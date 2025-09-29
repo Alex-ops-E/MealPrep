@@ -27,6 +27,9 @@ export interface ExtractedPriceInfo {
 
 export async function extractProductInfo(htmlContent: string, productQuery: string): Promise<ExtractedProductInfo[]> {
   try {
+    console.log(`GPT extracting products for query: "${productQuery}"`);
+    console.log(`HTML content length: ${htmlContent.length}`);
+    
     const prompt = `
 You are a product information extraction expert. Extract product details from the following HTML content for products matching the query: "${productQuery}".
 
@@ -77,6 +80,7 @@ Return only valid JSON. If no products found, return empty array.
     });
 
     const result = JSON.parse(response.choices[0].message.content || '{"products": []}');
+    console.log(`GPT extracted ${(result.products || []).length} products`);
     return result.products || [];
   } catch (error) {
     console.error("Error extracting product info:", error);

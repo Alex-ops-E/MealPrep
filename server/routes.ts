@@ -23,9 +23,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // If no results found and it's a new search, scrape for new products
       if (result.products.length === 0 && searchParams.page === 1) {
-        console.log(`Scraping for new products: ${searchParams.query}`);
+        console.log(`Scraping for new products: ${searchParams.query} in country: ${searchParams.country}`);
         
         const scrapeResult = await scrapeProductPrices(searchParams.query, searchParams.country);
+        console.log(`Scrape result: ${scrapeResult.products.length} products, ${scrapeResult.prices.length} prices, ${scrapeResult.errors.length} errors`);
         
         if (scrapeResult.errors.length > 0) {
           console.warn("Scraping errors:", scrapeResult.errors);
