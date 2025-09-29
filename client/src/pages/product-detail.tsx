@@ -294,7 +294,7 @@ export default function ProductDetail() {
                           {formatPrice(price.price, price.currency)}
                         </td>
                         <td className="py-4 px-6 text-muted-foreground" data-testid={`text-store-shipping-${price.store.id}`}>
-                          {formatShipping(price.shipping)}
+                          {formatShipping(price.shipping || undefined)}
                         </td>
                         <td className="py-4 px-6">
                           <Badge

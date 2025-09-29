@@ -95,6 +95,9 @@ export class MemStorage implements IStorage {
     const product: Product = {
       id,
       ...insertProduct,
+      description: insertProduct.description || null,
+      imageUrl: insertProduct.imageUrl || null,
+      specifications: insertProduct.specifications || null,
       createdAt: new Date()
     };
     this.products.set(id, product);
@@ -161,6 +164,8 @@ export class MemStorage implements IStorage {
     const store: Store = {
       id,
       ...insertStore,
+      logo: insertStore.logo || null,
+      rating: insertStore.rating || null,
       createdAt: new Date()
     };
     this.stores.set(id, store);
@@ -186,6 +191,10 @@ export class MemStorage implements IStorage {
     const price: ProductPrice = {
       id,
       ...insertPrice,
+      currency: insertPrice.currency || 'USD',
+      shipping: insertPrice.shipping || null,
+      inStock: insertPrice.inStock ?? null,
+      url: insertPrice.url || null,
       lastUpdated: new Date()
     };
     this.productPrices.set(id, price);
@@ -245,6 +254,7 @@ export class MemStorage implements IStorage {
     const alert: PriceAlert = {
       id,
       ...insertAlert,
+      isActive: insertAlert.isActive ?? null,
       createdAt: new Date()
     };
     this.priceAlerts.set(id, alert);
@@ -270,6 +280,8 @@ export class MemStorage implements IStorage {
     const query: SearchQuery = {
       id,
       ...insertQuery,
+      category: insertQuery.category || null,
+      results: insertQuery.results || null,
       createdAt: new Date()
     };
     this.searchQueries.set(id, query);

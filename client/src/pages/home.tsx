@@ -88,7 +88,9 @@ export default function Home() {
                     query: item.query,
                     country: selectedCountry,
                     page: 1,
-                    limit: 12
+                    limit: 12,
+                    inStockOnly: false,
+                    freeShippingOnly: false
                   })}
                   data-testid={`button-trending-${item.query.replace(/\s+/g, '-')}`}
                 >

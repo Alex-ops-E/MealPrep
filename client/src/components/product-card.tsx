@@ -79,7 +79,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                   {formatPrice(price.price, price.currency)}
                 </div>
                 <div className="text-xs text-muted-foreground" data-testid={`text-shipping-${price.id}`}>
-                  {formatShipping(price.shipping)}
+                  {formatShipping(price.shipping || undefined)}
                 </div>
               </div>
             </div>
