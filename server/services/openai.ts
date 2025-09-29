@@ -1,0 +1,185 @@
+import OpenAI from "openai";
+
+// the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+const openai = new OpenAI({ 
+  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || "default_key"
+});
+
+export interface ExtractedProductInfo {
+  name: string;
+  price: number;
+  currency: string;
+  description?: string;
+  imageUrl?: string;
+  inStock: boolean;
+  shipping?: number;
+  specifications?: Record<string, any>;
+}
+
+export interface ExtractedPriceInfo {
+  storeName: string;
+  price: number;
+  currency: string;
+  inStock: boolean;
+  shipping?: number;
+  url: string;
+}
+
+export async function extractProductInfo(htmlContent: string, productQuery: string): Promise<ExtractedProductInfo[]> {
+  try {
+    const prompt = `
+You are a product information extraction expert. Extract product details from the following HTML content for products matching the query: "${productQuery}".
+
+HTML Content:
+${htmlContent.slice(0, 8000)} // Limit content size
+
+Please extract and return a JSON array of products with the following structure:
+{
+  "products": [
+    {
+      "name": "Product name",
+      "price": 99.99,
+      "currency": "USD",
+      "description": "Product description",
+      "imageUrl": "URL to product image",
+      "inStock": true,
+      "shipping": 0,
+      "specifications": {
+        "key": "value"
+      }
+    }
+  ]
+}
+
+Focus on:
+1. Exact product names and prices
+2. Stock status
+3. Shipping costs (0 for free shipping)
+4. Product descriptions and specifications
+5. Image URLs if available
+
+Return only valid JSON. If no products found, return empty array.
+`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-5",
+      messages: [
+        {
+          role: "system",
+          content: "You are a specialized product data extraction AI. Extract accurate product information from HTML and return only valid JSON."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      response_format: { type: "json_object" }
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{"products": []}');
+    return result.products || [];
+  } catch (error) {
+    console.error("Error extracting product info:", error);
+    throw new Error("Failed to extract product information: " + (error as Error).message);
+  }
+}
+
+export async function extractPricesFromUrls(urls: string[], productQuery: string): Promise<ExtractedPriceInfo[]> {
+  try {
+    const urlsText = urls.join('\n');
+    
+    const prompt = `
+You are a price comparison expert. For the product query "${productQuery}", analyze these e-commerce URLs and extract pricing information:
+
+URLs to analyze:
+${urlsText}
+
+For each URL that contains relevant product information, extract:
+1. Store/retailer name
+2. Product price
+3. Currency
+4. Stock status
+5. Shipping cost
+6. The URL
+
+Return JSON in this format:
+{
+  "prices": [
+    {
+      "storeName": "Store Name",
+      "price": 99.99,
+      "currency": "USD",
+      "inStock": true,
+      "shipping": 15.99,
+      "url": "https://example.com/product"
+    }
+  ]
+}
+
+Focus on finding exact matches for the product query. If a URL doesn't contain relevant product information, skip it.
+Return only valid JSON.
+`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-5",
+      messages: [
+        {
+          role: "system",
+          content: "You are a price extraction specialist. Analyze URLs and extract accurate pricing information for product comparison."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      response_format: { type: "json_object" }
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{"prices": []}');
+    return result.prices || [];
+  } catch (error) {
+    console.error("Error extracting prices from URLs:", error);
+    throw new Error("Failed to extract prices: " + (error as Error).message);
+  }
+}
+
+export async function categorizeProduct(productName: string, description?: string): Promise<string> {
+  try {
+    const prompt = `
+Categorize the following product into one of these categories:
+- Electronics
+- Fashion
+- Home & Garden
+- Sports
+- Books
+- Health & Beauty
+- Automotive
+- Toys & Games
+- Other
+
+Product: ${productName}
+Description: ${description || "No description provided"}
+
+Return only the category name.
+`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-5",
+      messages: [
+        {
+          role: "system",
+          content: "You are a product categorization expert. Categorize products accurately based on their name and description."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ]
+    });
+
+    return response.choices[0].message.content?.trim() || "Other";
+  } catch (error) {
+    console.error("Error categorizing product:", error);
+    return "Other";
+  }
+}
