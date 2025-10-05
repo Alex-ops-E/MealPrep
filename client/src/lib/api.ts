@@ -1,35 +1,14 @@
 import { apiRequest } from "./queryClient";
-import type { SearchParams, ProductWithPrices, PriceHistoryPoint, InsertPriceAlert, Store } from "@shared/schema";
-
-export interface SearchResult {
-  products: ProductWithPrices[];
-  total: number;
-}
-
-export interface TrendingSearch {
-  query: string;
-  count: number;
-}
+import type { RecipeWithDetails, Store } from "@shared/schema";
 
 export const api = {
-  search: async (params: SearchParams): Promise<SearchResult> => {
-    const response = await apiRequest("POST", "/api/search", params);
+  generateRecipe: async (params: any): Promise<RecipeWithDetails> => {
+    const response = await apiRequest("POST", "/api/recipes/generate", params);
     return response.json();
   },
 
-  getProduct: async (id: string): Promise<ProductWithPrices> => {
-    const response = await apiRequest("GET", `/api/products/${id}`);
-    return response.json();
-  },
-
-  getPriceHistory: async (id: string, days?: number): Promise<PriceHistoryPoint[]> => {
-    const url = days ? `/api/products/${id}/price-history?days=${days}` : `/api/products/${id}/price-history`;
-    const response = await apiRequest("GET", url);
-    return response.json();
-  },
-
-  createPriceAlert: async (alert: InsertPriceAlert) => {
-    const response = await apiRequest("POST", "/api/price-alerts", alert);
+  getRecipe: async (id: string): Promise<RecipeWithDetails> => {
+    const response = await apiRequest("GET", `/api/recipes/${id}`);
     return response.json();
   },
 
@@ -37,9 +16,4 @@ export const api = {
     const response = await apiRequest("GET", "/api/stores");
     return response.json();
   },
-
-  getTrending: async (): Promise<TrendingSearch[]> => {
-    const response = await apiRequest("GET", "/api/trending");
-    return response.json();
-  }
 };

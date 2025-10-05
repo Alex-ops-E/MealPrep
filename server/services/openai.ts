@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import type { GenerateRecipeParams, InsertRecipe, Ingredient } from "@shared/schema";
 
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -185,5 +186,89 @@ Return only the category name.
   } catch (error) {
     console.error("Error categorizing product:", error);
     return "Other";
+  }
+}
+
+export async function generateRecipe(params: GenerateRecipeParams): Promise<InsertRecipe> {
+  try {
+    const { craving, servings, cuisine, cookTime, dietaryRestrictions } = params;
+    
+    const dietaryInfo = dietaryRestrictions && dietaryRestrictions.length > 0
+      ? `Dietary restrictions: ${dietaryRestrictions.join(', ')}`
+      : 'No dietary restrictions';
+    
+    const cuisineInfo = cuisine && cuisine !== 'Any' ? `Cuisine style: ${cuisine}` : '';
+    const timeInfo = cookTime && cookTime !== 'Any' ? `Cooking time: ${cookTime}` : '';
+    
+    const prompt = `
+Generate a detailed recipe based on the following requirements:
+
+Craving: ${craving}
+Servings: ${servings}
+${cuisineInfo}
+${timeInfo}
+${dietaryInfo}
+
+Please create a complete recipe with:
+1. A creative and appetizing title
+2. A brief summary (2-3 sentences)
+3. A detailed list of ingredients with quantities and units
+4. Step-by-step cooking instructions
+5. Total estimated cooking time
+
+Return the recipe in the following JSON format:
+{
+  "title": "Recipe Title",
+  "summary": "Brief description of the dish",
+  "servings": ${servings},
+  "cuisine": "${cuisine || 'Various'}",
+  "cookTime": "30 minutes",
+  "dietaryTags": ${JSON.stringify(dietaryRestrictions || [])},
+  "ingredients": [
+    {
+      "name": "ingredient name",
+      "quantity": 1.5,
+      "unit": "cups"
+    }
+  ],
+  "steps": [
+    "Step 1 instruction",
+    "Step 2 instruction"
+  ]
+}
+
+Make sure the recipe is practical, delicious, and matches the specified requirements.
+`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-5",
+      messages: [
+        {
+          role: "system",
+          content: "You are a professional chef and recipe creator. Generate detailed, practical, and delicious recipes that match user preferences."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      response_format: { type: "json_object" }
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{}');
+    
+    return {
+      title: result.title,
+      summary: result.summary,
+      servings: result.servings,
+      cuisine: result.cuisine,
+      cookTime: result.cookTime,
+      dietaryTags: result.dietaryTags,
+      ingredients: result.ingredients,
+      steps: result.steps
+    };
+  } catch (error) {
+    console.error("Error generating recipe:", error);
+    throw new Error("Failed to generate recipe: " + (error as Error).message);
   }
 }

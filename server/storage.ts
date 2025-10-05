@@ -1,25 +1,37 @@
 import { 
-  type Product, 
-  type InsertProduct,
+  type Recipe, 
+  type InsertRecipe,
+  type ShoppingList,
+  type InsertShoppingList,
+  type ShoppingListItem,
+  type InsertShoppingListItem,
   type Store,
   type InsertStore,
-  type ProductPrice,
-  type InsertProductPrice,
-  type PriceAlert,
-  type InsertPriceAlert,
-  type SearchQuery,
-  type InsertSearchQuery,
-  type ProductWithPrices,
-  type PriceHistoryPoint,
-  type SearchParams
+  type PriceQuote,
+  type InsertPriceQuote,
+  type RecipeWithDetails,
+  type ShoppingListWithItems,
+  type PriceQuoteWithStore,
+  type Ingredient
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
-  // Products
-  createProduct(product: InsertProduct): Promise<Product>;
-  getProduct(id: string): Promise<Product | undefined>;
-  searchProducts(params: SearchParams): Promise<{ products: ProductWithPrices[], total: number }>;
+  // Recipes
+  createRecipe(recipe: InsertRecipe): Promise<Recipe>;
+  getRecipe(id: string): Promise<RecipeWithDetails | undefined>;
+  getAllRecipes(): Promise<Recipe[]>;
+  
+  // Shopping Lists
+  createShoppingList(list: InsertShoppingList): Promise<ShoppingList>;
+  getShoppingList(id: string): Promise<ShoppingListWithItems | undefined>;
+  getShoppingListByRecipe(recipeId: string): Promise<ShoppingListWithItems | undefined>;
+  updateShoppingList(id: string, list: Partial<ShoppingList>): Promise<ShoppingList | undefined>;
+  
+  // Shopping List Items
+  createShoppingListItem(item: InsertShoppingListItem): Promise<ShoppingListItem>;
+  getShoppingListItems(listId: string): Promise<ShoppingListItem[]>;
+  updateShoppingListItem(id: string, item: Partial<ShoppingListItem>): Promise<ShoppingListItem | undefined>;
   
   // Stores
   createStore(store: InsertStore): Promise<Store>;
@@ -27,56 +39,51 @@ export interface IStorage {
   getStoreByName(name: string): Promise<Store | undefined>;
   getAllStores(): Promise<Store[]>;
   
-  // Product Prices
-  createProductPrice(price: InsertProductPrice): Promise<ProductPrice>;
-  getProductPrices(productId: string): Promise<(ProductPrice & { store: Store })[]>;
-  updateProductPrice(id: string, price: Partial<ProductPrice>): Promise<ProductPrice | undefined>;
-  getPriceHistory(productId: string, days?: number): Promise<PriceHistoryPoint[]>;
-  
-  // Price Alerts
-  createPriceAlert(alert: InsertPriceAlert): Promise<PriceAlert>;
-  getPriceAlerts(productId: string): Promise<PriceAlert[]>;
-  updatePriceAlert(id: string, alert: Partial<PriceAlert>): Promise<PriceAlert | undefined>;
-  
-  // Search Queries
-  createSearchQuery(query: InsertSearchQuery): Promise<SearchQuery>;
-  getRecentSearches(limit?: number): Promise<SearchQuery[]>;
+  // Price Quotes
+  createPriceQuote(quote: InsertPriceQuote): Promise<PriceQuote>;
+  getPriceQuotes(ingredientName: string): Promise<PriceQuoteWithStore[]>;
 }
 
 export class MemStorage implements IStorage {
-  private products: Map<string, Product> = new Map();
+  private recipes: Map<string, Recipe> = new Map();
+  private shoppingLists: Map<string, ShoppingList> = new Map();
+  private shoppingListItems: Map<string, ShoppingListItem> = new Map();
   private stores: Map<string, Store> = new Map();
-  private productPrices: Map<string, ProductPrice> = new Map();
-  private priceAlerts: Map<string, PriceAlert> = new Map();
-  private searchQueries: Map<string, SearchQuery> = new Map();
+  private priceQuotes: Map<string, PriceQuote> = new Map();
 
   constructor() {
     this.initializeSampleData();
   }
 
   private initializeSampleData() {
-    // Create sample stores
     const stores = [
       {
-        name: "TechMart",
-        logo: "https://via.placeholder.com/32x32/22c55e/ffffff?text=T",
-        website: "https://techmart.com",
+        name: "Whole Foods",
+        logo: "https://via.placeholder.com/32x32/22c55e/ffffff?text=WF",
+        website: "https://wholefoodsmarket.com",
         country: "US",
-        rating: 4.8
+        rating: 4.5
       },
       {
-        name: "ElectroWorld",
-        logo: "https://via.placeholder.com/32x32/3b82f6/ffffff?text=E",
-        website: "https://electroworld.com",
+        name: "Trader Joe's",
+        logo: "https://via.placeholder.com/32x32/3b82f6/ffffff?text=TJ",
+        website: "https://traderjoes.com",
+        country: "US",
+        rating: 4.7
+      },
+      {
+        name: "Walmart",
+        logo: "https://via.placeholder.com/32x32/f59e0b/ffffff?text=W",
+        website: "https://walmart.com",
         country: "US",
         rating: 4.2
       },
       {
-        name: "GadgetHub",
-        logo: "https://via.placeholder.com/32x32/f59e0b/ffffff?text=G",
-        website: "https://gadgethub.com",
+        name: "Kroger",
+        logo: "https://via.placeholder.com/32x32/ef4444/ffffff?text=K",
+        website: "https://kroger.com",
         country: "US",
-        rating: 4.5
+        rating: 4.3
       }
     ];
 
@@ -90,73 +97,109 @@ export class MemStorage implements IStorage {
     });
   }
 
-  async createProduct(insertProduct: InsertProduct): Promise<Product> {
+  async createRecipe(insertRecipe: InsertRecipe): Promise<Recipe> {
     const id = randomUUID();
-    const product: Product = {
+    const recipe: Recipe = {
       id,
-      ...insertProduct,
-      description: insertProduct.description || null,
-      imageUrl: insertProduct.imageUrl || null,
-      specifications: insertProduct.specifications || null,
+      ...insertRecipe,
+      summary: insertRecipe.summary || null,
+      cuisine: insertRecipe.cuisine || null,
+      cookTime: insertRecipe.cookTime || null,
+      dietaryTags: insertRecipe.dietaryTags || null,
       createdAt: new Date()
     };
-    this.products.set(id, product);
-    return product;
+    this.recipes.set(id, recipe);
+    return recipe;
   }
 
-  async getProduct(id: string): Promise<Product | undefined> {
-    return this.products.get(id);
+  async getRecipe(id: string): Promise<RecipeWithDetails | undefined> {
+    const recipe = this.recipes.get(id);
+    if (!recipe) return undefined;
+
+    const parsedIngredients = Array.isArray(recipe.ingredients) 
+      ? recipe.ingredients as Ingredient[]
+      : [];
+
+    return {
+      ...recipe,
+      parsedIngredients
+    };
   }
 
-  async searchProducts(params: SearchParams): Promise<{ products: ProductWithPrices[], total: number }> {
-    let allProducts = Array.from(this.products.values());
+  async getAllRecipes(): Promise<Recipe[]> {
+    return Array.from(this.recipes.values())
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+
+  async createShoppingList(insertList: InsertShoppingList): Promise<ShoppingList> {
+    const id = randomUUID();
+    const list: ShoppingList = {
+      id,
+      ...insertList,
+      status: insertList.status || "pending",
+      createdAt: new Date()
+    };
+    this.shoppingLists.set(id, list);
+    return list;
+  }
+
+  async getShoppingList(id: string): Promise<ShoppingListWithItems | undefined> {
+    const list = this.shoppingLists.get(id);
+    if (!list) return undefined;
+
+    const items = await this.getShoppingListItems(id);
+    return {
+      ...list,
+      items
+    };
+  }
+
+  async getShoppingListByRecipe(recipeId: string): Promise<ShoppingListWithItems | undefined> {
+    const list = Array.from(this.shoppingLists.values())
+      .find(l => l.recipeId === recipeId);
     
-    // Filter by category if specified
-    if (params.category && params.category !== "All Categories") {
-      allProducts = allProducts.filter(p => 
-        p.category.toLowerCase() === params.category!.toLowerCase()
-      );
-    }
+    if (!list) return undefined;
 
-    // Filter by query
-    if (params.query) {
-      const queryLower = params.query.toLowerCase();
-      allProducts = allProducts.filter(p => 
-        p.name.toLowerCase().includes(queryLower) ||
-        (p.description && p.description.toLowerCase().includes(queryLower))
-      );
-    }
+    const items = await this.getShoppingListItems(list.id);
+    return {
+      ...list,
+      items
+    };
+  }
 
-    // Get products with prices
-    const productsWithPrices: ProductWithPrices[] = [];
-    for (const product of allProducts) {
-      const prices = await this.getProductPrices(product.id);
-      
-      // Apply price filters
-      if (params.minPrice || params.maxPrice) {
-        const productPrices = prices.map(p => p.price);
-        const minProductPrice = Math.min(...productPrices);
-        const maxProductPrice = Math.max(...productPrices);
-        
-        if (params.minPrice && minProductPrice < params.minPrice) continue;
-        if (params.maxPrice && maxProductPrice > params.maxPrice) continue;
-      }
+  async updateShoppingList(id: string, updateList: Partial<ShoppingList>): Promise<ShoppingList | undefined> {
+    const existingList = this.shoppingLists.get(id);
+    if (!existingList) return undefined;
 
-      // Apply stock filter
-      if (params.inStockOnly && !prices.some(p => p.inStock)) continue;
+    const updatedList = { ...existingList, ...updateList };
+    this.shoppingLists.set(id, updatedList);
+    return updatedList;
+  }
 
-      // Apply free shipping filter
-      if (params.freeShippingOnly && !prices.some(p => p.shipping === 0)) continue;
+  async createShoppingListItem(insertItem: InsertShoppingListItem): Promise<ShoppingListItem> {
+    const id = randomUUID();
+    const item: ShoppingListItem = {
+      id,
+      ...insertItem,
+      acquired: insertItem.acquired ?? false,
+      preferredStoreIds: insertItem.preferredStoreIds || null
+    };
+    this.shoppingListItems.set(id, item);
+    return item;
+  }
 
-      productsWithPrices.push({ ...product, prices });
-    }
+  async getShoppingListItems(listId: string): Promise<ShoppingListItem[]> {
+    return Array.from(this.shoppingListItems.values())
+      .filter(item => item.listId === listId);
+  }
 
-    // Pagination
-    const total = productsWithPrices.length;
-    const start = (params.page - 1) * params.limit;
-    const paginatedProducts = productsWithPrices.slice(start, start + params.limit);
+  async updateShoppingListItem(id: string, updateItem: Partial<ShoppingListItem>): Promise<ShoppingListItem | undefined> {
+    const existingItem = this.shoppingListItems.get(id);
+    if (!existingItem) return undefined;
 
-    return { products: paginatedProducts, total };
+    const updatedItem = { ...existingItem, ...updateItem };
+    this.shoppingListItems.set(id, updatedItem);
+    return updatedItem;
   }
 
   async createStore(insertStore: InsertStore): Promise<Store> {
@@ -186,112 +229,33 @@ export class MemStorage implements IStorage {
     return Array.from(this.stores.values());
   }
 
-  async createProductPrice(insertPrice: InsertProductPrice): Promise<ProductPrice> {
+  async createPriceQuote(insertQuote: InsertPriceQuote): Promise<PriceQuote> {
     const id = randomUUID();
-    const price: ProductPrice = {
+    const quote: PriceQuote = {
       id,
-      ...insertPrice,
-      currency: insertPrice.currency || 'USD',
-      shipping: insertPrice.shipping || null,
-      inStock: insertPrice.inStock ?? null,
-      url: insertPrice.url || null,
-      lastUpdated: new Date()
+      ...insertQuote,
+      currency: insertQuote.currency || "USD",
+      unitSize: insertQuote.unitSize || null,
+      url: insertQuote.url || null,
+      updatedAt: new Date()
     };
-    this.productPrices.set(id, price);
-    return price;
+    this.priceQuotes.set(id, quote);
+    return quote;
   }
 
-  async getProductPrices(productId: string): Promise<(ProductPrice & { store: Store })[]> {
-    const prices = Array.from(this.productPrices.values())
-      .filter(price => price.productId === productId);
+  async getPriceQuotes(ingredientName: string): Promise<PriceQuoteWithStore[]> {
+    const quotes = Array.from(this.priceQuotes.values())
+      .filter(quote => quote.ingredientName.toLowerCase() === ingredientName.toLowerCase());
     
-    const pricesWithStores: (ProductPrice & { store: Store })[] = [];
-    for (const price of prices) {
-      const store = await this.getStore(price.storeId);
+    const quotesWithStores: PriceQuoteWithStore[] = [];
+    for (const quote of quotes) {
+      const store = await this.getStore(quote.storeId);
       if (store) {
-        pricesWithStores.push({ ...price, store });
+        quotesWithStores.push({ ...quote, store });
       }
     }
     
-    return pricesWithStores.sort((a, b) => a.price - b.price);
-  }
-
-  async updateProductPrice(id: string, updatePrice: Partial<ProductPrice>): Promise<ProductPrice | undefined> {
-    const existingPrice = this.productPrices.get(id);
-    if (!existingPrice) return undefined;
-
-    const updatedPrice = {
-      ...existingPrice,
-      ...updatePrice,
-      lastUpdated: new Date()
-    };
-    this.productPrices.set(id, updatedPrice);
-    return updatedPrice;
-  }
-
-  async getPriceHistory(productId: string, days: number = 30): Promise<PriceHistoryPoint[]> {
-    const prices = Array.from(this.productPrices.values())
-      .filter(price => price.productId === productId);
-    
-    const history: PriceHistoryPoint[] = [];
-    for (const price of prices) {
-      const store = await this.getStore(price.storeId);
-      if (store) {
-        history.push({
-          date: price.lastUpdated?.toISOString() || new Date().toISOString(),
-          price: price.price,
-          storeId: price.storeId,
-          storeName: store.name
-        });
-      }
-    }
-    
-    return history.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }
-
-  async createPriceAlert(insertAlert: InsertPriceAlert): Promise<PriceAlert> {
-    const id = randomUUID();
-    const alert: PriceAlert = {
-      id,
-      ...insertAlert,
-      isActive: insertAlert.isActive ?? null,
-      createdAt: new Date()
-    };
-    this.priceAlerts.set(id, alert);
-    return alert;
-  }
-
-  async getPriceAlerts(productId: string): Promise<PriceAlert[]> {
-    return Array.from(this.priceAlerts.values())
-      .filter(alert => alert.productId === productId && alert.isActive);
-  }
-
-  async updatePriceAlert(id: string, updateAlert: Partial<PriceAlert>): Promise<PriceAlert | undefined> {
-    const existingAlert = this.priceAlerts.get(id);
-    if (!existingAlert) return undefined;
-
-    const updatedAlert = { ...existingAlert, ...updateAlert };
-    this.priceAlerts.set(id, updatedAlert);
-    return updatedAlert;
-  }
-
-  async createSearchQuery(insertQuery: InsertSearchQuery): Promise<SearchQuery> {
-    const id = randomUUID();
-    const query: SearchQuery = {
-      id,
-      ...insertQuery,
-      category: insertQuery.category || null,
-      results: insertQuery.results || null,
-      createdAt: new Date()
-    };
-    this.searchQueries.set(id, query);
-    return query;
-  }
-
-  async getRecentSearches(limit: number = 10): Promise<SearchQuery[]> {
-    return Array.from(this.searchQueries.values())
-      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0))
-      .slice(0, limit);
+    return quotesWithStores.sort((a, b) => a.price - b.price);
   }
 }
 

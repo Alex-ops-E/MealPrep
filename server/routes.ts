@@ -1,195 +1,188 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { scrapeProductPrices } from "./services/scraper";
-import { categorizeProduct } from "./services/openai";
+import { generateRecipe } from "./services/openai";
+import { scrapeIngredientPrices } from "./services/scraper";
 import { 
-  searchProductsSchema, 
-  insertPriceAlertSchema,
-  type ProductWithPrices,
-  type SearchParams 
+  generateRecipeSchema,
+  insertShoppingListSchema,
+  insertShoppingListItemSchema,
+  type RecipeWithDetails,
+  type ShoppingListWithItems
 } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
-  // Search products
-  app.post("/api/search", async (req, res) => {
+  // Generate recipe with AI
+  app.post("/api/recipes/generate", async (req, res) => {
     try {
-      const searchParams = searchProductsSchema.parse(req.body);
+      const params = generateRecipeSchema.parse(req.body);
       
-      // First try to find existing products in storage
-      let result = await storage.searchProducts(searchParams);
+      console.log(`Generating recipe for: ${params.craving}`);
       
-      // If no results found and it's a new search, scrape for new products
-      if (result.products.length === 0 && searchParams.page === 1) {
-        console.log(`Scraping for new products: ${searchParams.query} in country: ${searchParams.country}`);
-        
-        const scrapeResult = await scrapeProductPrices(searchParams.query, searchParams.country);
-        console.log(`Scrape result: ${scrapeResult.products.length} products, ${scrapeResult.prices.length} prices, ${scrapeResult.errors.length} errors`);
-        
-        if (scrapeResult.errors.length > 0) {
-          console.warn("Scraping errors:", scrapeResult.errors);
-        }
-        
-        // Create products and prices from scraped data
-        const createdProducts: ProductWithPrices[] = [];
-        
-        for (const productInfo of scrapeResult.products) {
-          try {
-            // Categorize the product
-            const category = await categorizeProduct(productInfo.name, productInfo.description);
-            
-            // Create product
-            const product = await storage.createProduct({
-              name: productInfo.name,
-              description: productInfo.description || "",
-              category,
-              imageUrl: productInfo.imageUrl,
-              specifications: productInfo.specifications
-            });
-            
-            // Create store and price for this product
-            const prices = [];
-            
-            // Create a generic store for scraped price
-            let store = await storage.getStoreByName("Online Store");
-            if (!store) {
-              store = await storage.createStore({
-                name: "Online Store",
-                logo: "https://via.placeholder.com/32x32/6366f1/ffffff?text=OS",
-                website: "https://example.com",
-                country: searchParams.country,
-                rating: 4.0
-              });
-            }
-            
-            const price = await storage.createProductPrice({
-              productId: product.id,
-              storeId: store.id,
-              price: productInfo.price,
-              currency: productInfo.currency,
-              shipping: productInfo.shipping || 0,
-              inStock: productInfo.inStock,
-              url: ""
-            });
-            
-            prices.push({ ...price, store });
-            createdProducts.push({ ...product, prices });
-            
-          } catch (error) {
-            console.error("Error creating product:", error);
-          }
-        }
-        
-        // Add prices from different stores
-        for (const priceInfo of scrapeResult.prices) {
-          try {
-            // Find or create store
-            let store = await storage.getStoreByName(priceInfo.storeName);
-            if (!store) {
-              store = await storage.createStore({
-                name: priceInfo.storeName,
-                logo: `https://via.placeholder.com/32x32/6366f1/ffffff?text=${priceInfo.storeName.charAt(0)}`,
-                website: priceInfo.url,
-                country: searchParams.country,
-                rating: 4.0 + Math.random() * 1.0
-              });
-            }
-            
-            // Find matching product for this price
-            const matchingProduct = createdProducts.find(p => 
-              p.name.toLowerCase().includes(searchParams.query.toLowerCase()) ||
-              searchParams.query.toLowerCase().includes(p.name.toLowerCase().split(' ')[0])
-            );
-            
-            if (matchingProduct) {
-              const price = await storage.createProductPrice({
-                productId: matchingProduct.id,
-                storeId: store.id,
-                price: priceInfo.price,
-                currency: priceInfo.currency,
-                shipping: priceInfo.shipping || 0,
-                inStock: priceInfo.inStock,
-                url: priceInfo.url
-              });
-              
-              matchingProduct.prices.push({ ...price, store });
-            }
-            
-          } catch (error) {
-            console.error("Error creating store price:", error);
-          }
-        }
-        
-        // Save search query
-        await storage.createSearchQuery({
-          query: searchParams.query,
-          category: searchParams.category,
-          country: searchParams.country,
-          results: createdProducts
-        });
-        
-        // Return the newly created products
-        result = {
-          products: createdProducts,
-          total: createdProducts.length
-        };
-      }
+      const recipeData = await generateRecipe(params);
       
-      res.json(result);
+      const recipe = await storage.createRecipe(recipeData);
+      
+      const recipeWithDetails = await storage.getRecipe(recipe.id);
+      
+      res.json(recipeWithDetails);
       
     } catch (error) {
-      console.error("Search error:", error);
+      console.error("Generate recipe error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid recipe data", details: error.errors });
+      }
       res.status(500).json({ 
-        error: "Search failed", 
+        error: "Failed to generate recipe", 
         message: error instanceof Error ? error.message : "Unknown error" 
       });
     }
   });
 
-  // Get product details
-  app.get("/api/products/:id", async (req, res) => {
+  // Get recipe details
+  app.get("/api/recipes/:id", async (req, res) => {
     try {
-      const product = await storage.getProduct(req.params.id);
-      if (!product) {
-        return res.status(404).json({ error: "Product not found" });
+      const recipe = await storage.getRecipe(req.params.id);
+      if (!recipe) {
+        return res.status(404).json({ error: "Recipe not found" });
       }
       
-      const prices = await storage.getProductPrices(product.id);
-      const productWithPrices: ProductWithPrices = { ...product, prices };
-      
-      res.json(productWithPrices);
+      res.json(recipe);
     } catch (error) {
-      console.error("Get product error:", error);
-      res.status(500).json({ error: "Failed to get product" });
+      console.error("Get recipe error:", error);
+      res.status(500).json({ error: "Failed to get recipe" });
     }
   });
 
-  // Get price history
-  app.get("/api/products/:id/price-history", async (req, res) => {
+  // Get all recipes
+  app.get("/api/recipes", async (req, res) => {
     try {
-      const days = req.query.days ? parseInt(req.query.days as string) : 30;
-      const history = await storage.getPriceHistory(req.params.id, days);
-      res.json(history);
+      const recipes = await storage.getAllRecipes();
+      res.json(recipes);
     } catch (error) {
-      console.error("Get price history error:", error);
-      res.status(500).json({ error: "Failed to get price history" });
+      console.error("Get recipes error:", error);
+      res.status(500).json({ error: "Failed to get recipes" });
     }
   });
 
-  // Create price alert
-  app.post("/api/price-alerts", async (req, res) => {
+  // Create shopping list
+  app.post("/api/shopping-lists", async (req, res) => {
     try {
-      const alertData = insertPriceAlertSchema.parse(req.body);
-      const alert = await storage.createPriceAlert(alertData);
-      res.json(alert);
+      const listData = insertShoppingListSchema.parse(req.body);
+      const list = await storage.createShoppingList(listData);
+      res.json(list);
     } catch (error) {
-      console.error("Create price alert error:", error);
+      console.error("Create shopping list error:", error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: "Invalid alert data", details: error.errors });
+        return res.status(400).json({ error: "Invalid shopping list data", details: error.errors });
       }
-      res.status(500).json({ error: "Failed to create price alert" });
+      res.status(500).json({ error: "Failed to create shopping list" });
+    }
+  });
+
+  // Get shopping list
+  app.get("/api/shopping-lists/:id", async (req, res) => {
+    try {
+      const list = await storage.getShoppingList(req.params.id);
+      if (!list) {
+        return res.status(404).json({ error: "Shopping list not found" });
+      }
+      res.json(list);
+    } catch (error) {
+      console.error("Get shopping list error:", error);
+      res.status(500).json({ error: "Failed to get shopping list" });
+    }
+  });
+
+  // Get shopping list by recipe
+  app.get("/api/shopping-lists/recipe/:recipeId", async (req, res) => {
+    try {
+      const list = await storage.getShoppingListByRecipe(req.params.recipeId);
+      if (!list) {
+        return res.status(404).json({ error: "Shopping list not found" });
+      }
+      res.json(list);
+    } catch (error) {
+      console.error("Get shopping list error:", error);
+      res.status(500).json({ error: "Failed to get shopping list" });
+    }
+  });
+
+  // Add item to shopping list
+  app.post("/api/shopping-lists/:id/items", async (req, res) => {
+    try {
+      const itemData = insertShoppingListItemSchema.parse({
+        ...req.body,
+        listId: req.params.id
+      });
+      const item = await storage.createShoppingListItem(itemData);
+      res.json(item);
+    } catch (error) {
+      console.error("Add shopping list item error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid item data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to add item" });
+    }
+  });
+
+  // Update shopping list item
+  app.patch("/api/shopping-list-items/:id", async (req, res) => {
+    try {
+      const item = await storage.updateShoppingListItem(req.params.id, req.body);
+      if (!item) {
+        return res.status(404).json({ error: "Item not found" });
+      }
+      res.json(item);
+    } catch (error) {
+      console.error("Update shopping list item error:", error);
+      res.status(500).json({ error: "Failed to update item" });
+    }
+  });
+
+  // Get ingredient prices
+  app.get("/api/ingredients/:name/prices", async (req, res) => {
+    try {
+      const ingredientName = req.params.name;
+      const country = (req.query.country as string) || "US";
+      
+      let quotes = await storage.getPriceQuotes(ingredientName);
+      
+      if (quotes.length === 0) {
+        console.log(`Scraping prices for ingredient: ${ingredientName}`);
+        const scrapedPrices = await scrapeIngredientPrices(ingredientName, country);
+        
+        for (const priceInfo of scrapedPrices) {
+          let store = await storage.getStoreByName(priceInfo.storeName);
+          if (!store) {
+            store = await storage.createStore({
+              name: priceInfo.storeName,
+              logo: `https://via.placeholder.com/32x32/6366f1/ffffff?text=${priceInfo.storeName.charAt(0)}`,
+              website: priceInfo.url || "https://example.com",
+              country,
+              rating: 4.0 + Math.random() * 1.0
+            });
+          }
+          
+          await storage.createPriceQuote({
+            ingredientName,
+            storeId: store.id,
+            price: priceInfo.price,
+            unitSize: priceInfo.unitSize,
+            currency: priceInfo.currency || "USD",
+            url: priceInfo.url
+          });
+        }
+        
+        quotes = await storage.getPriceQuotes(ingredientName);
+      }
+      
+      res.json(quotes);
+    } catch (error) {
+      console.error("Get ingredient prices error:", error);
+      res.status(500).json({ error: "Failed to get ingredient prices" });
     }
   });
 
@@ -201,30 +194,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get stores error:", error);
       res.status(500).json({ error: "Failed to get stores" });
-    }
-  });
-
-  // Get trending searches
-  app.get("/api/trending", async (req, res) => {
-    try {
-      const recentSearches = await storage.getRecentSearches(10);
-      
-      // Group by query and count frequency
-      const searchCounts = recentSearches.reduce((acc, search) => {
-        acc[search.query] = (acc[search.query] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-      
-      // Sort by frequency and return top searches
-      const trending = Object.entries(searchCounts)
-        .sort(([,a], [,b]) => b - a)
-        .slice(0, 5)
-        .map(([query, count]) => ({ query, count }));
-      
-      res.json(trending);
-    } catch (error) {
-      console.error("Get trending error:", error);
-      res.status(500).json({ error: "Failed to get trending searches" });
     }
   });
 

@@ -3,14 +3,34 @@ import { pgTable, text, varchar, integer, timestamp, boolean, jsonb, real } from
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const products = pgTable("products", {
+export const recipes = pgTable("recipes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: text("name").notNull(),
-  description: text("description"),
-  category: text("category").notNull(),
-  imageUrl: text("image_url"),
-  specifications: jsonb("specifications"),
+  title: text("title").notNull(),
+  summary: text("summary"),
+  servings: integer("servings").notNull(),
+  cuisine: text("cuisine"),
+  cookTime: text("cook_time"),
+  dietaryTags: text("dietary_tags").array(),
+  ingredients: jsonb("ingredients").notNull(),
+  steps: text("steps").array().notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const shoppingLists = pgTable("shopping_lists", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  recipeId: varchar("recipe_id").notNull(),
+  status: text("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const shoppingListItems = pgTable("shopping_list_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  listId: varchar("list_id").notNull(),
+  ingredientName: text("ingredient_name").notNull(),
+  quantity: real("quantity").notNull(),
+  unit: text("unit").notNull(),
+  acquired: boolean("acquired").default(false),
+  preferredStoreIds: text("preferred_store_ids").array(),
 });
 
 export const stores = pgTable("stores", {
@@ -23,40 +43,30 @@ export const stores = pgTable("stores", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const productPrices = pgTable("product_prices", {
+export const priceQuotes = pgTable("price_quotes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  productId: varchar("product_id").notNull(),
+  ingredientName: text("ingredient_name").notNull(),
   storeId: varchar("store_id").notNull(),
   price: real("price").notNull(),
+  unitSize: text("unit_size"),
   currency: text("currency").notNull().default("USD"),
-  shipping: real("shipping"),
-  inStock: boolean("in_stock").default(true),
   url: text("url"),
-  lastUpdated: timestamp("last_updated").defaultNow(),
-});
-
-export const priceAlerts = pgTable("price_alerts", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  productId: varchar("product_id").notNull(),
-  targetPrice: real("target_price").notNull(),
-  email: text("email").notNull(),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const searchQueries = pgTable("search_queries", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  query: text("query").notNull(),
-  category: text("category"),
-  country: text("country").notNull(),
-  results: jsonb("results"),
-  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Insert schemas
-export const insertProductSchema = createInsertSchema(products).omit({
+export const insertRecipeSchema = createInsertSchema(recipes).omit({
   id: true,
   createdAt: true,
+});
+
+export const insertShoppingListSchema = createInsertSchema(shoppingLists).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertShoppingListItemSchema = createInsertSchema(shoppingListItems).omit({
+  id: true,
 });
 
 export const insertStoreSchema = createInsertSchema(stores).omit({
@@ -64,59 +74,52 @@ export const insertStoreSchema = createInsertSchema(stores).omit({
   createdAt: true,
 });
 
-export const insertProductPriceSchema = createInsertSchema(productPrices).omit({
+export const insertPriceQuoteSchema = createInsertSchema(priceQuotes).omit({
   id: true,
-  lastUpdated: true,
+  updatedAt: true,
 });
 
-export const insertPriceAlertSchema = createInsertSchema(priceAlerts).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertSearchQuerySchema = createInsertSchema(searchQueries).omit({
-  id: true,
-  createdAt: true,
-});
-
-// Search schema with filters
-export const searchProductsSchema = z.object({
-  query: z.string().min(1),
-  category: z.string().optional(),
-  country: z.string().default("US"),
-  minPrice: z.number().optional(),
-  maxPrice: z.number().optional(),
-  inStockOnly: z.boolean().default(false),
-  freeShippingOnly: z.boolean().default(false),
-  page: z.number().default(1),
-  limit: z.number().default(12),
+// Recipe generation request schema
+export const generateRecipeSchema = z.object({
+  craving: z.string().min(1),
+  servings: z.number().min(1).max(20),
+  cuisine: z.string().optional(),
+  cookTime: z.string().optional(),
+  dietaryRestrictions: z.array(z.string()).optional(),
 });
 
 // Types
-export type Product = typeof products.$inferSelect;
-export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type Recipe = typeof recipes.$inferSelect;
+export type InsertRecipe = z.infer<typeof insertRecipeSchema>;
+
+export type ShoppingList = typeof shoppingLists.$inferSelect;
+export type InsertShoppingList = z.infer<typeof insertShoppingListSchema>;
+
+export type ShoppingListItem = typeof shoppingListItems.$inferSelect;
+export type InsertShoppingListItem = z.infer<typeof insertShoppingListItemSchema>;
 
 export type Store = typeof stores.$inferSelect;
 export type InsertStore = z.infer<typeof insertStoreSchema>;
 
-export type ProductPrice = typeof productPrices.$inferSelect;
-export type InsertProductPrice = z.infer<typeof insertProductPriceSchema>;
+export type PriceQuote = typeof priceQuotes.$inferSelect;
+export type InsertPriceQuote = z.infer<typeof insertPriceQuoteSchema>;
 
-export type PriceAlert = typeof priceAlerts.$inferSelect;
-export type InsertPriceAlert = z.infer<typeof insertPriceAlertSchema>;
+export type GenerateRecipeParams = z.infer<typeof generateRecipeSchema>;
 
-export type SearchQuery = typeof searchQueries.$inferSelect;
-export type InsertSearchQuery = z.infer<typeof insertSearchQuerySchema>;
-
-export type SearchParams = z.infer<typeof searchProductsSchema>;
-
-export interface ProductWithPrices extends Product {
-  prices: (ProductPrice & { store: Store })[];
+export interface Ingredient {
+  name: string;
+  quantity: number;
+  unit: string;
 }
 
-export interface PriceHistoryPoint {
-  date: string;
-  price: number;
-  storeId: string;
-  storeName: string;
+export interface RecipeWithDetails extends Recipe {
+  parsedIngredients: Ingredient[];
+}
+
+export interface ShoppingListWithItems extends ShoppingList {
+  items: ShoppingListItem[];
+}
+
+export interface PriceQuoteWithStore extends PriceQuote {
+  store: Store;
 }
