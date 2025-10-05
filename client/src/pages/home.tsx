@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Store as StoreIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ import type { RecipeWithDetails, ShoppingListWithItems, PriceQuoteWithStore } fr
 
 const generateRecipeFormSchema = z.object({
   craving: z.string().min(1, "Please describe what you'd like to cook"),
-  servings: z.number().min(1).max(20),
+  servings: z.coerce.number().min(1).max(20),
   cuisine: z.string().optional(),
   cookTime: z.string().optional(),
   dietaryRestrictions: z.array(z.string()).optional(),
@@ -28,6 +28,123 @@ const generateRecipeFormSchema = z.object({
 type GenerateRecipeForm = z.infer<typeof generateRecipeFormSchema>;
 
 type Step = 1 | 2 | 3 | 4;
+
+function PriceComparisonStep({ 
+  recipe, 
+  onBack, 
+  onStartOver 
+}: { 
+  recipe: RecipeWithDetails | null;
+  onBack: () => void;
+  onStartOver: () => void;
+}) {
+  const [selectedIngredient, setSelectedIngredient] = useState<string | null>(
+    recipe?.parsedIngredients[0]?.name || null
+  );
+
+  const { data: priceQuotes, isLoading } = useQuery({
+    queryKey: ["/api/ingredients", selectedIngredient, "prices"],
+    queryFn: async () => {
+      if (!selectedIngredient) return [];
+      const response = await apiRequest("GET", `/api/ingredients/${encodeURIComponent(selectedIngredient)}/prices?country=US`);
+      return (await response.json()) as PriceQuoteWithStore[];
+    },
+    enabled: !!selectedIngredient,
+  });
+
+  if (!recipe) return null;
+
+  return (
+    <Card className="p-8 bg-white">
+      <h1 className="text-3xl font-bold text-gray-900 mb-6">Price Comparison</h1>
+      <p className="text-gray-600 mb-6">
+        Compare ingredient prices across different stores
+      </p>
+
+      <div className="mb-6">
+        <Label className="text-gray-900 font-medium mb-3 block">Select Ingredient</Label>
+        <Select value={selectedIngredient || ""} onValueChange={setSelectedIngredient}>
+          <SelectTrigger data-testid="select-ingredient">
+            <SelectValue placeholder="Choose an ingredient" />
+          </SelectTrigger>
+          <SelectContent>
+            {recipe.parsedIngredients.map((ingredient, index) => (
+              <SelectItem key={index} value={ingredient.name}>
+                {ingredient.quantity} {ingredient.unit} {ingredient.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {isLoading && (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="border border-gray-200 rounded-lg p-4 animate-pulse">
+              <div className="h-6 bg-gray-200 rounded w-1/4 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!isLoading && priceQuotes && priceQuotes.length > 0 && (
+        <div className="space-y-3 mb-8">
+          {priceQuotes.map((quote, index) => (
+            <div
+              key={quote.id}
+              className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
+              data-testid={`price-quote-${index}`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <StoreIcon className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">{quote.store.name}</h3>
+                    <p className="text-sm text-gray-500">
+                      {quote.unitSize || "Standard size"} • Rating: {quote.store.rating?.toFixed(1) || "N/A"}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-gray-900">
+                    ${quote.price.toFixed(2)}
+                  </p>
+                  <p className="text-sm text-gray-500">{quote.currency}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!isLoading && priceQuotes && priceQuotes.length === 0 && selectedIngredient && (
+        <div className="text-center py-8 text-gray-500">
+          <p>No price data available for {selectedIngredient}</p>
+        </div>
+      )}
+
+      <div className="flex gap-4">
+        <Button
+          variant="outline"
+          onClick={onBack}
+          data-testid="button-back-to-shopping"
+        >
+          Back to Shopping List
+        </Button>
+        <Button
+          onClick={onStartOver}
+          className="bg-blue-600 hover:bg-blue-700"
+          data-testid="button-start-over"
+        >
+          Start Over
+        </Button>
+      </div>
+    </Card>
+  );
+}
 
 export default function Home() {
   const [currentStep, setCurrentStep] = useState<Step>(1);
@@ -445,47 +562,16 @@ export default function Home() {
           </Card>
         )}
 
-        {currentStep === 4 && (
-          <Card className="p-8 bg-white">
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">Price Comparison</h1>
-            <p className="text-gray-600 mb-6">
-              Compare ingredient prices across different stores
-            </p>
-            
-            <div className="space-y-6">
-              {recipe?.parsedIngredients.slice(0, 3).map((ingredient, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-3">{ingredient.name}</h3>
-                  <div className="text-gray-500 text-sm">
-                    Price comparison data will be loaded here
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-8 flex gap-4">
-              <Button
-                variant="outline"
-                onClick={() => setCurrentStep(3)}
-                data-testid="button-back-to-shopping"
-              >
-                Back to Shopping List
-              </Button>
-              <Button
-                onClick={() => {
-                  setCurrentStep(1);
-                  setRecipe(null);
-                  setShoppingList(null);
-                  form.reset();
-                }}
-                className="bg-blue-600 hover:bg-blue-700"
-                data-testid="button-start-over"
-              >
-                Start Over
-              </Button>
-            </div>
-          </Card>
-        )}
+        {currentStep === 4 && <PriceComparisonStep
+          recipe={recipe}
+          onBack={() => setCurrentStep(3)}
+          onStartOver={() => {
+            setCurrentStep(1);
+            setRecipe(null);
+            setShoppingList(null);
+            form.reset();
+          }}
+        />}
       </div>
 
       <Footer />
