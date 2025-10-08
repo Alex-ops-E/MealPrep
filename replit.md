@@ -132,7 +132,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Third-Party Service Integrations
 - **OpenAI API**: AI service for recipe generation and intelligent ingredient analysis
-- **Simulated Grocery Store APIs**: Mock price data for multiple grocery chains (Whole Foods, Trader Joe's, Walmart, Kroger)
+- **Simulated Grocery Store APIs**: Mock price data for multiple Indonesian grocery platforms (Grab Food, Gojek GoFood, Superindo)
 
 ## API Endpoints
 

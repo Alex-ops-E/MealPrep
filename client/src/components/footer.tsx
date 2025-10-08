@@ -6,7 +6,7 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">Disclaimer</h3>
             <p className="text-sm text-gray-600">
-              Grocery Agent is an experimental tool that helps users compare prices across retailers. We are not affiliated with or endorsed by Walmart or Amazon. Prices and availability may vary and are provided via third-party APIs.
+              Grocery Agent is an experimental tool that helps users compare prices across retailers. We are not affiliated with or endorsed by Grab, Gojek, or Superindo. Prices and availability may vary and are provided via third-party APIs.
             </p>
           </div>
           
