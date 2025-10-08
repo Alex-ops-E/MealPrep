@@ -5,7 +5,7 @@ type Language = "en" | "id";
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 const translations: Record<Language, Record<string, string>> = {
@@ -92,6 +92,18 @@ const translations: Record<Language, Record<string, string>> = {
     "recipe.priceComparisonTitle": "Price Comparison",
     "recipe.priceComparisonDescription": "Compare ingredient prices across different stores",
     "recipe.priceComparisonResults": "Price Comparison Results",
+    "recipe.bestValue": "Best Value",
+    "recipe.export": "Export",
+    "recipe.share": "Share",
+    "recipe.totalForItems": "Total for {count} items",
+    "recipe.moreExpensive": "IDR {amount} more expensive",
+    "recipe.shopAt": "Shop at {store}",
+    "recipe.item": "ITEM",
+    "recipe.quantity": "QUANTITY",
+    "recipe.bestDeal": "BEST DEAL",
+    "recipe.action": "ACTION",
+    "recipe.search": "Search",
+    "recipe.buyNow": "Buy Now",
     "recipe.store": "Store",
     "recipe.price": "Price",
     "recipe.size": "Size",
@@ -188,6 +200,18 @@ const translations: Record<Language, Record<string, string>> = {
     "recipe.priceComparisonTitle": "Perbandingan Harga",
     "recipe.priceComparisonDescription": "Bandingkan harga bahan di berbagai toko",
     "recipe.priceComparisonResults": "Hasil Perbandingan Harga",
+    "recipe.bestValue": "Nilai Terbaik",
+    "recipe.export": "Ekspor",
+    "recipe.share": "Bagikan",
+    "recipe.totalForItems": "Total untuk {count} barang",
+    "recipe.moreExpensive": "IDR {amount} lebih mahal",
+    "recipe.shopAt": "Belanja di {store}",
+    "recipe.item": "BARANG",
+    "recipe.quantity": "JUMLAH",
+    "recipe.bestDeal": "HARGA TERBAIK",
+    "recipe.action": "AKSI",
+    "recipe.search": "Cari",
+    "recipe.buyNow": "Beli Sekarang",
     "recipe.store": "Toko",
     "recipe.price": "Harga",
     "recipe.size": "Ukuran",
@@ -208,12 +232,19 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<Language>("en");
 
-  const t = (key: string): string => {
-    const translation = translations[language][key];
+  const t = (key: string, params?: Record<string, string | number>): string => {
+    let translation = translations[language][key];
     if (!translation) {
       console.warn(`Translation key not found: ${key}`);
       return key;
     }
+    
+    if (params) {
+      Object.entries(params).forEach(([param, value]) => {
+        translation = translation.replace(`{${param}}`, String(value));
+      });
+    }
+    
     return translation;
   };
 

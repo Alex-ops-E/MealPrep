@@ -488,7 +488,7 @@ export default function Home() {
               {t("recipe.priceComparisonDescription")}
             </p>
 
-            <PriceComparisonView shoppingList={shoppingList} t={t} />
+            <PriceComparisonView shoppingList={shoppingList} />
 
             <div className="flex gap-4 mt-8">
               <Button
@@ -520,7 +520,9 @@ export default function Home() {
   );
 }
 
-function PriceComparisonView({ shoppingList, t }: { shoppingList: ShoppingListItem[], t: (key: string) => string }) {
+function PriceComparisonView({ shoppingList }: { shoppingList: ShoppingListItem[] }) {
+  const { t } = useLanguage();
+  
   // Mock store data (in-memory, not saved to database)
   const stores: Store[] = [
     { id: "1", name: "Superindo", logo: "🏪" },
@@ -563,11 +565,11 @@ function PriceComparisonView({ shoppingList, t }: { shoppingList: ShoppingListIt
         <div className="flex gap-2">
           <Button variant="outline" size="sm" data-testid="button-export">
             <Download className="w-4 h-4 mr-2" />
-            Export
+            {t("recipe.export")}
           </Button>
           <Button variant="outline" size="sm" data-testid="button-share">
             <Share2 className="w-4 h-4 mr-2" />
-            Share
+            {t("recipe.share")}
           </Button>
         </div>
       </div>
@@ -589,7 +591,7 @@ function PriceComparisonView({ shoppingList, t }: { shoppingList: ShoppingListIt
             >
               {isBestValue && (
                 <div className="absolute top-4 right-4 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded" data-testid="badge-best-value">
-                  Best Value
+                  {t("recipe.bestValue")}
                 </div>
               )}
               <div className="mb-4">
@@ -597,7 +599,7 @@ function PriceComparisonView({ shoppingList, t }: { shoppingList: ShoppingListIt
                   <span className="text-2xl">{store.logo}</span>
                   <h3 className="text-lg font-semibold">{store.name}</h3>
                 </div>
-                <p className="text-sm text-gray-600">Total for {shoppingList.length} items</p>
+                <p className="text-sm text-gray-600">{t("recipe.totalForItems", { count: shoppingList.length })}</p>
               </div>
               <div className="mb-4">
                 <p className="text-3xl font-bold text-gray-900">
@@ -605,7 +607,7 @@ function PriceComparisonView({ shoppingList, t }: { shoppingList: ShoppingListIt
                 </p>
                 {priceDiff > 0 && (
                   <p className="text-sm text-orange-600 mt-1">
-                    IDR {priceDiff.toLocaleString()} more expensive
+                    {t("recipe.moreExpensive", { amount: priceDiff.toLocaleString() })}
                   </p>
                 )}
               </div>
@@ -613,7 +615,7 @@ function PriceComparisonView({ shoppingList, t }: { shoppingList: ShoppingListIt
                 className={`w-full ${isBestValue ? "bg-blue-600 hover:bg-blue-700" : "bg-orange-500 hover:bg-orange-600"}`}
                 data-testid={`button-shop-${store.id}`}
               >
-                Shop at {store.name}
+                {t("recipe.shopAt", { store: store.name })}
               </Button>
             </Card>
           );
@@ -625,15 +627,15 @@ function PriceComparisonView({ shoppingList, t }: { shoppingList: ShoppingListIt
         <table className="w-full">
           <thead className="bg-gray-50 border-b">
             <tr>
-              <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">ITEM</th>
-              <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">QUANTITY</th>
+              <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">{t("recipe.item")}</th>
+              <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">{t("recipe.quantity")}</th>
               {stores.map(store => (
                 <th key={store.id} className="text-left px-6 py-3 text-sm font-medium text-gray-700">
-                  {store.name.toUpperCase()} PRICE
+                  {store.name.toUpperCase()} {t("recipe.price").toUpperCase()}
                 </th>
               ))}
-              <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">BEST DEAL</th>
-              <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">ACTION</th>
+              <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">{t("recipe.bestDeal")}</th>
+              <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">{t("recipe.action")}</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -681,7 +683,7 @@ function PriceComparisonView({ shoppingList, t }: { shoppingList: ShoppingListIt
                       variant={bestDealStore?.id === stores[0].id ? "default" : "outline"}
                       data-testid={`button-action-${idx}`}
                     >
-                      {bestDealStore?.id === stores[0].id ? "Search" : "Buy Now"}
+                      {bestDealStore?.id === stores[0].id ? t("recipe.search") : t("recipe.buyNow")}
                     </Button>
                   </td>
                 </tr>
