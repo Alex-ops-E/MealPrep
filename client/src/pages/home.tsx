@@ -18,12 +18,34 @@ import Footer from "@/components/footer";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { RecipeWithDetails } from "@shared/schema";
 
-type Step = 1 | 2;
+type Step = 1 | 2 | 3 | 4;
+
+interface ShoppingListItem {
+  name: string;
+  quantity: number;
+  unit: string;
+  acquired: boolean;
+}
+
+interface Store {
+  id: string;
+  name: string;
+  logo: string;
+}
+
+interface PriceQuote {
+  ingredientName: string;
+  storeId: string;
+  price: number;
+  unitSize: string;
+  currency: string;
+}
 
 export default function Home() {
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [recipe, setRecipe] = useState<RecipeWithDetails | null>(null);
   const [selectedDietaryRestrictions, setSelectedDietaryRestrictions] = useState<string[]>([]);
+  const [shoppingList, setShoppingList] = useState<ShoppingListItem[]>([]);
   
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -56,6 +78,14 @@ export default function Home() {
     },
     onSuccess: (data) => {
       setRecipe(data);
+      // Create shopping list from ingredients
+      const items: ShoppingListItem[] = data.parsedIngredients.map(ing => ({
+        name: ing.name,
+        quantity: ing.quantity,
+        unit: ing.unit,
+        acquired: false,
+      }));
+      setShoppingList(items);
       setCurrentStep(2);
       toast({
         title: t("recipe.generatedTitle"),
@@ -88,6 +118,8 @@ export default function Home() {
   const steps = [
     { number: 1, label: t("recipe.generate") },
     { number: 2, label: t("recipe.viewRecipe") },
+    { number: 3, label: t("recipe.shop") },
+    { number: 4, label: t("recipe.compare") },
   ];
 
   return (
@@ -367,12 +399,20 @@ export default function Home() {
 
             <div className="flex gap-4">
               <Button
+                onClick={() => setCurrentStep(3)}
+                className="bg-blue-600 hover:bg-blue-700"
+                data-testid="button-continue-shop"
+              >
+                {t("recipe.continueToShop")}
+              </Button>
+              <Button
                 onClick={() => {
                   setCurrentStep(1);
                   setRecipe(null);
+                  setShoppingList([]);
                   form.reset();
                 }}
-                className="bg-blue-600 hover:bg-blue-700"
+                variant="outline"
                 data-testid="button-generate-another"
               >
                 {t("recipe.generateAnother")}
@@ -380,9 +420,171 @@ export default function Home() {
             </div>
           </Card>
         )}
+
+        {currentStep === 3 && recipe && (
+          <Card className="p-8 bg-white">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2" data-testid="text-shopping-list-title">
+              {t("recipe.shoppingListTitle")}
+            </h1>
+            <p className="text-gray-600 mb-6">
+              {t("recipe.shoppingListDescription")}
+            </p>
+
+            <div className="space-y-4 mb-8">
+              {shoppingList.map((item, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                  data-testid={`shopping-item-${index}`}
+                >
+                  <div className="flex items-center gap-4 flex-1">
+                    <input
+                      type="checkbox"
+                      checked={item.acquired}
+                      onChange={(e) => {
+                        const updated = [...shoppingList];
+                        updated[index].acquired = e.target.checked;
+                        setShoppingList(updated);
+                      }}
+                      className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      data-testid={`checkbox-item-${index}`}
+                    />
+                    <div className={item.acquired ? "line-through text-gray-400" : ""}>
+                      <span className="font-medium">{item.quantity} {item.unit} {item.name}</span>
+                    </div>
+                  </div>
+                  {item.acquired && (
+                    <span className="text-sm text-green-600 font-medium">{t("recipe.acquired")}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-4">
+              <Button
+                onClick={() => setCurrentStep(4)}
+                className="bg-blue-600 hover:bg-blue-700"
+                data-testid="button-continue-compare"
+              >
+                {t("recipe.continueToPriceComparison")}
+              </Button>
+              <Button
+                onClick={() => setCurrentStep(2)}
+                variant="outline"
+                data-testid="button-back-recipe"
+              >
+                {t("recipe.viewRecipe")}
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {currentStep === 4 && recipe && (
+          <Card className="p-8 bg-white">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2" data-testid="text-price-comparison-title">
+              {t("recipe.priceComparisonTitle")}
+            </h1>
+            <p className="text-gray-600 mb-6">
+              {t("recipe.priceComparisonDescription")}
+            </p>
+
+            <PriceComparisonView shoppingList={shoppingList} t={t} />
+
+            <div className="flex gap-4 mt-8">
+              <Button
+                onClick={() => {
+                  setCurrentStep(1);
+                  setRecipe(null);
+                  setShoppingList([]);
+                  form.reset();
+                }}
+                className="bg-blue-600 hover:bg-blue-700"
+                data-testid="button-start-over"
+              >
+                {t("recipe.startOver")}
+              </Button>
+              <Button
+                onClick={() => setCurrentStep(3)}
+                variant="outline"
+                data-testid="button-back-shop"
+              >
+                {t("recipe.shop")}
+              </Button>
+            </div>
+          </Card>
+        )}
       </div>
 
       <Footer />
+    </div>
+  );
+}
+
+function PriceComparisonView({ shoppingList, t }: { shoppingList: ShoppingListItem[], t: (key: string) => string }) {
+  // Mock store data (in-memory, not saved to database)
+  const stores: Store[] = [
+    { id: "1", name: "Superindo", logo: "🏪" },
+    { id: "2", name: "Alfamart", logo: "🏬" },
+    { id: "3", name: "Indomaret", logo: "🛒" },
+  ];
+
+  // Generate mock price quotes for each ingredient
+  const generateMockPrices = (item: ShoppingListItem): PriceQuote[] => {
+    return stores.map(store => ({
+      ingredientName: item.name,
+      storeId: store.id,
+      price: Math.floor(Math.random() * 50000) + 10000,
+      unitSize: `${item.quantity} ${item.unit}`,
+      currency: "IDR",
+    }));
+  };
+
+  return (
+    <div className="space-y-6">
+      {shoppingList.map((item, idx) => {
+        const prices = generateMockPrices(item);
+        const sortedPrices = [...prices].sort((a, b) => a.price - b.price);
+
+        return (
+          <div key={idx} className="border rounded-lg p-6" data-testid={`price-group-${idx}`}>
+            <h3 className="text-lg font-semibold mb-4">
+              {item.quantity} {item.unit} {item.name}
+            </h3>
+            <div className="space-y-3">
+              {sortedPrices.map((quote, index) => {
+                const store = stores.find(s => s.id === quote.storeId);
+                const isLowest = index === 0;
+                
+                return (
+                  <div
+                    key={index}
+                    className={`flex items-center justify-between p-4 rounded-lg ${
+                      isLowest ? "bg-green-50 border-2 border-green-200" : "bg-gray-50"
+                    }`}
+                    data-testid={`price-item-${idx}-${index}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{store?.logo}</span>
+                      <div>
+                        <div className="font-medium">{store?.name}</div>
+                        <div className="text-sm text-gray-500">{quote.unitSize}</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`text-lg font-bold ${isLowest ? "text-green-600" : ""}`}>
+                        {quote.currency} {quote.price.toLocaleString()}
+                      </div>
+                      {isLowest && (
+                        <div className="text-sm text-green-600">Lowest Price</div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
