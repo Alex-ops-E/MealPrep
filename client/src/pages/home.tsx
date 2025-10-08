@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Sparkles, Store as StoreIcon } from "lucide-react";
+import { Sparkles, Store as StoreIcon, ShoppingCart, TrendingDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -18,13 +18,37 @@ import Footer from "@/components/footer";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { RecipeWithDetails } from "@shared/schema";
 
-type Step = 1 | 2;
+type Step = 1 | 2 | 3 | 4;
 
+interface ShoppingListItem {
+  id: string;
+  ingredientName: string;
+  quantity: string;
+  unit: string;
+  acquired: boolean;
+}
+
+interface Store {
+  id: string;
+  name: string;
+  logo: string;
+  rating: number;
+}
+
+interface PriceQuote {
+  id: string;
+  ingredientName: string;
+  storeId: string;
+  price: number;
+  unitSize: string;
+  currency: string;
+}
 
 export default function Home() {
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [recipe, setRecipe] = useState<RecipeWithDetails | null>(null);
   const [selectedDietaryRestrictions, setSelectedDietaryRestrictions] = useState<string[]>([]);
+  const [shoppingList, setShoppingList] = useState<ShoppingListItem[]>([]);
   
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -79,6 +103,29 @@ export default function Home() {
     });
   };
 
+  const createShoppingList = () => {
+    if (!recipe) return;
+    
+    const items: ShoppingListItem[] = recipe.parsedIngredients.map((ingredient, index) => ({
+      id: `item-${index}`,
+      ingredientName: ingredient.name,
+      quantity: ingredient.quantity.toString(),
+      unit: ingredient.unit,
+      acquired: false,
+    }));
+    
+    setShoppingList(items);
+    setCurrentStep(3);
+  };
+
+  const toggleItemAcquired = (itemId: string) => {
+    setShoppingList(items => 
+      items.map(item => 
+        item.id === itemId ? { ...item, acquired: !item.acquired } : item
+      )
+    );
+  };
+
   const quickStarts = [
     { label: t("recipe.healthyQuick"), craving: t("recipe.healthyQuickCraving") },
     { label: t("recipe.comfortFood"), craving: t("recipe.comfortFoodCraving") },
@@ -89,6 +136,8 @@ export default function Home() {
   const steps = [
     { number: 1, label: t("recipe.generate") },
     { number: 2, label: t("recipe.viewRecipe") },
+    { number: 3, label: t("recipe.shop") },
+    { number: 4, label: t("recipe.compare") },
   ];
 
   return (
@@ -373,19 +422,287 @@ export default function Home() {
                   setRecipe(null);
                   form.reset();
                 }}
-                className="bg-blue-600 hover:bg-blue-700"
+                variant="outline"
                 data-testid="button-generate-another"
               >
                 {t("recipe.generateAnother")}
+              </Button>
+              <Button
+                onClick={createShoppingList}
+                className="bg-blue-600 hover:bg-blue-700"
+                data-testid="button-create-shopping-list"
+              >
+                <ShoppingCart className="mr-2 h-4 w-4" />
+                {t("recipe.createShoppingList")}
               </Button>
             </div>
           </Card>
         )}
 
+        {currentStep === 3 && shoppingList.length > 0 && (
+          <Card className="p-8 bg-white">
+            <h1 className="text-3xl font-bold text-gray-900 mb-6">
+              {t("recipe.shoppingList")}
+            </h1>
+
+            <div className="space-y-3 mb-8">
+              {shoppingList.map((item) => (
+                <div
+                  key={item.id}
+                  className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                    item.acquired
+                      ? "bg-green-50 border-green-200"
+                      : "bg-white border-gray-200 hover:border-blue-300"
+                  }`}
+                  onClick={() => toggleItemAcquired(item.id)}
+                  data-testid={`shopping-item-${item.id}`}
+                >
+                  <div
+                    className={`w-6 h-6 rounded border-2 flex items-center justify-center ${
+                      item.acquired
+                        ? "bg-green-500 border-green-500"
+                        : "border-gray-300"
+                    }`}
+                  >
+                    {item.acquired && (
+                      <svg
+                        className="w-4 h-4 text-white"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path d="M5 13l4 4L19 7"></path>
+                      </svg>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-medium ${item.acquired ? "line-through text-gray-500" : "text-gray-900"}`}>
+                      {item.ingredientName}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {item.quantity} {item.unit}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-4">
+              <Button
+                onClick={() => setCurrentStep(2)}
+                variant="outline"
+                data-testid="button-back-to-recipe"
+              >
+                {t("recipe.backToRecipe")}
+              </Button>
+              <Button
+                onClick={() => setCurrentStep(4)}
+                className="bg-blue-600 hover:bg-blue-700"
+                data-testid="button-compare-prices"
+              >
+                <TrendingDown className="mr-2 h-4 w-4" />
+                {t("recipe.comparePrices")}
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {currentStep === 4 && <PriceComparisonView shoppingList={shoppingList} />}
+
       </div>
 
       <Footer />
     </div>
+  );
+}
+
+function PriceComparisonView({ shoppingList }: { shoppingList: ShoppingListItem[] }) {
+  const { t } = useLanguage();
+  
+  // Mock stores data
+  const stores: Store[] = [
+    {
+      id: "1",
+      name: "Superindo",
+      logo: "🏪",
+      rating: 4.5,
+    },
+    {
+      id: "2",
+      name: "Alfamart",
+      logo: "🏬",
+      rating: 4.3,
+    },
+    {
+      id: "3",
+      name: "Indomaret",
+      logo: "🏪",
+      rating: 4.4,
+    },
+  ];
+
+  // Generate mock price quotes for each ingredient
+  const priceQuotes: PriceQuote[] = useMemo(() => {
+    const quotes: PriceQuote[] = [];
+    shoppingList.forEach((item, itemIndex) => {
+      stores.forEach((store, storeIndex) => {
+        const basePrice = 5000 + Math.random() * 45000;
+        const variation = storeIndex === 0 ? 0.9 : storeIndex === 1 ? 1.1 : 1.0;
+        quotes.push({
+          id: `quote-${itemIndex}-${storeIndex}`,
+          ingredientName: item.ingredientName,
+          storeId: store.id,
+          price: Math.round(basePrice * variation / 100) * 100,
+          unitSize: `${item.quantity} ${item.unit}`,
+          currency: "IDR",
+        });
+      });
+    });
+    return quotes;
+  }, [shoppingList]);
+
+  // Calculate basket totals for each store
+  const basketTotals = useMemo(() => {
+    return stores.map((store) => {
+      const storeQuotes = priceQuotes.filter((q) => q.storeId === store.id);
+      const total = storeQuotes.reduce((sum, quote) => sum + quote.price, 0);
+      return {
+        storeId: store.id,
+        storeName: store.name,
+        total,
+      };
+    });
+  }, [priceQuotes]);
+
+  const bestDeal = useMemo(() => {
+    return basketTotals.reduce((best, current) =>
+      current.total < best.total ? current : best
+    );
+  }, [basketTotals]);
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(price);
+  };
+
+  return (
+    <Card className="p-8 bg-white">
+      <h1 className="text-3xl font-bold text-gray-900 mb-6" data-testid="text-price-comparison-title">
+        {t("priceComparison.title")}
+      </h1>
+
+      {/* Basket Totals */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        {basketTotals.map((basket) => {
+          const store = stores.find((s) => s.id === basket.storeId);
+          const isBestDeal = basket.storeId === bestDeal.storeId;
+          
+          return (
+            <div
+              key={basket.storeId}
+              className={`relative p-6 rounded-lg border-2 transition-all ${
+                isBestDeal
+                  ? "border-green-500 bg-green-50"
+                  : "border-gray-200 bg-white"
+              }`}
+              data-testid={`store-card-${store?.name.toLowerCase()}`}
+            >
+              {isBestDeal && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full">
+                  {t("priceComparison.bestValue")}
+                </div>
+              )}
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-3xl">{store?.logo}</span>
+                <div>
+                  <h3 className="font-bold text-gray-900">{store?.name}</h3>
+                  <div className="flex items-center gap-1">
+                    <span className="text-yellow-500">★</span>
+                    <span className="text-sm text-gray-600">{store?.rating}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-gray-900" data-testid={`total-${store?.name.toLowerCase()}`}>
+                {formatPrice(basket.total)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Price Breakdown Table */}
+      <div className="overflow-x-auto mb-6">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b-2 border-gray-200">
+              <th className="text-left py-3 px-4 font-semibold text-gray-900">
+                {t("priceComparison.ingredient")}
+              </th>
+              {stores.map((store) => (
+                <th
+                  key={store.id}
+                  className="text-right py-3 px-4 font-semibold text-gray-900"
+                >
+                  {store.name}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {shoppingList.map((item) => {
+              const itemQuotes = priceQuotes.filter(
+                (q) => q.ingredientName === item.ingredientName
+              );
+              const bestPrice = Math.min(...itemQuotes.map((q) => q.price));
+
+              return (
+                <tr key={item.id} className="border-b border-gray-100">
+                  <td className="py-3 px-4 text-gray-900" data-testid={`ingredient-${item.id}`}>
+                    <div>
+                      <div className="font-medium">{item.ingredientName}</div>
+                      <div className="text-sm text-gray-500">
+                        {item.quantity} {item.unit}
+                      </div>
+                    </div>
+                  </td>
+                  {stores.map((store) => {
+                    const quote = itemQuotes.find((q) => q.storeId === store.id);
+                    const isBest = quote && quote.price === bestPrice;
+
+                    return (
+                      <td
+                        key={store.id}
+                        className={`text-right py-3 px-4 ${
+                          isBest ? "font-bold text-green-600" : "text-gray-700"
+                        }`}
+                        data-testid={`price-${item.id}-${store.name.toLowerCase()}`}
+                      >
+                        {quote ? formatPrice(quote.price) : "-"}
+                        {isBest && (
+                          <span className="ml-2 text-xs text-green-600">
+                            {t("priceComparison.bestDeal")}
+                          </span>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="text-sm text-gray-500 mb-6">
+        {t("priceComparison.disclaimer")}
+      </p>
+    </Card>
   );
 }
 
