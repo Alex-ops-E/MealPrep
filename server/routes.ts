@@ -7,6 +7,7 @@ import {
   generateRecipeSchema,
   insertShoppingListSchema,
   insertShoppingListItemSchema,
+  insertWaitlistSchema,
   type RecipeWithDetails,
   type ShoppingListWithItems
 } from "@shared/schema";
@@ -194,6 +195,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get stores error:", error);
       res.status(500).json({ error: "Failed to get stores" });
+    }
+  });
+
+  // Waitlist endpoints
+  app.post("/api/waitlist", async (req, res) => {
+    try {
+      const waitlistData = insertWaitlistSchema.parse(req.body);
+      const entry = await storage.createWaitlistEntry(waitlistData);
+      res.json(entry);
+    } catch (error) {
+      console.error("Create waitlist entry error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to join waitlist" });
+    }
+  });
+
+  app.get("/api/waitlist/count", async (req, res) => {
+    try {
+      const count = await storage.getWaitlistCount();
+      res.json({ count });
+    } catch (error) {
+      console.error("Get waitlist count error:", error);
+      res.status(500).json({ error: "Failed to get waitlist count" });
     }
   });
 
