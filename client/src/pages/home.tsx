@@ -425,35 +425,61 @@ function WaitlistSection() {
   const displayCount = countData?.count || 0;
 
   return (
-    <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 py-12 overflow-hidden">
+    <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 py-8 overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />
       <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500 rounded-full blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500 rounded-full blur-3xl opacity-20 translate-y-1/2 -translate-x-1/2" />
       
-      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mb-6">
-          <Sparkles className="w-4 h-4 text-yellow-300" />
-          <span className="text-sm font-medium text-white">Coming Soon</span>
+      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mb-3">
+            <Sparkles className="w-3 h-3 text-yellow-300" />
+            <span className="text-xs font-medium text-white">Coming Soon</span>
+          </div>
+          
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-2 leading-tight" data-testid="text-waitlist-title">
+            Mobile app is launching soon!
+          </h2>
+          <p className="text-base text-blue-100 mb-4" data-testid="text-waitlist-count">
+            {displayCount > 0 
+              ? `Join ${displayCount.toLocaleString()}+ people on the waitlist` 
+              : "Be the first to get early access"}
+          </p>
+
+          {/* Features List */}
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-6 text-sm text-white/90">
+            <div className="flex items-center gap-1.5">
+              <span className="text-green-300">✓</span>
+              <span>Price Alerts</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-green-300">✓</span>
+              <span>Smart Cart</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-green-300">✓</span>
+              <span>Pantry Sync</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-green-300">✓</span>
+              <span>Meal Planner</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-green-300">✓</span>
+              <span>Photo Scan and Cook</span>
+            </div>
+          </div>
         </div>
-        
-        <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight" data-testid="text-waitlist-title">
-          Mobile app is launching soon!
-        </h2>
-        <p className="text-lg md:text-xl text-blue-100 mb-8 max-w-2xl mx-auto" data-testid="text-waitlist-count">
-          {displayCount > 0 
-            ? `Join ${displayCount.toLocaleString()}+ people on the waitlist` 
-            : "Be the first to get early access"}
-        </p>
 
         <form onSubmit={handleSubmit} className="max-w-md mx-auto">
-          <div className="flex flex-col sm:flex-row gap-3 mb-3">
+          <div className="flex flex-col sm:flex-row gap-2 mb-2">
             <Input
               type="text"
               placeholder="Your name (optional)"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="bg-white/95 backdrop-blur border-white/20 h-12 text-base"
+              className="bg-white/95 backdrop-blur border-white/20 h-11 text-sm"
               data-testid="input-waitlist-name"
             />
             <Input
@@ -462,14 +488,14 @@ function WaitlistSection() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="bg-white/95 backdrop-blur border-white/20 h-12 text-base"
+              className="bg-white/95 backdrop-blur border-white/20 h-11 text-sm"
               data-testid="input-waitlist-email"
             />
           </div>
           <Button
             type="submit"
             size="lg"
-            className="w-full bg-white text-blue-600 hover:bg-blue-50 font-semibold h-12 text-base shadow-lg hover:shadow-xl transition-all"
+            className="w-full bg-white text-blue-600 hover:bg-blue-50 font-semibold h-11 text-sm shadow-lg hover:shadow-xl transition-all"
             disabled={joinWaitlistMutation.isPending}
             data-testid="button-join-waitlist"
           >
