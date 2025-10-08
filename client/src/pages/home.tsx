@@ -18,16 +18,6 @@ import Footer from "@/components/footer";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { RecipeWithDetails } from "@shared/schema";
 
-const generateRecipeFormSchema = z.object({
-  craving: z.string().min(1, "Please describe what you'd like to cook"),
-  servings: z.coerce.number().min(1).max(20),
-  cuisine: z.string().optional(),
-  cookTime: z.string().optional(),
-  dietaryRestrictions: z.array(z.string()).optional(),
-});
-
-type GenerateRecipeForm = z.infer<typeof generateRecipeFormSchema>;
-
 type Step = 1 | 2;
 
 export default function Home() {
@@ -37,6 +27,16 @@ export default function Home() {
   
   const { toast } = useToast();
   const { t } = useLanguage();
+
+  const generateRecipeFormSchema = z.object({
+    craving: z.string().min(1, t("recipe.cravingError")),
+    servings: z.coerce.number().min(1).max(20),
+    cuisine: z.string().optional(),
+    cookTime: z.string().optional(),
+    dietaryRestrictions: z.array(z.string()).optional(),
+  });
+
+  type GenerateRecipeForm = z.infer<typeof generateRecipeFormSchema>;
 
   const form = useForm<GenerateRecipeForm>({
     resolver: zodResolver(generateRecipeFormSchema),
@@ -79,10 +79,10 @@ export default function Home() {
   };
 
   const quickStarts = [
-    { label: t("recipe.healthyQuick"), craving: "a healthy 30-minute meal" },
-    { label: t("recipe.comfortFood"), craving: "comfort food that's hearty and satisfying" },
-    { label: t("recipe.dateNight"), craving: "an impressive romantic dinner" },
-    { label: t("recipe.familyDinner"), craving: "a family-friendly dinner everyone will enjoy" },
+    { label: t("recipe.healthyQuick"), craving: t("recipe.healthyQuickCraving") },
+    { label: t("recipe.comfortFood"), craving: t("recipe.comfortFoodCraving") },
+    { label: t("recipe.dateNight"), craving: t("recipe.dateNightCraving") },
+    { label: t("recipe.familyDinner"), craving: t("recipe.familyDinnerCraving") },
   ];
 
   const steps = [
