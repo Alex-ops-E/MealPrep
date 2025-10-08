@@ -1,9 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Sparkles, Store as StoreIcon, Download, Share2 } from "lucide-react";
+import { Sparkles, Store as StoreIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -18,34 +18,13 @@ import Footer from "@/components/footer";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { RecipeWithDetails } from "@shared/schema";
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2;
 
-interface ShoppingListItem {
-  name: string;
-  quantity: number;
-  unit: string;
-  acquired: boolean;
-}
-
-interface Store {
-  id: string;
-  name: string;
-  logo: string;
-}
-
-interface PriceQuote {
-  ingredientName: string;
-  storeId: string;
-  price: number;
-  unitSize: string;
-  currency: string;
-}
 
 export default function Home() {
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [recipe, setRecipe] = useState<RecipeWithDetails | null>(null);
   const [selectedDietaryRestrictions, setSelectedDietaryRestrictions] = useState<string[]>([]);
-  const [shoppingList, setShoppingList] = useState<ShoppingListItem[]>([]);
   
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -78,14 +57,6 @@ export default function Home() {
     },
     onSuccess: (data) => {
       setRecipe(data);
-      // Create shopping list from ingredients
-      const items: ShoppingListItem[] = data.parsedIngredients.map(ing => ({
-        name: ing.name,
-        quantity: ing.quantity,
-        unit: ing.unit,
-        acquired: false,
-      }));
-      setShoppingList(items);
       setCurrentStep(2);
       toast({
         title: t("recipe.generatedTitle"),
@@ -118,8 +89,6 @@ export default function Home() {
   const steps = [
     { number: 1, label: t("recipe.generate") },
     { number: 2, label: t("recipe.viewRecipe") },
-    { number: 3, label: t("recipe.shop") },
-    { number: 4, label: t("recipe.compare") },
   ];
 
   return (
@@ -399,20 +368,12 @@ export default function Home() {
 
             <div className="flex gap-4">
               <Button
-                onClick={() => setCurrentStep(3)}
-                className="bg-blue-600 hover:bg-blue-700"
-                data-testid="button-continue-shop"
-              >
-                {t("recipe.continueToShop")}
-              </Button>
-              <Button
                 onClick={() => {
                   setCurrentStep(1);
                   setRecipe(null);
-                  setShoppingList([]);
                   form.reset();
                 }}
-                variant="outline"
+                className="bg-blue-600 hover:bg-blue-700"
                 data-testid="button-generate-another"
               >
                 {t("recipe.generateAnother")}
@@ -421,277 +382,9 @@ export default function Home() {
           </Card>
         )}
 
-        {currentStep === 3 && recipe && (
-          <Card className="p-8 bg-white">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2" data-testid="text-shopping-list-title">
-              {t("recipe.shoppingListTitle")}
-            </h1>
-            <p className="text-gray-600 mb-6">
-              {t("recipe.shoppingListDescription")}
-            </p>
-
-            <div className="space-y-4 mb-8">
-              {shoppingList.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
-                  data-testid={`shopping-item-${index}`}
-                >
-                  <div className="flex items-center gap-4 flex-1">
-                    <input
-                      type="checkbox"
-                      checked={item.acquired}
-                      onChange={(e) => {
-                        const updated = [...shoppingList];
-                        updated[index].acquired = e.target.checked;
-                        setShoppingList(updated);
-                      }}
-                      className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      data-testid={`checkbox-item-${index}`}
-                    />
-                    <div className={item.acquired ? "line-through text-gray-400" : ""}>
-                      <span className="font-medium">{item.quantity} {item.unit} {item.name}</span>
-                    </div>
-                  </div>
-                  {item.acquired && (
-                    <span className="text-sm text-green-600 font-medium">{t("recipe.acquired")}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="flex gap-4">
-              <Button
-                onClick={() => setCurrentStep(4)}
-                className="bg-blue-600 hover:bg-blue-700"
-                data-testid="button-continue-compare"
-              >
-                {t("recipe.continueToPriceComparison")}
-              </Button>
-              <Button
-                onClick={() => setCurrentStep(2)}
-                variant="outline"
-                data-testid="button-back-recipe"
-              >
-                {t("recipe.viewRecipe")}
-              </Button>
-            </div>
-          </Card>
-        )}
-
-        {currentStep === 4 && recipe && (
-          <Card className="p-8 bg-white">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2" data-testid="text-price-comparison-title">
-              {t("recipe.priceComparisonTitle")}
-            </h1>
-            <p className="text-gray-600 mb-6">
-              {t("recipe.priceComparisonDescription")}
-            </p>
-
-            <PriceComparisonView shoppingList={shoppingList} />
-
-            <div className="flex gap-4 mt-8">
-              <Button
-                onClick={() => {
-                  setCurrentStep(1);
-                  setRecipe(null);
-                  setShoppingList([]);
-                  form.reset();
-                }}
-                className="bg-blue-600 hover:bg-blue-700"
-                data-testid="button-start-over"
-              >
-                {t("recipe.startOver")}
-              </Button>
-              <Button
-                onClick={() => setCurrentStep(3)}
-                variant="outline"
-                data-testid="button-back-shop"
-              >
-                {t("recipe.shop")}
-              </Button>
-            </div>
-          </Card>
-        )}
       </div>
 
       <Footer />
-    </div>
-  );
-}
-
-function PriceComparisonView({ shoppingList }: { shoppingList: ShoppingListItem[] }) {
-  const { t } = useLanguage();
-  
-  // Mock store data (in-memory, not saved to database)
-  const stores: Store[] = [
-    { id: "1", name: "Superindo", logo: "🏪" },
-    { id: "2", name: "Alfamart", logo: "🏬" },
-    { id: "3", name: "Indomaret", logo: "🛒" },
-  ];
-
-  // Generate stable mock prices using useMemo to avoid regeneration on re-renders
-  const allPrices = useMemo(() => {
-    return shoppingList.map(item => {
-      return stores.map(store => ({
-        ingredientName: item.name,
-        storeId: store.id,
-        price: Math.floor(Math.random() * 50000) + 10000,
-        unitSize: `${item.quantity} ${item.unit}`,
-        currency: "IDR",
-      }));
-    });
-  }, [shoppingList]);
-
-  // Calculate total basket price for each store
-  const storeTotals = stores.map(store => {
-    const total = allPrices.reduce((sum, itemPrices) => {
-      const price = itemPrices.find(p => p.storeId === store.id)?.price || 0;
-      return sum + price;
-    }, 0);
-    return { storeId: store.id, total };
-  });
-
-  const sortedStoreTotals = [...storeTotals].sort((a, b) => a.total - b.total);
-  const bestValueStoreId = sortedStoreTotals[0]?.storeId;
-
-  return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900" data-testid="text-comparison-header">
-          {t("recipe.priceComparisonResults")}
-        </h2>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" data-testid="button-export">
-            <Download className="w-4 h-4 mr-2" />
-            {t("recipe.export")}
-          </Button>
-          <Button variant="outline" size="sm" data-testid="button-share">
-            <Share2 className="w-4 h-4 mr-2" />
-            {t("recipe.share")}
-          </Button>
-        </div>
-      </div>
-
-      {/* Store Comparison Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {stores.map(store => {
-          const storeTotal = storeTotals.find(t => t.storeId === store.id);
-          const isBestValue = store.id === bestValueStoreId;
-          const priceDiff = storeTotal && bestValueStoreId !== store.id
-            ? storeTotal.total - (storeTotals.find(t => t.storeId === bestValueStoreId)?.total || 0)
-            : 0;
-
-          return (
-            <Card
-              key={store.id}
-              className={`p-6 relative ${isBestValue ? "bg-blue-50 border-blue-200" : "bg-orange-50 border-orange-200"}`}
-              data-testid={`store-card-${store.id}`}
-            >
-              {isBestValue && (
-                <div className="absolute top-4 right-4 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded" data-testid="badge-best-value">
-                  {t("recipe.bestValue")}
-                </div>
-              )}
-              <div className="mb-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl">{store.logo}</span>
-                  <h3 className="text-lg font-semibold">{store.name}</h3>
-                </div>
-                <p className="text-sm text-gray-600">{t("recipe.totalForItems", { count: shoppingList.length })}</p>
-              </div>
-              <div className="mb-4">
-                <p className="text-3xl font-bold text-gray-900">
-                  IDR {storeTotal?.total.toLocaleString()}
-                </p>
-                {priceDiff > 0 && (
-                  <p className="text-sm text-orange-600 mt-1">
-                    {t("recipe.moreExpensive", { amount: priceDiff.toLocaleString() })}
-                  </p>
-                )}
-              </div>
-              <Button
-                className={`w-full ${isBestValue ? "bg-blue-600 hover:bg-blue-700" : "bg-orange-500 hover:bg-orange-600"}`}
-                data-testid={`button-shop-${store.id}`}
-              >
-                {t("recipe.shopAt", { store: store.name })}
-              </Button>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Detailed Breakdown Table */}
-      <div className="border rounded-lg overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">{t("recipe.item")}</th>
-              <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">{t("recipe.quantity")}</th>
-              {stores.map(store => (
-                <th key={store.id} className="text-left px-6 py-3 text-sm font-medium text-gray-700">
-                  {store.name.toUpperCase()} {t("recipe.price").toUpperCase()}
-                </th>
-              ))}
-              <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">{t("recipe.bestDeal")}</th>
-              <th className="text-left px-6 py-3 text-sm font-medium text-gray-700">{t("recipe.action")}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {shoppingList.map((item, idx) => {
-              const itemPrices = allPrices[idx];
-              const lowestPrice = Math.min(...itemPrices.map(p => p.price));
-              const bestDealStore = stores.find(store => 
-                itemPrices.find(p => p.storeId === store.id && p.price === lowestPrice)
-              );
-
-              return (
-                <tr key={idx} className="hover:bg-gray-50" data-testid={`row-item-${idx}`}>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-2xl">
-                        🥘
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">{item.name}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-gray-700">
-                    {item.quantity} {item.unit}
-                  </td>
-                  {stores.map(store => {
-                    const price = itemPrices.find(p => p.storeId === store.id);
-                    return (
-                      <td key={store.id} className="px-6 py-4">
-                        <div className="font-semibold text-gray-900">
-                          IDR {price?.price.toLocaleString()}
-                        </div>
-                        <div className="text-xs text-gray-500">{price?.unitSize}</div>
-                      </td>
-                    );
-                  })}
-                  <td className="px-6 py-4">
-                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-sm">
-                      {bestDealStore?.name}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <Button
-                      size="sm"
-                      variant={bestDealStore?.id === stores[0].id ? "default" : "outline"}
-                      data-testid={`button-action-${idx}`}
-                    >
-                      {bestDealStore?.id === stores[0].id ? t("recipe.search") : t("recipe.buyNow")}
-                    </Button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 }

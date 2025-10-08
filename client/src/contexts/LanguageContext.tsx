@@ -110,6 +110,11 @@ const translations: Record<Language, Record<string, string>> = {
     "recipe.viewProduct": "View Product",
     "recipe.startOver": "Start Over",
     
+    // Price Comparison Page
+    "priceComparison.title": "Price Comparison Feature",
+    "priceComparison.message": "The standalone price comparison feature is currently being updated. In the meantime, you can still generate delicious recipes with our AI-powered recipe generator!",
+    "priceComparison.goToGenerator": "Go to Recipe Generator",
+    
     // Footer
     "footer.rights": "All rights reserved.",
     
@@ -217,6 +222,11 @@ const translations: Record<Language, Record<string, string>> = {
     "recipe.size": "Ukuran",
     "recipe.viewProduct": "Lihat Produk",
     "recipe.startOver": "Mulai Lagi",
+    
+    // Price Comparison Page
+    "priceComparison.title": "Fitur Perbandingan Harga",
+    "priceComparison.message": "Fitur perbandingan harga mandiri saat ini sedang diperbarui. Sementara itu, Anda masih dapat membuat resep lezat dengan generator resep bertenaga AI kami!",
+    "priceComparison.goToGenerator": "Ke Generator Resep",
     
     // Footer
     "footer.rights": "Hak cipta dilindungi.",
