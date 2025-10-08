@@ -517,15 +517,15 @@ export default function Home() {
           </Card>
         )}
 
-        {currentStep === 3 && (
+        {currentStep === 3 && recipe && (
           <Card className="p-8 bg-white">
             <h1 className="text-3xl font-bold text-gray-900 mb-6">Shopping List</h1>
             <p className="text-gray-600 mb-6">
-              These are the ingredients you'll need to make {recipe?.title}
+              These are the ingredients you'll need to make {recipe.title}
             </p>
             
             <div className="space-y-3 mb-8">
-              {recipe?.parsedIngredients.map((ingredient, index) => (
+              {recipe.parsedIngredients.map((ingredient, index) => (
                 <div
                   key={index}
                   className="flex items-center p-4 border border-gray-200 rounded-lg"
@@ -562,7 +562,7 @@ export default function Home() {
           </Card>
         )}
 
-        {currentStep === 4 && <PriceComparisonStep
+        {currentStep === 4 && recipe && <PriceComparisonStep
           recipe={recipe}
           onBack={() => setCurrentStep(3)}
           onStartOver={() => {
