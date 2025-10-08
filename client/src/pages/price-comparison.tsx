@@ -51,10 +51,19 @@ export default function PriceComparison() {
     },
   ];
 
+  // If no shopping list from wizard, use sample data
+  const displayList = shoppingList.length > 0 ? shoppingList : [
+    { id: "sample-1", ingredientName: "Chicken Breast", quantity: "500", unit: "g", acquired: false },
+    { id: "sample-2", ingredientName: "Rice", quantity: "2", unit: "cups", acquired: false },
+    { id: "sample-3", ingredientName: "Garlic", quantity: "4", unit: "cloves", acquired: false },
+    { id: "sample-4", ingredientName: "Soy Sauce", quantity: "3", unit: "tbsp", acquired: false },
+    { id: "sample-5", ingredientName: "Vegetable Oil", quantity: "2", unit: "tbsp", acquired: false },
+  ];
+
   // Generate mock price quotes for each ingredient
   const priceQuotes: PriceQuote[] = useMemo(() => {
     const quotes: PriceQuote[] = [];
-    shoppingList.forEach((item, itemIndex) => {
+    displayList.forEach((item, itemIndex) => {
       stores.forEach((store, storeIndex) => {
         const basePrice = 5000 + Math.random() * 45000;
         const variation = storeIndex === 0 ? 0.9 : storeIndex === 1 ? 1.1 : 1.0;
@@ -69,7 +78,7 @@ export default function PriceComparison() {
       });
     });
     return quotes;
-  }, [shoppingList]);
+  }, [displayList]);
 
   // Calculate basket totals for each store
   const basketTotals = useMemo(() => {
@@ -97,43 +106,6 @@ export default function PriceComparison() {
       minimumFractionDigits: 0,
     }).format(price);
   };
-
-  // If no shopping list, show empty state
-  if (shoppingList.length === 0) {
-    return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
-        <Header />
-        
-        <div className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
-          <Card className="p-12 bg-white text-center">
-            <div className="flex justify-center mb-6">
-              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
-                <ShoppingCart className="w-10 h-10 text-blue-600" />
-              </div>
-            </div>
-            
-            <h1 className="text-3xl font-bold text-gray-900 mb-4" data-testid="text-price-comparison-title">
-              {t("priceComparison.title")}
-            </h1>
-            
-            <p className="text-gray-600 max-w-2xl mx-auto mb-8 text-lg" data-testid="text-price-comparison-message">
-              {t("priceComparison.message")}
-            </p>
-            
-            <Button
-              onClick={() => setLocation("/")}
-              className="bg-blue-600 hover:bg-blue-700"
-              data-testid="button-go-to-generator"
-            >
-              {t("priceComparison.goToGenerator")}
-            </Button>
-          </Card>
-        </div>
-
-        <Footer />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -203,7 +175,7 @@ export default function PriceComparison() {
                 </tr>
               </thead>
               <tbody>
-                {shoppingList.map((item) => {
+                {displayList.map((item) => {
                   const itemQuotes = priceQuotes.filter(
                     (q) => q.ingredientName === item.ingredientName
                   );
