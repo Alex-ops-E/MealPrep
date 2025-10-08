@@ -35,7 +35,7 @@ export default function Header({ currentStep }: HeaderProps) {
                 className={location === "/" ? "bg-blue-600 hover:bg-blue-700" : ""}
                 data-testid="link-recipe-generator"
               >
-                Recipe Generator
+                {t("header.recipeGenerator")}
               </Button>
             </Link>
             <Link href="/price-comparison">
@@ -44,7 +44,7 @@ export default function Header({ currentStep }: HeaderProps) {
                 className={location === "/price-comparison" ? "bg-blue-600 hover:bg-blue-700" : ""}
                 data-testid="link-price-comparison"
               >
-                Price Comparison
+                {t("header.priceComparison")}
               </Button>
             </Link>
             

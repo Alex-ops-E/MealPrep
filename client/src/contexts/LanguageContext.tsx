@@ -12,6 +12,8 @@ const translations: Record<Language, Record<string, string>> = {
   en: {
     // Header
     "header.title": "Grocery Agent",
+    "header.recipeGenerator": "Recipe Generator",
+    "header.priceComparison": "Price Comparison",
     
     // Waitlist
     "waitlist.comingSoon": "Coming Soon",
@@ -86,6 +88,8 @@ const translations: Record<Language, Record<string, string>> = {
   id: {
     // Header
     "header.title": "Agen Belanja",
+    "header.recipeGenerator": "Generator Resep",
+    "header.priceComparison": "Perbandingan Harga",
     
     // Waitlist
     "waitlist.comingSoon": "Segera Hadir",

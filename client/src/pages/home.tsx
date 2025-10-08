@@ -36,6 +36,7 @@ export default function Home() {
   const [selectedDietaryRestrictions, setSelectedDietaryRestrictions] = useState<string[]>([]);
   
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const form = useForm<GenerateRecipeForm>({
     resolver: zodResolver(generateRecipeFormSchema),
@@ -57,13 +58,13 @@ export default function Home() {
       setRecipe(data);
       setCurrentStep(2);
       toast({
-        title: "Recipe generated!",
-        description: "Your recipe is ready to view",
+        title: t("recipe.generatedTitle"),
+        description: t("recipe.generatedMessage"),
       });
     },
     onError: (error) => {
       toast({
-        title: "Generation failed",
+        title: t("recipe.failedTitle"),
         description: error.message,
         variant: "destructive",
       });
@@ -78,15 +79,15 @@ export default function Home() {
   };
 
   const quickStarts = [
-    { label: "Healthy & Quick", craving: "a healthy 30-minute meal" },
-    { label: "Comfort Food", craving: "comfort food that's hearty and satisfying" },
-    { label: "Date Night", craving: "an impressive romantic dinner" },
-    { label: "Family Dinner", craving: "a family-friendly dinner everyone will enjoy" },
+    { label: t("recipe.healthyQuick"), craving: "a healthy 30-minute meal" },
+    { label: t("recipe.comfortFood"), craving: "comfort food that's hearty and satisfying" },
+    { label: t("recipe.dateNight"), craving: "an impressive romantic dinner" },
+    { label: t("recipe.familyDinner"), craving: "a family-friendly dinner everyone will enjoy" },
   ];
 
   const steps = [
-    { number: 1, label: "Generate" },
-    { number: 2, label: "View Recipe" },
+    { number: 1, label: t("recipe.generate") },
+    { number: 2, label: t("recipe.viewRecipe") },
   ];
 
   return (
@@ -136,7 +137,7 @@ export default function Home() {
         {currentStep === 1 && (
           <Card className="p-8 bg-white">
             <h1 className="text-3xl font-bold text-gray-900 mb-6">
-              What would you like to cook?
+              {t("recipe.whatToCook")}
             </h1>
 
             <Form {...form}>
@@ -147,12 +148,12 @@ export default function Home() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-gray-900 font-medium">
-                        Describe your craving
+                        {t("recipe.craving")}
                       </FormLabel>
                       <FormControl>
                         <Input
                           {...field}
-                          placeholder="e.g., a healthy 30-minute chicken meal for dinner"
+                          placeholder={t("recipe.cravingPlaceholder")}
                           className="h-12"
                           data-testid="input-craving"
                         />
@@ -163,7 +164,7 @@ export default function Home() {
 
                 <div>
                   <FormLabel className="text-gray-900 font-medium mb-3 block">
-                    Quick starts
+                    {t("recipe.quickStarts")}
                   </FormLabel>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {quickStarts.map((quickStart) => (
@@ -187,7 +188,7 @@ export default function Home() {
                     name="servings"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-900 font-medium">Servings</FormLabel>
+                        <FormLabel className="text-gray-900 font-medium">{t("recipe.servings")}</FormLabel>
                         <Select
                           value={field.value.toString()}
                           onValueChange={(value) => field.onChange(parseInt(value))}
@@ -200,7 +201,7 @@ export default function Home() {
                           <SelectContent>
                             {[1, 2, 3, 4, 5, 6, 8, 10, 12].map((num) => (
                               <SelectItem key={num} value={num.toString()}>
-                                {num} {num === 1 ? "person" : "people"}
+                                {num} {num === 1 ? t("recipe.person") : t("recipe.people")}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -214,7 +215,7 @@ export default function Home() {
                     name="cuisine"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-900 font-medium">Cuisine Style</FormLabel>
+                        <FormLabel className="text-gray-900 font-medium">{t("recipe.cuisineStyle")}</FormLabel>
                         <Select value={field.value} onValueChange={field.onChange}>
                           <FormControl>
                             <SelectTrigger data-testid="select-cuisine">
@@ -222,14 +223,14 @@ export default function Home() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Any">Any</SelectItem>
-                            <SelectItem value="Italian">Italian</SelectItem>
-                            <SelectItem value="Mexican">Mexican</SelectItem>
-                            <SelectItem value="Asian">Asian</SelectItem>
-                            <SelectItem value="Mediterranean">Mediterranean</SelectItem>
-                            <SelectItem value="American">American</SelectItem>
-                            <SelectItem value="French">French</SelectItem>
-                            <SelectItem value="Indian">Indian</SelectItem>
+                            <SelectItem value="Any">{t("recipe.any")}</SelectItem>
+                            <SelectItem value="Italian">{t("recipe.italian")}</SelectItem>
+                            <SelectItem value="Mexican">{t("recipe.mexican")}</SelectItem>
+                            <SelectItem value="Asian">{t("recipe.asian")}</SelectItem>
+                            <SelectItem value="Mediterranean">{t("recipe.mediterranean")}</SelectItem>
+                            <SelectItem value="American">{t("recipe.american")}</SelectItem>
+                            <SelectItem value="French">{t("recipe.french")}</SelectItem>
+                            <SelectItem value="Indian">{t("recipe.indian")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </FormItem>
@@ -241,7 +242,7 @@ export default function Home() {
                     name="cookTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-900 font-medium">Cooking Time</FormLabel>
+                        <FormLabel className="text-gray-900 font-medium">{t("recipe.cookingTime")}</FormLabel>
                         <Select value={field.value} onValueChange={field.onChange}>
                           <FormControl>
                             <SelectTrigger data-testid="select-cooktime">
@@ -249,12 +250,12 @@ export default function Home() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Any">Any</SelectItem>
-                            <SelectItem value="15 minutes">15 minutes</SelectItem>
-                            <SelectItem value="30 minutes">30 minutes</SelectItem>
-                            <SelectItem value="45 minutes">45 minutes</SelectItem>
-                            <SelectItem value="1 hour">1 hour</SelectItem>
-                            <SelectItem value="2+ hours">2+ hours</SelectItem>
+                            <SelectItem value="Any">{t("recipe.any")}</SelectItem>
+                            <SelectItem value="15 minutes">{t("recipe.15min")}</SelectItem>
+                            <SelectItem value="30 minutes">{t("recipe.30min")}</SelectItem>
+                            <SelectItem value="45 minutes">{t("recipe.45min")}</SelectItem>
+                            <SelectItem value="1 hour">{t("recipe.1hour")}</SelectItem>
+                            <SelectItem value="2+ hours">{t("recipe.2hours")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </FormItem>
@@ -264,7 +265,7 @@ export default function Home() {
 
                 <div>
                   <FormLabel className="text-gray-900 font-medium mb-3 block">
-                    Dietary Restrictions
+                    {t("recipe.dietaryRestrictions")}
                   </FormLabel>
                   <RadioGroup
                     value={selectedDietaryRestrictions[0] || ""}
@@ -273,15 +274,21 @@ export default function Home() {
                     }}
                     className="flex flex-wrap gap-4"
                   >
-                    {["Vegetarian", "Vegan", "Gluten-Free", "Dairy-Free", "Keto"].map((restriction) => (
-                      <div key={restriction} className="flex items-center space-x-2">
+                    {[
+                      { value: "Vegetarian", label: t("recipe.vegetarian") },
+                      { value: "Vegan", label: t("recipe.vegan") },
+                      { value: "Gluten-Free", label: t("recipe.glutenFree") },
+                      { value: "Dairy-Free", label: t("recipe.dairyFree") },
+                      { value: "Keto", label: t("recipe.keto") }
+                    ].map((restriction) => (
+                      <div key={restriction.value} className="flex items-center space-x-2">
                         <RadioGroupItem
-                          value={restriction}
-                          id={restriction}
-                          data-testid={`radio-${restriction.toLowerCase().replace('-', '')}`}
+                          value={restriction.value}
+                          id={restriction.value}
+                          data-testid={`radio-${restriction.value.toLowerCase().replace('-', '')}`}
                         />
-                        <Label htmlFor={restriction} className="cursor-pointer font-normal">
-                          {restriction}
+                        <Label htmlFor={restriction.value} className="cursor-pointer font-normal">
+                          {restriction.label}
                         </Label>
                       </div>
                     ))}
@@ -295,11 +302,11 @@ export default function Home() {
                   data-testid="button-generate-recipe"
                 >
                   {generateMutation.isPending ? (
-                    "Generating..."
+                    t("recipe.generating")
                   ) : (
                     <>
                       <Sparkles className="mr-2 h-4 w-4" />
-                      Generate Recipe with AI
+                      {t("recipe.generateButton")}
                     </>
                   )}
                 </Button>
@@ -319,21 +326,21 @@ export default function Home() {
 
             <div className="grid grid-cols-3 gap-4 mb-8">
               <div>
-                <p className="text-sm text-gray-500">Servings</p>
+                <p className="text-sm text-gray-500">{t("recipe.servings")}</p>
                 <p className="text-lg font-semibold">{recipe.servings}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Cook Time</p>
+                <p className="text-sm text-gray-500">{t("recipe.cookingTime")}</p>
                 <p className="text-lg font-semibold">{recipe.cookTime}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Cuisine</p>
+                <p className="text-sm text-gray-500">{t("recipe.cuisineStyle")}</p>
                 <p className="text-lg font-semibold">{recipe.cuisine}</p>
               </div>
             </div>
 
             <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Ingredients</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">{t("recipe.ingredients")}</h2>
               <ul className="space-y-2">
                 {recipe.parsedIngredients.map((ingredient, index) => (
                   <li key={index} className="flex items-start" data-testid={`ingredient-${index}`}>
@@ -347,7 +354,7 @@ export default function Home() {
             </div>
 
             <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Instructions</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">{t("recipe.instructions")}</h2>
               <ol className="space-y-4">
                 {recipe.steps.map((step, index) => (
                   <li key={index} className="flex" data-testid={`step-${index}`}>
@@ -368,7 +375,7 @@ export default function Home() {
                 className="bg-blue-600 hover:bg-blue-700"
                 data-testid="button-generate-another"
               >
-                Generate Another Recipe
+                {t("recipe.generateAnother")}
               </Button>
             </div>
           </Card>
