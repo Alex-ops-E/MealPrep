@@ -13,20 +13,13 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useShopping, type ShoppingListItem } from "@/contexts/ShoppingContext";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { RecipeWithDetails } from "@shared/schema";
 
 type Step = 1 | 2 | 3 | 4;
-
-interface ShoppingListItem {
-  id: string;
-  ingredientName: string;
-  quantity: string;
-  unit: string;
-  acquired: boolean;
-}
 
 interface Store {
   id: string;
@@ -48,10 +41,10 @@ export default function Home() {
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [recipe, setRecipe] = useState<RecipeWithDetails | null>(null);
   const [selectedDietaryRestrictions, setSelectedDietaryRestrictions] = useState<string[]>([]);
-  const [shoppingList, setShoppingList] = useState<ShoppingListItem[]>([]);
   
   const { toast } = useToast();
   const { t } = useLanguage();
+  const { shoppingList, setShoppingList, toggleItemAcquired } = useShopping();
 
   const generateRecipeFormSchema = z.object({
     craving: z.string().min(1, t("recipe.cravingError")),
@@ -116,14 +109,6 @@ export default function Home() {
     
     setShoppingList(items);
     setCurrentStep(3);
-  };
-
-  const toggleItemAcquired = (itemId: string) => {
-    setShoppingList(items => 
-      items.map(item => 
-        item.id === itemId ? { ...item, acquired: !item.acquired } : item
-      )
-    );
   };
 
   const quickStarts = [
