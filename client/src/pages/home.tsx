@@ -12,6 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -383,6 +384,7 @@ function WaitlistSection() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const { data: countData } = useQuery({
     queryKey: ["/api/waitlist/count"],
@@ -400,16 +402,16 @@ function WaitlistSection() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/waitlist/count"] });
       toast({
-        title: "Success!",
-        description: "You've been added to the waitlist. We'll notify you when the mobile app launches!",
+        title: t("waitlist.successTitle"),
+        description: t("waitlist.successMessage"),
       });
       setEmail("");
       setName("");
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to join waitlist. Please try again.",
+        title: t("waitlist.errorTitle"),
+        description: t("waitlist.errorMessage"),
         variant: "destructive",
       });
     },
@@ -435,39 +437,39 @@ function WaitlistSection() {
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mb-3">
             <Sparkles className="w-3 h-3 text-yellow-300" />
-            <span className="text-xs font-medium text-white">Coming Soon</span>
+            <span className="text-xs font-medium text-white">{t("waitlist.comingSoon")}</span>
           </div>
           
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-2 leading-tight" data-testid="text-waitlist-title">
-            Mobile app is launching soon!
+            {t("waitlist.title")}
           </h2>
           <p className="text-base text-blue-100 mb-4" data-testid="text-waitlist-count">
             {displayCount > 0 
-              ? `Join ${displayCount.toLocaleString()}+ people on the waitlist` 
-              : "Be the first to get early access"}
+              ? t("waitlist.joinCount").replace("{count}", displayCount.toLocaleString())
+              : t("waitlist.beFirst")}
           </p>
 
           {/* Features List */}
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-6 text-sm text-white/90">
             <div className="flex items-center gap-1.5">
               <span className="text-green-300">✓</span>
-              <span>Price Alerts</span>
+              <span>{t("waitlist.feature.priceAlerts")}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-green-300">✓</span>
-              <span>Smart Cart</span>
+              <span>{t("waitlist.feature.smartCart")}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-green-300">✓</span>
-              <span>Pantry Sync</span>
+              <span>{t("waitlist.feature.pantrySync")}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-green-300">✓</span>
-              <span>Meal Planner</span>
+              <span>{t("waitlist.feature.mealPlanner")}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-green-300">✓</span>
-              <span>Photo Scan and Cook</span>
+              <span>{t("waitlist.feature.photoScan")}</span>
             </div>
           </div>
         </div>
@@ -476,7 +478,7 @@ function WaitlistSection() {
           <div className="flex flex-col sm:flex-row gap-2 mb-2">
             <Input
               type="text"
-              placeholder="Your name (optional)"
+              placeholder={t("waitlist.namePlaceholder")}
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="bg-white/95 backdrop-blur border-white/20 h-11 text-sm"
@@ -484,7 +486,7 @@ function WaitlistSection() {
             />
             <Input
               type="email"
-              placeholder="Your email address"
+              placeholder={t("waitlist.emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -499,7 +501,7 @@ function WaitlistSection() {
             disabled={joinWaitlistMutation.isPending}
             data-testid="button-join-waitlist"
           >
-            {joinWaitlistMutation.isPending ? "Joining..." : "Get Early Access"}
+            {joinWaitlistMutation.isPending ? t("waitlist.buttonJoining") : t("waitlist.button")}
           </Button>
         </form>
       </div>
