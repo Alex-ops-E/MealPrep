@@ -212,6 +212,8 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       <Header currentStep={currentStep} />
       
+      <WaitlistSection />
+      
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-center items-center mb-12">
           {steps.map((step, index) => (
@@ -574,8 +576,6 @@ export default function Home() {
         />}
       </div>
 
-      <WaitlistSection />
-
       <Footer />
     </div>
   );
@@ -627,44 +627,55 @@ function WaitlistSection() {
   const displayCount = countData?.count || 0;
 
   return (
-    <div className="bg-gradient-to-r from-blue-600 to-purple-600 py-16">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="text-4xl font-bold text-white mb-4" data-testid="text-waitlist-title">
-          Mobile app coming soon — join the waitlist
+    <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 py-12 overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500 rounded-full blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500 rounded-full blur-3xl opacity-20 translate-y-1/2 -translate-x-1/2" />
+      
+      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mb-6">
+          <Sparkles className="w-4 h-4 text-yellow-300" />
+          <span className="text-sm font-medium text-white">Coming Soon</span>
+        </div>
+        
+        <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight" data-testid="text-waitlist-title">
+          Mobile app is launching soon!
         </h2>
-        <p className="text-xl text-blue-100 mb-8" data-testid="text-waitlist-count">
-          {displayCount > 0 ? `${displayCount.toLocaleString()}+` : "Be the first to"} {displayCount > 0 ? "people" : ""} sign up
+        <p className="text-lg md:text-xl text-blue-100 mb-8 max-w-2xl mx-auto" data-testid="text-waitlist-count">
+          {displayCount > 0 
+            ? `Join ${displayCount.toLocaleString()}+ people on the waitlist` 
+            : "Be the first to get early access"}
         </p>
 
-        <form onSubmit={handleSubmit} className="max-w-md mx-auto space-y-4">
-          <div>
+        <form onSubmit={handleSubmit} className="max-w-md mx-auto">
+          <div className="flex flex-col sm:flex-row gap-3 mb-3">
             <Input
               type="text"
               placeholder="Your name (optional)"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="bg-white"
+              className="bg-white/95 backdrop-blur border-white/20 h-12 text-base"
               data-testid="input-waitlist-name"
             />
-          </div>
-          <div>
             <Input
               type="email"
-              placeholder="Your email"
+              placeholder="Your email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="bg-white"
+              className="bg-white/95 backdrop-blur border-white/20 h-12 text-base"
               data-testid="input-waitlist-email"
             />
           </div>
           <Button
             type="submit"
-            className="w-full bg-white text-blue-600 hover:bg-blue-50"
+            size="lg"
+            className="w-full bg-white text-blue-600 hover:bg-blue-50 font-semibold h-12 text-base shadow-lg hover:shadow-xl transition-all"
             disabled={joinWaitlistMutation.isPending}
             data-testid="button-join-waitlist"
           >
-            {joinWaitlistMutation.isPending ? "Joining..." : "Join Waitlist"}
+            {joinWaitlistMutation.isPending ? "Joining..." : "Get Early Access"}
           </Button>
         </form>
       </div>
