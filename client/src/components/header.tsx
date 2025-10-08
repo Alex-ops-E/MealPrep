@@ -1,6 +1,13 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { UtensilsCrossed } from "lucide-react";
+import { UtensilsCrossed, Globe } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
   currentStep?: number;
@@ -8,6 +15,7 @@ interface HeaderProps {
 
 export default function Header({ currentStep }: HeaderProps) {
   const [location] = useLocation();
+  const { language, setLanguage, t } = useLanguage();
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -17,7 +25,7 @@ export default function Header({ currentStep }: HeaderProps) {
             <div className="bg-blue-600 text-white p-2 rounded-lg">
               <UtensilsCrossed className="h-5 w-5" />
             </div>
-            <span className="text-xl font-bold text-gray-900">Grocery Agent</span>
+            <span className="text-xl font-bold text-gray-900">{t("header.title")}</span>
           </div>
           
           <nav className="flex items-center space-x-4">
@@ -39,6 +47,30 @@ export default function Header({ currentStep }: HeaderProps) {
                 Price Comparison
               </Button>
             </Link>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" data-testid="button-language">
+                  <Globe className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => setLanguage("en")}
+                  className={language === "en" ? "bg-blue-50" : ""}
+                  data-testid="language-english"
+                >
+                  {t("language.english")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setLanguage("id")}
+                  className={language === "id" ? "bg-blue-50" : ""}
+                  data-testid="language-indonesian"
+                >
+                  {t("language.indonesian")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </nav>
         </div>
       </div>
