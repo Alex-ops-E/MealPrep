@@ -12,9 +12,13 @@ import {
   type RecipeWithDetails,
   type ShoppingListWithItems,
   type PriceQuoteWithStore,
-  type Ingredient
+  type Ingredient,
+  type Waitlist,
+  type InsertWaitlist
 } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
+import * as schema from "@shared/schema";
 
 export interface IStorage {
   // Recipes
@@ -42,20 +46,19 @@ export interface IStorage {
   // Price Quotes
   createPriceQuote(quote: InsertPriceQuote): Promise<PriceQuote>;
   getPriceQuotes(ingredientName: string): Promise<PriceQuoteWithStore[]>;
+  
+  // Waitlist
+  createWaitlistEntry(entry: InsertWaitlist): Promise<Waitlist>;
+  getWaitlistCount(): Promise<number>;
 }
 
-export class MemStorage implements IStorage {
-  private recipes: Map<string, Recipe> = new Map();
-  private shoppingLists: Map<string, ShoppingList> = new Map();
-  private shoppingListItems: Map<string, ShoppingListItem> = new Map();
-  private stores: Map<string, Store> = new Map();
-  private priceQuotes: Map<string, PriceQuote> = new Map();
-
+// Reference: blueprint:javascript_database for database integration
+export class DatabaseStorage implements IStorage {
   constructor() {
     this.initializeSampleData();
   }
 
-  private initializeSampleData() {
+  private async initializeSampleData() {
     const stores = [
       {
         name: "Grab Food",
@@ -80,33 +83,25 @@ export class MemStorage implements IStorage {
       }
     ];
 
-    stores.forEach(store => {
-      const id = randomUUID();
-      this.stores.set(id, {
-        id,
-        ...store,
-        createdAt: new Date()
-      });
-    });
+    try {
+      for (const store of stores) {
+        const existing = await this.getStoreByName(store.name);
+        if (!existing) {
+          await this.createStore(store);
+        }
+      }
+    } catch (error) {
+      console.error("Error initializing sample data:", error);
+    }
   }
 
   async createRecipe(insertRecipe: InsertRecipe): Promise<Recipe> {
-    const id = randomUUID();
-    const recipe: Recipe = {
-      id,
-      ...insertRecipe,
-      summary: insertRecipe.summary || null,
-      cuisine: insertRecipe.cuisine || null,
-      cookTime: insertRecipe.cookTime || null,
-      dietaryTags: insertRecipe.dietaryTags || null,
-      createdAt: new Date()
-    };
-    this.recipes.set(id, recipe);
+    const [recipe] = await db.insert(schema.recipes).values(insertRecipe).returning();
     return recipe;
   }
 
   async getRecipe(id: string): Promise<RecipeWithDetails | undefined> {
-    const recipe = this.recipes.get(id);
+    const [recipe] = await db.select().from(schema.recipes).where(eq(schema.recipes.id, id));
     if (!recipe) return undefined;
 
     const parsedIngredients = Array.isArray(recipe.ingredients) 
@@ -120,24 +115,16 @@ export class MemStorage implements IStorage {
   }
 
   async getAllRecipes(): Promise<Recipe[]> {
-    return Array.from(this.recipes.values())
-      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+    return await db.select().from(schema.recipes).orderBy(desc(schema.recipes.createdAt));
   }
 
   async createShoppingList(insertList: InsertShoppingList): Promise<ShoppingList> {
-    const id = randomUUID();
-    const list: ShoppingList = {
-      id,
-      ...insertList,
-      status: insertList.status || "pending",
-      createdAt: new Date()
-    };
-    this.shoppingLists.set(id, list);
+    const [list] = await db.insert(schema.shoppingLists).values(insertList).returning();
     return list;
   }
 
   async getShoppingList(id: string): Promise<ShoppingListWithItems | undefined> {
-    const list = this.shoppingLists.get(id);
+    const [list] = await db.select().from(schema.shoppingLists).where(eq(schema.shoppingLists.id, id));
     if (!list) return undefined;
 
     const items = await this.getShoppingListItems(id);
@@ -148,9 +135,7 @@ export class MemStorage implements IStorage {
   }
 
   async getShoppingListByRecipe(recipeId: string): Promise<ShoppingListWithItems | undefined> {
-    const list = Array.from(this.shoppingLists.values())
-      .find(l => l.recipeId === recipeId);
-    
+    const [list] = await db.select().from(schema.shoppingLists).where(eq(schema.shoppingLists.recipeId, recipeId));
     if (!list) return undefined;
 
     const items = await this.getShoppingListItems(list.id);
@@ -161,87 +146,54 @@ export class MemStorage implements IStorage {
   }
 
   async updateShoppingList(id: string, updateList: Partial<ShoppingList>): Promise<ShoppingList | undefined> {
-    const existingList = this.shoppingLists.get(id);
-    if (!existingList) return undefined;
-
-    const updatedList = { ...existingList, ...updateList };
-    this.shoppingLists.set(id, updatedList);
-    return updatedList;
+    const [list] = await db.update(schema.shoppingLists).set(updateList).where(eq(schema.shoppingLists.id, id)).returning();
+    return list || undefined;
   }
 
   async createShoppingListItem(insertItem: InsertShoppingListItem): Promise<ShoppingListItem> {
-    const id = randomUUID();
-    const item: ShoppingListItem = {
-      id,
-      ...insertItem,
-      acquired: insertItem.acquired ?? false,
-      preferredStoreIds: insertItem.preferredStoreIds || null
-    };
-    this.shoppingListItems.set(id, item);
+    const [item] = await db.insert(schema.shoppingListItems).values(insertItem).returning();
     return item;
   }
 
   async getShoppingListItems(listId: string): Promise<ShoppingListItem[]> {
-    return Array.from(this.shoppingListItems.values())
-      .filter(item => item.listId === listId);
+    return await db.select().from(schema.shoppingListItems).where(eq(schema.shoppingListItems.listId, listId));
   }
 
   async updateShoppingListItem(id: string, updateItem: Partial<ShoppingListItem>): Promise<ShoppingListItem | undefined> {
-    const existingItem = this.shoppingListItems.get(id);
-    if (!existingItem) return undefined;
-
-    const updatedItem = { ...existingItem, ...updateItem };
-    this.shoppingListItems.set(id, updatedItem);
-    return updatedItem;
+    const [item] = await db.update(schema.shoppingListItems).set(updateItem).where(eq(schema.shoppingListItems.id, id)).returning();
+    return item || undefined;
   }
 
   async createStore(insertStore: InsertStore): Promise<Store> {
-    const id = randomUUID();
-    const store: Store = {
-      id,
-      ...insertStore,
-      logo: insertStore.logo || null,
-      rating: insertStore.rating || null,
-      createdAt: new Date()
-    };
-    this.stores.set(id, store);
+    const [store] = await db.insert(schema.stores).values(insertStore).returning();
     return store;
   }
 
   async getStore(id: string): Promise<Store | undefined> {
-    return this.stores.get(id);
+    const [store] = await db.select().from(schema.stores).where(eq(schema.stores.id, id));
+    return store || undefined;
   }
 
   async getStoreByName(name: string): Promise<Store | undefined> {
-    return Array.from(this.stores.values()).find(store => 
-      store.name.toLowerCase() === name.toLowerCase()
-    );
+    const stores = await db.select().from(schema.stores);
+    return stores.find(store => store.name.toLowerCase() === name.toLowerCase()) || undefined;
   }
 
   async getAllStores(): Promise<Store[]> {
-    return Array.from(this.stores.values());
+    return await db.select().from(schema.stores);
   }
 
   async createPriceQuote(insertQuote: InsertPriceQuote): Promise<PriceQuote> {
-    const id = randomUUID();
-    const quote: PriceQuote = {
-      id,
-      ...insertQuote,
-      currency: insertQuote.currency || "USD",
-      unitSize: insertQuote.unitSize || null,
-      url: insertQuote.url || null,
-      updatedAt: new Date()
-    };
-    this.priceQuotes.set(id, quote);
+    const [quote] = await db.insert(schema.priceQuotes).values(insertQuote).returning();
     return quote;
   }
 
   async getPriceQuotes(ingredientName: string): Promise<PriceQuoteWithStore[]> {
-    const quotes = Array.from(this.priceQuotes.values())
-      .filter(quote => quote.ingredientName.toLowerCase() === ingredientName.toLowerCase());
+    const quotes = await db.select().from(schema.priceQuotes);
+    const filteredQuotes = quotes.filter(quote => quote.ingredientName.toLowerCase() === ingredientName.toLowerCase());
     
     const quotesWithStores: PriceQuoteWithStore[] = [];
-    for (const quote of quotes) {
+    for (const quote of filteredQuotes) {
       const store = await this.getStore(quote.storeId);
       if (store) {
         quotesWithStores.push({ ...quote, store });
@@ -250,6 +202,16 @@ export class MemStorage implements IStorage {
     
     return quotesWithStores.sort((a, b) => a.price - b.price);
   }
+
+  async createWaitlistEntry(entry: InsertWaitlist): Promise<Waitlist> {
+    const [waitlistEntry] = await db.insert(schema.waitlist).values(entry).returning();
+    return waitlistEntry;
+  }
+
+  async getWaitlistCount(): Promise<number> {
+    const entries = await db.select().from(schema.waitlist);
+    return entries.length;
+  }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

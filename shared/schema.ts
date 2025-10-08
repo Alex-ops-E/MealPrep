@@ -54,6 +54,21 @@ export const priceQuotes = pgTable("price_quotes", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const ingredients = pgTable("ingredients", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull().unique(),
+  category: text("category"),
+  commonUnit: text("common_unit"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const waitlist = pgTable("waitlist", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertRecipeSchema = createInsertSchema(recipes).omit({
   id: true,
@@ -77,6 +92,16 @@ export const insertStoreSchema = createInsertSchema(stores).omit({
 export const insertPriceQuoteSchema = createInsertSchema(priceQuotes).omit({
   id: true,
   updatedAt: true,
+});
+
+export const insertIngredientSchema = createInsertSchema(ingredients).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertWaitlistSchema = createInsertSchema(waitlist).omit({
+  id: true,
+  createdAt: true,
 });
 
 // Recipe generation request schema
@@ -103,6 +128,12 @@ export type InsertStore = z.infer<typeof insertStoreSchema>;
 
 export type PriceQuote = typeof priceQuotes.$inferSelect;
 export type InsertPriceQuote = z.infer<typeof insertPriceQuoteSchema>;
+
+export type IngredientData = typeof ingredients.$inferSelect;
+export type InsertIngredientData = z.infer<typeof insertIngredientSchema>;
+
+export type Waitlist = typeof waitlist.$inferSelect;
+export type InsertWaitlist = z.infer<typeof insertWaitlistSchema>;
 
 export type GenerateRecipeParams = z.infer<typeof generateRecipeSchema>;
 
