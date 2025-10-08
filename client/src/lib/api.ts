@@ -1,5 +1,5 @@
 import { apiRequest } from "./queryClient";
-import type { RecipeWithDetails, Store } from "@shared/schema";
+import type { RecipeWithDetails } from "@shared/schema";
 
 export const api = {
   generateRecipe: async (params: any): Promise<RecipeWithDetails> => {
@@ -9,11 +9,6 @@ export const api = {
 
   getRecipe: async (id: string): Promise<RecipeWithDetails> => {
     const response = await apiRequest("GET", `/api/recipes/${id}`);
-    return response.json();
-  },
-
-  getStores: async (): Promise<Store[]> => {
-    const response = await apiRequest("GET", "/api/stores");
     return response.json();
   },
 };
