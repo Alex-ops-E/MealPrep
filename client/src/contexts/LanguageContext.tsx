@@ -109,11 +109,19 @@ const translations: Record<Language, Record<string, string>> = {
     "recipe.size": "Size",
     "recipe.viewProduct": "View Product",
     "recipe.startOver": "Start Over",
+    "recipe.shoppingList": "Shopping List",
+    "recipe.backToRecipe": "Back to Recipe",
+    "recipe.comparePrices": "Compare Prices",
+    "recipe.createShoppingList": "Create Shopping List",
     
     // Price Comparison Page
     "priceComparison.title": "Price Comparison Feature",
     "priceComparison.message": "The standalone price comparison feature is currently being updated. In the meantime, you can still generate delicious recipes with our AI-powered recipe generator!",
     "priceComparison.goToGenerator": "Go to Recipe Generator",
+    "priceComparison.bestValue": "Best Value",
+    "priceComparison.ingredient": "Ingredient",
+    "priceComparison.bestDeal": "Best Deal",
+    "priceComparison.disclaimer": "Prices are approximate and may vary. Please check with stores for current pricing.",
     
     // Footer
     "footer.rights": "All rights reserved.",
@@ -222,11 +230,19 @@ const translations: Record<Language, Record<string, string>> = {
     "recipe.size": "Ukuran",
     "recipe.viewProduct": "Lihat Produk",
     "recipe.startOver": "Mulai Lagi",
+    "recipe.shoppingList": "Daftar Belanja",
+    "recipe.backToRecipe": "Kembali ke Resep",
+    "recipe.comparePrices": "Bandingkan Harga",
+    "recipe.createShoppingList": "Buat Daftar Belanja",
     
     // Price Comparison Page
     "priceComparison.title": "Fitur Perbandingan Harga",
     "priceComparison.message": "Fitur perbandingan harga mandiri saat ini sedang diperbarui. Sementara itu, Anda masih dapat membuat resep lezat dengan generator resep bertenaga AI kami!",
     "priceComparison.goToGenerator": "Ke Generator Resep",
+    "priceComparison.bestValue": "Nilai Terbaik",
+    "priceComparison.ingredient": "Bahan",
+    "priceComparison.bestDeal": "Harga Terbaik",
+    "priceComparison.disclaimer": "Harga adalah perkiraan dan dapat bervariasi. Silakan periksa dengan toko untuk harga saat ini.",
     
     // Footer
     "footer.rights": "Hak cipta dilindungi.",
