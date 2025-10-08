@@ -54,11 +54,11 @@ export interface IStorage {
 
 // Reference: blueprint:javascript_database for database integration
 export class DatabaseStorage implements IStorage {
-  constructor() {
-    this.initializeSampleData();
-  }
+  private initialized = false;
 
-  private async initializeSampleData() {
+  private async ensureInitialized() {
+    if (this.initialized) return;
+    
     const stores = [
       {
         name: "Grab Food",
@@ -90,6 +90,7 @@ export class DatabaseStorage implements IStorage {
           await this.createStore(store);
         }
       }
+      this.initialized = true;
     } catch (error) {
       console.error("Error initializing sample data:", error);
     }
@@ -180,6 +181,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllStores(): Promise<Store[]> {
+    await this.ensureInitialized();
     return await db.select().from(schema.stores);
   }
 

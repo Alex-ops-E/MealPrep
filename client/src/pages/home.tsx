@@ -14,7 +14,7 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { RecipeWithDetails, ShoppingListWithItems, PriceQuoteWithStore } from "@shared/schema";
 
 const generateRecipeFormSchema = z.object({
@@ -574,7 +574,100 @@ export default function Home() {
         />}
       </div>
 
+      <WaitlistSection />
+
       <Footer />
+    </div>
+  );
+}
+
+function WaitlistSection() {
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const { toast } = useToast();
+
+  const { data: countData } = useQuery({
+    queryKey: ["/api/waitlist/count"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/waitlist/count");
+      return (await response.json()) as { count: number };
+    },
+  });
+
+  const joinWaitlistMutation = useMutation({
+    mutationFn: async (data: { email: string; name?: string }) => {
+      const response = await apiRequest("POST", "/api/waitlist", data);
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/waitlist/count"] });
+      toast({
+        title: "Success!",
+        description: "You've been added to the waitlist. We'll notify you when the mobile app launches!",
+      });
+      setEmail("");
+      setName("");
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to join waitlist. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email.trim()) {
+      joinWaitlistMutation.mutate({ email, name: name.trim() || undefined });
+    }
+  };
+
+  const displayCount = countData?.count || 0;
+
+  return (
+    <div className="bg-gradient-to-r from-blue-600 to-purple-600 py-16">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 className="text-4xl font-bold text-white mb-4" data-testid="text-waitlist-title">
+          Mobile app coming soon — join the waitlist
+        </h2>
+        <p className="text-xl text-blue-100 mb-8" data-testid="text-waitlist-count">
+          {displayCount > 0 ? `${displayCount.toLocaleString()}+` : "Be the first to"} {displayCount > 0 ? "people" : ""} sign up
+        </p>
+
+        <form onSubmit={handleSubmit} className="max-w-md mx-auto space-y-4">
+          <div>
+            <Input
+              type="text"
+              placeholder="Your name (optional)"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="bg-white"
+              data-testid="input-waitlist-name"
+            />
+          </div>
+          <div>
+            <Input
+              type="email"
+              placeholder="Your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="bg-white"
+              data-testid="input-waitlist-email"
+            />
+          </div>
+          <Button
+            type="submit"
+            className="w-full bg-white text-blue-600 hover:bg-blue-50"
+            disabled={joinWaitlistMutation.isPending}
+            data-testid="button-join-waitlist"
+          >
+            {joinWaitlistMutation.isPending ? "Joining..." : "Join Waitlist"}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }
