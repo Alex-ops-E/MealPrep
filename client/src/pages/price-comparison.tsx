@@ -68,23 +68,10 @@ export default function PriceComparison() {
                   <Input
                     value={row.name}
                     onChange={(e) => updateIngredientName(row.id, e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && row.name.trim()) {
-                        searchIngredient(row.id);
-                      }
-                    }}
                     placeholder={`Ingredient ${index + 1} (e.g., chicken breast, tomatoes)`}
                     className="flex-1"
                     data-testid={`input-ingredient-${index}`}
                   />
-                  <Button
-                    onClick={() => searchIngredient(row.id)}
-                    disabled={!row.name.trim()}
-                    className="bg-blue-600 hover:bg-blue-700"
-                    data-testid={`button-search-${index}`}
-                  >
-                    <Search className="h-4 w-4" />
-                  </Button>
                   {ingredientRows.length > 1 && (
                     <Button
                       variant="outline"
@@ -98,15 +85,32 @@ export default function PriceComparison() {
               ))}
             </div>
             
-            <Button
-              variant="outline"
-              onClick={addIngredientRow}
-              className="mt-3 w-full"
-              data-testid="button-add-ingredient"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add More Ingredients
-            </Button>
+            <div className="flex gap-3 mt-3">
+              <Button
+                variant="outline"
+                onClick={addIngredientRow}
+                className="flex-1"
+                data-testid="button-add-ingredient"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add More Ingredients
+              </Button>
+              <Button
+                onClick={() => {
+                  ingredientRows.forEach(row => {
+                    if (row.name.trim()) {
+                      searchIngredient(row.id);
+                    }
+                  });
+                }}
+                disabled={!ingredientRows.some(row => row.name.trim())}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                data-testid="button-compare-all"
+              >
+                <Search className="h-4 w-4 mr-2" />
+                Compare Prices
+              </Button>
+            </div>
           </div>
 
           {searchingIngredients.length === 0 && (
