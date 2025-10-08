@@ -4,11 +4,11 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Store as StoreIcon, Search, Plus, X } from "lucide-react";
+import { Search, Plus, X, ExternalLink } from "lucide-react";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { apiRequest } from "@/lib/queryClient";
-import type { PriceQuoteWithStore } from "@shared/schema";
+import type { PriceQuoteWithStore, Store } from "@shared/schema";
 
 interface IngredientRow {
   id: string;
@@ -49,11 +49,19 @@ export default function PriceComparison() {
 
   const searchingIngredients = ingredientRows.filter(row => row.searching && row.name.trim());
 
+  const { data: stores } = useQuery({
+    queryKey: ["/api/stores"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/stores");
+      return (await response.json()) as Store[];
+    },
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header currentStep={4} />
       
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Card className="p-8 bg-white">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Price Comparison</h1>
           <p className="text-gray-600 mb-6">
@@ -119,9 +127,12 @@ export default function PriceComparison() {
             </div>
           )}
 
-          {searchingIngredients.map((ingredient) => (
-            <IngredientPriceSection key={ingredient.id} ingredientName={ingredient.name} />
-          ))}
+          {searchingIngredients.length > 0 && stores && stores.length > 0 && (
+            <PriceComparisonTable 
+              ingredients={searchingIngredients} 
+              stores={stores}
+            />
+          )}
         </Card>
       </div>
 
@@ -130,7 +141,53 @@ export default function PriceComparison() {
   );
 }
 
-function IngredientPriceSection({ ingredientName }: { ingredientName: string }) {
+function PriceComparisonTable({ 
+  ingredients, 
+  stores 
+}: { 
+  ingredients: IngredientRow[]; 
+  stores: Store[];
+}) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse" data-testid="price-comparison-table">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-gray-900">
+              Ingredients
+            </th>
+            {stores.map((store) => (
+              <th 
+                key={store.id} 
+                className="border border-gray-300 px-4 py-3 text-center font-semibold text-gray-900"
+                data-testid={`header-store-${store.name}`}
+              >
+                {store.name}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {ingredients.map((ingredient) => (
+            <IngredientRow 
+              key={ingredient.id} 
+              ingredientName={ingredient.name} 
+              stores={stores}
+            />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function IngredientRow({ 
+  ingredientName, 
+  stores 
+}: { 
+  ingredientName: string; 
+  stores: Store[];
+}) {
   const { data: priceQuotes, isLoading } = useQuery({
     queryKey: ["/api/ingredients", ingredientName, "prices"],
     queryFn: async () => {
@@ -139,58 +196,68 @@ function IngredientPriceSection({ ingredientName }: { ingredientName: string }) 
     },
   });
 
+  const getPriceForStore = (storeId: string) => {
+    return priceQuotes?.find(quote => quote.storeId === storeId);
+  };
+
   return (
-    <div className="mb-8">
-      <h2 className="text-xl font-bold text-gray-900 mb-4">{ingredientName}</h2>
-      
-      {isLoading && (
-        <div className="space-y-3">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="border border-gray-200 rounded-lg p-4 animate-pulse">
-              <div className="h-6 bg-gray-200 rounded w-1/4 mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {!isLoading && priceQuotes && priceQuotes.length > 0 && (
-        <div className="space-y-3">
-          {priceQuotes.map((quote, index) => (
-            <div
-              key={quote.id}
-              className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
-              data-testid={`price-quote-${ingredientName}-${index}`}
+    <tr data-testid={`row-ingredient-${ingredientName}`}>
+      <td className="border border-gray-300 px-4 py-3 font-medium text-gray-900">
+        {ingredientName}
+      </td>
+      {stores.map((store) => {
+        const quote = getPriceForStore(store.id);
+        
+        if (isLoading) {
+          return (
+            <td 
+              key={store.id} 
+              className="border border-gray-300 px-4 py-3"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <StoreIcon className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{quote.store.name}</h3>
-                    <p className="text-sm text-gray-500">
-                      {quote.unitSize || "Standard size"} • Rating: {quote.store.rating?.toFixed(1) || "N/A"}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-gray-900">
-                    Rp {quote.price.toLocaleString('id-ID')}
-                  </p>
-                  <p className="text-sm text-gray-500">{quote.currency}</p>
-                </div>
+              <div className="animate-pulse space-y-2">
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            </td>
+          );
+        }
 
-      {!isLoading && priceQuotes && priceQuotes.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          <p>No price data available for "{ingredientName}"</p>
-        </div>
-      )}
-    </div>
+        if (!quote) {
+          return (
+            <td 
+              key={store.id} 
+              className="border border-gray-300 px-4 py-3 text-center text-gray-400"
+            >
+              Not available
+            </td>
+          );
+        }
+
+        return (
+          <td 
+            key={store.id} 
+            className="border border-gray-300 px-4 py-3"
+            data-testid={`cell-${ingredientName}-${store.name}`}
+          >
+            <div className="space-y-1">
+              <a 
+                href={quote.url || "#"} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 hover:underline font-medium flex items-center gap-1"
+                data-testid={`link-product-${ingredientName}-${store.name}`}
+              >
+                <ExternalLink className="h-4 w-4" />
+                {ingredientName}
+              </a>
+              <p className="text-sm text-gray-600">{quote.unitSize || "Standard size"}</p>
+              <p className="text-lg font-bold text-gray-900">
+                Rp {quote.price.toLocaleString('id-ID')}
+              </p>
+            </div>
+          </td>
+        );
+      })}
+    </tr>
   );
 }
