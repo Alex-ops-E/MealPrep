@@ -58,32 +58,25 @@ export class MemStorage implements IStorage {
   private initializeSampleData() {
     const stores = [
       {
-        name: "Whole Foods",
-        logo: "https://via.placeholder.com/32x32/22c55e/ffffff?text=WF",
-        website: "https://wholefoodsmarket.com",
-        country: "US",
-        rating: 4.5
+        name: "Grab Food",
+        logo: "https://via.placeholder.com/32x32/00b14f/ffffff?text=G",
+        website: "https://food.grab.com/id/en/",
+        country: "ID",
+        rating: 4.3
       },
       {
-        name: "Trader Joe's",
-        logo: "https://via.placeholder.com/32x32/3b82f6/ffffff?text=TJ",
-        website: "https://traderjoes.com",
-        country: "US",
-        rating: 4.7
-      },
-      {
-        name: "Walmart",
-        logo: "https://via.placeholder.com/32x32/f59e0b/ffffff?text=W",
-        website: "https://walmart.com",
-        country: "US",
+        name: "Gojek GoFood",
+        logo: "https://via.placeholder.com/32x32/00880d/ffffff?text=GJ",
+        website: "https://www.gojek.com/en-id/gofood",
+        country: "ID",
         rating: 4.2
       },
       {
-        name: "Kroger",
-        logo: "https://via.placeholder.com/32x32/ef4444/ffffff?text=K",
-        website: "https://kroger.com",
-        country: "US",
-        rating: 4.3
+        name: "Superindo",
+        logo: "https://via.placeholder.com/32x32/ed1c24/ffffff?text=SI",
+        website: "https://www.superindo.co.id/",
+        country: "ID",
+        rating: 4.1
       }
     ];
 

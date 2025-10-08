@@ -46,7 +46,7 @@ function PriceComparisonStep({
     queryKey: ["/api/ingredients", selectedIngredient, "prices"],
     queryFn: async () => {
       if (!selectedIngredient) return [];
-      const response = await apiRequest("GET", `/api/ingredients/${encodeURIComponent(selectedIngredient)}/prices?country=US`);
+      const response = await apiRequest("GET", `/api/ingredients/${encodeURIComponent(selectedIngredient)}/prices?country=ID`);
       return (await response.json()) as PriceQuoteWithStore[];
     },
     enabled: !!selectedIngredient,
@@ -110,7 +110,7 @@ function PriceComparisonStep({
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-gray-900">
-                    ${quote.price.toFixed(2)}
+                    Rp {quote.price.toLocaleString('id-ID')}
                   </p>
                   <p className="text-sm text-gray-500">{quote.currency}</p>
                 </div>

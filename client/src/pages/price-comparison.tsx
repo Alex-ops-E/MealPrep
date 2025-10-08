@@ -134,7 +134,7 @@ function IngredientPriceSection({ ingredientName }: { ingredientName: string }) 
   const { data: priceQuotes, isLoading } = useQuery({
     queryKey: ["/api/ingredients", ingredientName, "prices"],
     queryFn: async () => {
-      const response = await apiRequest("GET", `/api/ingredients/${encodeURIComponent(ingredientName)}/prices?country=US`);
+      const response = await apiRequest("GET", `/api/ingredients/${encodeURIComponent(ingredientName)}/prices?country=ID`);
       return (await response.json()) as PriceQuoteWithStore[];
     },
   });
@@ -176,7 +176,7 @@ function IngredientPriceSection({ ingredientName }: { ingredientName: string }) 
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-gray-900">
-                    ${quote.price.toFixed(2)}
+                    Rp {quote.price.toLocaleString('id-ID')}
                   </p>
                   <p className="text-sm text-gray-500">{quote.currency}</p>
                 </div>

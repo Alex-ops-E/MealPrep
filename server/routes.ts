@@ -146,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/ingredients/:name/prices", async (req, res) => {
     try {
       const ingredientName = req.params.name;
-      const country = (req.query.country as string) || "US";
+      const country = (req.query.country as string) || "ID";
       
       let quotes = await storage.getPriceQuotes(ingredientName);
       
@@ -171,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             storeId: store.id,
             price: priceInfo.price,
             unitSize: priceInfo.unitSize,
-            currency: priceInfo.currency || "USD",
+            currency: priceInfo.currency || "IDR",
             url: priceInfo.url
           });
         }

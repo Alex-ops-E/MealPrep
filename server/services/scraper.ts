@@ -175,24 +175,71 @@ export interface IngredientPrice {
   url?: string;
 }
 
-export async function scrapeIngredientPrices(ingredientName: string, country: string = 'US'): Promise<IngredientPrice[]> {
+export async function scrapeIngredientPrices(ingredientName: string, country: string = 'ID'): Promise<IngredientPrice[]> {
   const groceryStores = [
-    'Whole Foods',
-    'Trader Joe\'s',
-    'Walmart',
-    'Kroger'
+    { name: 'Grab Food', url: 'https://food.grab.com/id/en/' },
+    { name: 'Gojek GoFood', url: 'https://www.gojek.com/en-id/gofood' },
+    { name: 'Superindo', url: 'https://www.superindo.co.id/' }
   ];
   
+  try {
+    // Use OpenAI to generate realistic Indonesian grocery prices
+    const OpenAI = (await import('openai')).default;
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are a price data expert for Indonesian grocery delivery platforms. Generate realistic price data for ingredients from these stores:
+- Grab Food (https://food.grab.com/id/en/)
+- Gojek GoFood (https://www.gojek.com/en-id/gofood)
+- Superindo (https://www.superindo.co.id/)
+
+Return prices in Indonesian Rupiah (IDR). Use realistic Indonesian market prices for ${new Date().getFullYear()}. Return data as a JSON object with this exact structure:
+{"prices": [{"store": "Grab Food", "price": number, "unitSize": "string"}, {"store": "Gojek GoFood", "price": number, "unitSize": "string"}, {"store": "Superindo", "price": number, "unitSize": "string"}]}`
+        },
+        {
+          role: "user",
+          content: `Generate realistic price quotes for "${ingredientName}" from Grab Food, Gojek GoFood, and Superindo. Include unit sizes common in Indonesia (e.g., "250g", "500g", "1kg", "per piece", "per pack").`
+        }
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const result = JSON.parse(completion.choices[0].message.content || '{"prices":[]}');
+    const priceData = result.prices || [];
+
+    const prices: IngredientPrice[] = priceData.map((item: any) => {
+      const storeInfo = groceryStores.find(s => s.name === item.store) || groceryStores[0];
+      return {
+        storeName: item.store,
+        price: item.price,
+        currency: 'IDR',
+        unitSize: item.unitSize,
+        url: storeInfo.url
+      };
+    });
+
+    if (prices.length > 0) {
+      return prices;
+    }
+  } catch (error) {
+    console.error('Error generating prices with OpenAI:', error);
+  }
+
+  // Fallback to mock prices if OpenAI fails
   const prices: IngredientPrice[] = groceryStores.map(store => {
-    const basePrice = Math.random() * 5 + 2;
-    const storeMultiplier = store === 'Whole Foods' ? 1.4 : store === 'Trader Joe\'s' ? 1.1 : store === 'Kroger' ? 0.95 : 1;
+    const basePrice = Math.random() * 30000 + 10000;
+    const storeMultiplier = store.name === 'Superindo' ? 0.9 : store.name === 'Grab Food' ? 1.1 : 1;
     
     return {
-      storeName: store,
-      price: parseFloat((basePrice * storeMultiplier).toFixed(2)),
-      currency: 'USD',
+      storeName: store.name,
+      price: parseFloat((basePrice * storeMultiplier).toFixed(0)),
+      currency: 'IDR',
       unitSize: getUnitSize(ingredientName),
-      url: `https://${store.toLowerCase().replace(/\s/g, '')}.com/products/${ingredientName.toLowerCase().replace(/\s/g, '-')}`
+      url: store.url
     };
   });
   
@@ -202,24 +249,27 @@ export async function scrapeIngredientPrices(ingredientName: string, country: st
 function getUnitSize(ingredientName: string): string {
   const lowerName = ingredientName.toLowerCase();
   
-  if (lowerName.includes('milk') || lowerName.includes('juice')) {
-    return '1 gallon';
+  if (lowerName.includes('milk') || lowerName.includes('susu')) {
+    return '1 liter';
   }
-  if (lowerName.includes('egg')) {
-    return '1 dozen';
+  if (lowerName.includes('egg') || lowerName.includes('telur')) {
+    return 'per 10 butir';
   }
-  if (lowerName.includes('bread')) {
-    return '1 loaf';
+  if (lowerName.includes('bread') || lowerName.includes('roti')) {
+    return 'per pack';
   }
-  if (lowerName.includes('chicken') || lowerName.includes('beef') || lowerName.includes('pork')) {
-    return '1 lb';
+  if (lowerName.includes('chicken') || lowerName.includes('ayam') || lowerName.includes('beef') || lowerName.includes('daging')) {
+    return '500g';
   }
-  if (lowerName.includes('cheese')) {
-    return '8 oz';
+  if (lowerName.includes('rice') || lowerName.includes('beras')) {
+    return '1kg';
   }
-  if (lowerName.includes('butter')) {
-    return '1 lb';
+  if (lowerName.includes('oil') || lowerName.includes('minyak')) {
+    return '1 liter';
+  }
+  if (lowerName.includes('vegetable') || lowerName.includes('sayur')) {
+    return '250g';
   }
   
-  return '1 unit';
+  return 'per piece';
 }
