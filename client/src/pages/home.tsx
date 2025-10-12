@@ -814,6 +814,9 @@ function WaitlistSection() {
           >
             {joinWaitlistMutation.isPending ? t("waitlist.buttonJoining") : t("waitlist.button")}
           </Button>
+          <p className="text-xs text-white/70 mt-2 text-center">
+            By submitting, I agree that my data (email) may be processed and stored securely on Replit's servers located.
+          </p>
         </form>
       </div>
     </div>
