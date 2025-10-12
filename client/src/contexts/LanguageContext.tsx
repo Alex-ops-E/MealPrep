@@ -33,6 +33,7 @@ const translations: Record<Language, Record<string, string>> = {
     "waitlist.successMessage": "You've been added to the waitlist. We'll notify you when the mobile app launches!",
     "waitlist.errorTitle": "Error",
     "waitlist.errorMessage": "Failed to join waitlist. Please try again.",
+    "waitlist.disclaimer": "By submitting, I agree that my data (email) may be processed and stored securely on Replit's servers located.",
     
     // Recipe Generator
     "recipe.generate": "Generate",
@@ -154,6 +155,7 @@ const translations: Record<Language, Record<string, string>> = {
     "waitlist.successMessage": "Anda telah ditambahkan ke daftar tunggu. Kami akan memberi tahu Anda saat aplikasi mobile diluncurkan!",
     "waitlist.errorTitle": "Kesalahan",
     "waitlist.errorMessage": "Gagal bergabung dengan daftar tunggu. Silakan coba lagi.",
+    "waitlist.disclaimer": "Dengan mengirimkan, saya setuju bahwa data saya (email) dapat diproses dan disimpan dengan aman di server Replit yang berlokasi.",
     
     // Recipe Generator
     "recipe.generate": "Buat",
