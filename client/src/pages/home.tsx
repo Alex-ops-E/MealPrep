@@ -697,21 +697,12 @@ function WaitlistSection() {
   const { toast } = useToast();
   const { t } = useLanguage();
 
-  const { data: countData } = useQuery({
-    queryKey: ["/api/waitlist/count"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/waitlist/count");
-      return (await response.json()) as { count: number };
-    },
-  });
-
   const joinWaitlistMutation = useMutation({
     mutationFn: async (data: { email: string; name?: string }) => {
       const response = await apiRequest("POST", "/api/waitlist", data);
       return await response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/waitlist/count"] });
       toast({
         title: t("waitlist.successTitle"),
         description: t("waitlist.successMessage"),
@@ -735,8 +726,6 @@ function WaitlistSection() {
     }
   };
 
-  const displayCount = countData?.count || 0;
-
   return (
     <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 py-8 overflow-hidden">
       {/* Background decoration */}
@@ -755,9 +744,7 @@ function WaitlistSection() {
             {t("waitlist.title")}
           </h2>
           <p className="text-base text-blue-100 mb-4" data-testid="text-waitlist-count">
-            {displayCount > 0 
-              ? t("waitlist.joinCount").replace("{count}", displayCount.toLocaleString())
-              : t("waitlist.beFirst")}
+            {t("waitlist.joinCount")}
           </p>
 
           {/* Features List */}

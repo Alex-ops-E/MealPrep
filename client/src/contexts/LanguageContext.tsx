@@ -18,7 +18,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Waitlist
     "waitlist.comingSoon": "Coming Soon",
     "waitlist.title": "Mobile app is launching soon!",
-    "waitlist.joinCount": "Join {count}+ people on the waitlist",
+    "waitlist.joinCount": "Join 1000+ people on the waitlist",
     "waitlist.beFirst": "Be the first to get early access",
     "waitlist.feature.priceAlerts": "Price Alerts",
     "waitlist.feature.smartCart": "Smart Cart",
@@ -140,7 +140,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Waitlist
     "waitlist.comingSoon": "Segera Hadir",
     "waitlist.title": "Aplikasi mobile segera diluncurkan!",
-    "waitlist.joinCount": "Bergabung dengan {count}+ orang di daftar tunggu",
+    "waitlist.joinCount": "Bergabung dengan 1000+ orang di daftar tunggu",
     "waitlist.beFirst": "Jadilah yang pertama mendapatkan akses awal",
     "waitlist.feature.priceAlerts": "Peringatan Harga",
     "waitlist.feature.smartCart": "Keranjang Pintar",
