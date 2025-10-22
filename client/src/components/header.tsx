@@ -50,8 +50,9 @@ export default function Header({ currentStep }: HeaderProps) {
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" data-testid="button-language">
-                  <Globe className="h-5 w-5" />
+                <Button variant="outline" className="gap-2 font-semibold" data-testid="button-language">
+                  <Globe className="h-4 w-4" />
+                  <span className="uppercase text-sm">{language}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -60,14 +61,14 @@ export default function Header({ currentStep }: HeaderProps) {
                   className={language === "en" ? "bg-blue-50" : ""}
                   data-testid="language-english"
                 >
-                  {t("language.english")}
+                  🇺🇸 {t("language.english")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => setLanguage("id")}
                   className={language === "id" ? "bg-blue-50" : ""}
                   data-testid="language-indonesian"
                 >
-                  {t("language.indonesian")}
+                  🇮🇩 {t("language.indonesian")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
