@@ -3,13 +3,14 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calendar, Plus, ChevronLeft, ChevronRight, ShoppingCart, Sparkles, Trash2, ChefHat, Home, TrendingUp } from "lucide-react";
+import { Calendar, Plus, ChevronLeft, ChevronRight, ShoppingCart, Sparkles, Trash2, ChefHat, Home, TrendingUp, Globe } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Meal, Recipe } from "@shared/schema";
 
@@ -46,7 +47,7 @@ function isSameDay(date1: Date, date2: Date): boolean {
 }
 
 export default function MealPlanner() {
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const { toast } = useToast();
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedSlot, setSelectedSlot] = useState<{ day: string; type: string; mode: 'add' | 'generate' } | null>(null);
@@ -175,6 +176,31 @@ export default function MealPlanner() {
                   {t("header.priceComparison")}
                 </Button>
               </Link>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2 font-semibold" data-testid="button-language">
+                    <Globe className="h-4 w-4" />
+                    <span className="uppercase text-sm">{language}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => setLanguage("en")}
+                    className={language === "en" ? "bg-blue-50" : ""}
+                    data-testid="language-english"
+                  >
+                    🇺🇸 {t("language.english")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setLanguage("id")}
+                    className={language === "id" ? "bg-blue-50" : ""}
+                    data-testid="language-indonesian"
+                  >
+                    🇮🇩 {t("language.indonesian")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           
