@@ -23,10 +23,12 @@ export default function RecipeDetail() {
   const handleShopForIngredients = () => {
     if (!recipe) return;
     
+    const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
+    
     setCurrentRecipe({
       id: recipe.id,
       title: recipe.title,
-      ingredients: recipe.ingredients || []
+      ingredients
     });
     setCurrentStep(3);
     window.location.href = "/";
@@ -136,7 +138,7 @@ export default function RecipeDetail() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3" data-testid="list-ingredients">
-                    {recipe.ingredients?.map((ingredient: Ingredient, index: number) => (
+                    {(Array.isArray(recipe.ingredients) ? recipe.ingredients : []).map((ingredient: Ingredient, index: number) => (
                       <li key={index} className="flex items-start gap-2">
                         <span className="text-blue-600 mt-1">•</span>
                         <span>
