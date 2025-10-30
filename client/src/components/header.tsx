@@ -38,6 +38,15 @@ export default function Header({ currentStep }: HeaderProps) {
                 {t("header.recipeGenerator")}
               </Button>
             </Link>
+            <Link href="/meal-planner">
+              <Button
+                variant={location === "/meal-planner" ? "default" : "ghost"}
+                className={location === "/meal-planner" ? "bg-blue-600 hover:bg-blue-700" : ""}
+                data-testid="link-meal-planner"
+              >
+                {t("header.mealPlanner")}
+              </Button>
+            </Link>
             <Link href="/price-comparison">
               <Button
                 variant={location === "/price-comparison" ? "default" : "ghost"}

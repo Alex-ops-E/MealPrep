@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ShoppingProvider } from "@/contexts/ShoppingContext";
 import Home from "@/pages/home";
+import MealPlanner from "@/pages/meal-planner";
 import PriceComparison from "@/pages/price-comparison";
 import NotFound from "@/pages/not-found";
 
@@ -13,6 +14,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/meal-planner" component={MealPlanner} />
       <Route path="/price-comparison" component={PriceComparison} />
       <Route component={NotFound} />
     </Switch>

@@ -14,6 +14,7 @@ const translations: Record<Language, Record<string, string>> = {
     "header.title": "Grocery Agent",
     "header.recipeGenerator": "Recipe Generator",
     "header.priceComparison": "Price Comparison",
+    "header.mealPlanner": "Meal Planner",
     
     // Waitlist
     "waitlist.comingSoon": "Coming Soon",
@@ -124,6 +125,33 @@ const translations: Record<Language, Record<string, string>> = {
     "priceComparison.bestDeal": "Best Deal",
     "priceComparison.disclaimer": "Prices are approximate and may vary. Please check with stores for current pricing.",
     
+    // Meal Planner
+    "mealPlanner.title": "Meal Planner",
+    "mealPlanner.description": "Plan your weekly meals with AI-powered recipe suggestions",
+    "mealPlanner.weeklyPlan": "Weekly Meal Plan",
+    "mealPlanner.weekRange": "Week of {start} - {end}",
+    "mealPlanner.mealType": "Meal Type",
+    "mealPlanner.monday": "Monday",
+    "mealPlanner.tuesday": "Tuesday",
+    "mealPlanner.wednesday": "Wednesday",
+    "mealPlanner.thursday": "Thursday",
+    "mealPlanner.friday": "Friday",
+    "mealPlanner.saturday": "Saturday",
+    "mealPlanner.sunday": "Sunday",
+    "mealPlanner.breakfast": "Breakfast",
+    "mealPlanner.lunch": "Lunch",
+    "mealPlanner.dinner": "Dinner",
+    "mealPlanner.addMeal": "Add Meal",
+    "mealPlanner.addMealDescription": "Generate a {type} recipe for {day}",
+    "mealPlanner.whatToMake": "What would you like to make?",
+    "mealPlanner.promptPlaceholder": "e.g., scrambled eggs with toast",
+    "mealPlanner.generateMeal": "Generate Meal",
+    "mealPlanner.successTitle": "Meal Added!",
+    "mealPlanner.successMessage": "Your meal has been added to the plan",
+    "mealPlanner.errorTitle": "Error",
+    "mealPlanner.deletedTitle": "Meal Removed",
+    "mealPlanner.deletedMessage": "The meal has been removed from your plan",
+    
     // Footer
     "footer.rights": "All rights reserved.",
     
@@ -136,6 +164,7 @@ const translations: Record<Language, Record<string, string>> = {
     "header.title": "Agen Belanja",
     "header.recipeGenerator": "Generator Resep",
     "header.priceComparison": "Perbandingan Harga",
+    "header.mealPlanner": "Perencana Makan",
     
     // Waitlist
     "waitlist.comingSoon": "Segera Hadir",
@@ -245,6 +274,33 @@ const translations: Record<Language, Record<string, string>> = {
     "priceComparison.ingredient": "Bahan",
     "priceComparison.bestDeal": "Harga Terbaik",
     "priceComparison.disclaimer": "Harga adalah perkiraan dan dapat bervariasi. Silakan periksa dengan toko untuk harga saat ini.",
+    
+    // Meal Planner
+    "mealPlanner.title": "Perencana Makan",
+    "mealPlanner.description": "Rencanakan makanan mingguan Anda dengan saran resep bertenaga AI",
+    "mealPlanner.weeklyPlan": "Rencana Makan Mingguan",
+    "mealPlanner.weekRange": "Minggu {start} - {end}",
+    "mealPlanner.mealType": "Jenis Makanan",
+    "mealPlanner.monday": "Senin",
+    "mealPlanner.tuesday": "Selasa",
+    "mealPlanner.wednesday": "Rabu",
+    "mealPlanner.thursday": "Kamis",
+    "mealPlanner.friday": "Jumat",
+    "mealPlanner.saturday": "Sabtu",
+    "mealPlanner.sunday": "Minggu",
+    "mealPlanner.breakfast": "Sarapan",
+    "mealPlanner.lunch": "Makan Siang",
+    "mealPlanner.dinner": "Makan Malam",
+    "mealPlanner.addMeal": "Tambah Makanan",
+    "mealPlanner.addMealDescription": "Buat resep {type} untuk {day}",
+    "mealPlanner.whatToMake": "Apa yang ingin Anda buat?",
+    "mealPlanner.promptPlaceholder": "mis., telur orak-arik dengan roti panggang",
+    "mealPlanner.generateMeal": "Buat Makanan",
+    "mealPlanner.successTitle": "Makanan Ditambahkan!",
+    "mealPlanner.successMessage": "Makanan Anda telah ditambahkan ke rencana",
+    "mealPlanner.errorTitle": "Kesalahan",
+    "mealPlanner.deletedTitle": "Makanan Dihapus",
+    "mealPlanner.deletedMessage": "Makanan telah dihapus dari rencana Anda",
     
     // Footer
     "footer.rights": "Hak cipta dilindungi.",
