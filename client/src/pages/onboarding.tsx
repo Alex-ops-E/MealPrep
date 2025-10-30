@@ -42,7 +42,7 @@ const DIET_PREFERENCES = [
 
 export default function Onboarding() {
   const [, setLocation] = useLocation();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -118,7 +118,7 @@ export default function Onboarding() {
         email: email || null,
       });
 
-      setLocation("/");
+      setLocation(`/${language}`);
     } catch (error) {
       console.error("Failed to save onboarding:", error);
     } finally {

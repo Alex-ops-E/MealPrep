@@ -164,13 +164,13 @@ export default function MealPlanner() {
             </div>
             
             <div className="flex gap-2">
-              <Link href="/">
+              <Link href={`/${language}`}>
                 <Button variant="outline" className="gap-2" data-testid="button-nav-recipe-generator">
                   <Home className="h-4 w-4" />
                   {t("header.recipeGenerator")}
                 </Button>
               </Link>
-              <Link href="/price-comparison">
+              <Link href={`/${language}/price-comparison`}>
                 <Button variant="outline" className="gap-2" data-testid="button-nav-price-comparison">
                   <TrendingUp className="h-4 w-4" />
                   {t("header.priceComparison")}
@@ -272,7 +272,7 @@ export default function MealPlanner() {
                               <div className="flex items-start gap-2 mb-1">
                                 <ChefHat className="h-3.5 w-3.5 text-purple-600 mt-0.5 flex-shrink-0" />
                                 {meal.recipeId ? (
-                                  <Link href={`/recipe/${meal.recipeId}`}>
+                                  <Link href={`/${language}/recipe/${meal.recipeId}`}>
                                     <h4 className="font-medium text-xs text-purple-700 hover:text-purple-900 underline cursor-pointer line-clamp-2" data-testid={`text-meal-${meal.id}`}>
                                       {meal.name}
                                     </h4>

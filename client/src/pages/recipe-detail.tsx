@@ -10,8 +10,8 @@ import { ChefHat, Clock, Users, ArrowLeft, ShoppingCart, Lightbulb } from "lucid
 import type { RecipeWithDetails, Ingredient } from "@shared/schema";
 
 export default function RecipeDetail() {
-  const { t } = useLanguage();
-  const [, params] = useRoute("/recipe/:id");
+  const { t, language } = useLanguage();
+  const [, params] = useRoute("/:lang(en|id)/recipe/:id");
   const [, setLocation] = useLocation();
   const { setShoppingList } = useShopping();
   const recipeId = params?.id;
@@ -37,7 +37,7 @@ export default function RecipeDetail() {
       }));
     
     setShoppingList(shoppingItems);
-    setLocation("/price-comparison");
+    setLocation(`/${language}/price-comparison`);
   };
   
   if (isLoading) {
@@ -56,7 +56,7 @@ export default function RecipeDetail() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Recipe Not Found</h2>
-          <Link href="/meal-planner">
+          <Link href={`/${language}/meal-planner`}>
             <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Meal Planner
@@ -71,7 +71,7 @@ export default function RecipeDetail() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <Link href="/meal-planner">
+          <Link href={`/${language}/meal-planner`}>
             <Button variant="ghost" className="gap-2" data-testid="button-back">
               <ArrowLeft className="h-4 w-4" />
               {t("recipe.backToRecipe")}

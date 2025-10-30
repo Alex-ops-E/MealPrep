@@ -16,6 +16,10 @@ interface HeaderProps {
 export default function Header({ currentStep }: HeaderProps) {
   const [location] = useLocation();
   const { language, setLanguage, t } = useLanguage();
+  
+  const isActive = (path: string) => {
+    return location === `/${language}${path}` || location === `/${language}${path}/`;
+  };
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -29,28 +33,28 @@ export default function Header({ currentStep }: HeaderProps) {
           </div>
           
           <nav className="flex items-center space-x-4">
-            <Link href="/">
+            <Link href={`/${language}`}>
               <Button
-                variant={location === "/" ? "default" : "ghost"}
-                className={location === "/" ? "bg-blue-600 hover:bg-blue-700" : ""}
+                variant={isActive("") ? "default" : "ghost"}
+                className={isActive("") ? "bg-blue-600 hover:bg-blue-700" : ""}
                 data-testid="link-recipe-generator"
               >
                 {t("header.recipeGenerator")}
               </Button>
             </Link>
-            <Link href="/meal-planner">
+            <Link href={`/${language}/meal-planner`}>
               <Button
-                variant={location === "/meal-planner" ? "default" : "ghost"}
-                className={location === "/meal-planner" ? "bg-blue-600 hover:bg-blue-700" : ""}
+                variant={isActive("/meal-planner") ? "default" : "ghost"}
+                className={isActive("/meal-planner") ? "bg-blue-600 hover:bg-blue-700" : ""}
                 data-testid="link-meal-planner"
               >
                 {t("header.mealPlanner")}
               </Button>
             </Link>
-            <Link href="/price-comparison">
+            <Link href={`/${language}/price-comparison`}>
               <Button
-                variant={location === "/price-comparison" ? "default" : "ghost"}
-                className={location === "/price-comparison" ? "bg-blue-600 hover:bg-blue-700" : ""}
+                variant={isActive("/price-comparison") ? "default" : "ghost"}
+                className={isActive("/price-comparison") ? "bg-blue-600 hover:bg-blue-700" : ""}
                 data-testid="link-price-comparison"
               >
                 {t("header.priceComparison")}
