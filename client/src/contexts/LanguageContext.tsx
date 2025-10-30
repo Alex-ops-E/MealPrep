@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useLocation } from "wouter";
 
 type Language = "en" | "id";
 
@@ -412,7 +413,22 @@ const translations: Record<Language, Record<string, string>> = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>("en");
+  const [location] = useLocation();
+  const [language, setLanguageState] = useState<Language>(() => {
+    const pathLang = location.split('/')[1];
+    return (pathLang === 'en' || pathLang === 'id') ? pathLang : 'id';
+  });
+
+  useEffect(() => {
+    const pathLang = location.split('/')[1];
+    if (pathLang === 'en' || pathLang === 'id') {
+      setLanguageState(pathLang);
+    }
+  }, [location]);
+
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+  };
 
   const t = (key: string, params?: Record<string, string | number>): string => {
     let translation = translations[language][key];
