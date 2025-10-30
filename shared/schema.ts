@@ -43,6 +43,16 @@ export const meals = pgTable("meals", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const onboardingResponses = pgTable("onboarding_responses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: text("session_id").notNull().unique(),
+  groceryGoal: text("grocery_goal"),
+  cookingFrequency: text("cooking_frequency"),
+  preferredStores: text("preferred_stores").array(),
+  dietPreferences: text("diet_preferences").array(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertRecipeSchema = createInsertSchema(recipes).omit({
   id: true,
@@ -60,6 +70,11 @@ export const insertWaitlistSchema = createInsertSchema(waitlist).omit({
 });
 
 export const insertMealSchema = createInsertSchema(meals).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertOnboardingResponseSchema = createInsertSchema(onboardingResponses).omit({
   id: true,
   createdAt: true,
 });
@@ -93,6 +108,9 @@ export type InsertWaitlist = z.infer<typeof insertWaitlistSchema>;
 
 export type Meal = typeof meals.$inferSelect;
 export type InsertMeal = z.infer<typeof insertMealSchema>;
+
+export type OnboardingResponse = typeof onboardingResponses.$inferSelect;
+export type InsertOnboardingResponse = z.infer<typeof insertOnboardingResponseSchema>;
 
 export type GenerateRecipeParams = z.infer<typeof generateRecipeSchema>;
 export type GenerateMealParams = z.infer<typeof generateMealSchema>;
