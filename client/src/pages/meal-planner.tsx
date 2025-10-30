@@ -364,11 +364,11 @@ export default function MealPlanner() {
                               size="sm"
                               className="flex-1 h-9 text-xs text-purple-600 border-purple-300 hover:bg-purple-50"
                               onClick={() => handleQuickGenerate(day, type)}
-                              disabled={generateMealMutation.isPending}
+                              disabled={generateRecipeMutation.isPending}
                               data-testid={`button-generate-${day}-${type}`}
                             >
                               <Sparkles className="h-3 w-3 mr-1" />
-                              {t("mealPlanner.generate")}
+                              {generateRecipeMutation.isPending ? t("recipe.generating") : t("mealPlanner.generate")}
                             </Button>
                           </div>
                         )}
