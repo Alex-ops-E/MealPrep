@@ -1,9 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { generateRecipe } from "./services/openai";
+import { generateRecipe, generateMeal } from "./services/openai";
 import { 
   generateRecipeSchema,
+  generateMealSchema,
   insertWaitlistSchema,
   type RecipeWithDetails
 } from "@shared/schema";
@@ -61,6 +62,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get recipes error:", error);
       res.status(500).json({ error: "Failed to get recipes" });
+    }
+  });
+
+  // Meal endpoints
+  app.post("/api/meals/generate", async (req, res) => {
+    try {
+      const params = generateMealSchema.parse(req.body);
+      
+      console.log(`Generating ${params.type} meal for ${params.dayKey}: ${params.prompt}`);
+      
+      const recipeData = await generateMeal(params);
+      const recipe = await storage.createRecipe(recipeData);
+      
+      const meal = await storage.createMeal({
+        name: recipe.title,
+        type: params.type,
+        dayKey: params.dayKey,
+        recipeId: recipe.id,
+      });
+      
+      res.json({
+        meal,
+        recipe
+      });
+      
+    } catch (error) {
+      console.error("Generate meal error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid meal data", details: error.errors });
+      }
+      res.status(500).json({ 
+        error: "Failed to generate meal", 
+        message: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  });
+
+  app.get("/api/meals/week", async (req, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      
+      if (typeof startDate !== 'string' || typeof endDate !== 'string') {
+        return res.status(400).json({ error: "startDate and endDate are required" });
+      }
+      
+      const meals = await storage.getMealsByWeek(startDate, endDate);
+      res.json(meals);
+    } catch (error) {
+      console.error("Get meals error:", error);
+      res.status(500).json({ error: "Failed to get meals" });
+    }
+  });
+
+  app.delete("/api/meals/:id", async (req, res) => {
+    try {
+      await storage.deleteMeal(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete meal error:", error);
+      res.status(500).json({ error: "Failed to delete meal" });
     }
   });
 

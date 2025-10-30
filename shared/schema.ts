@@ -7,12 +7,15 @@ export const recipes = pgTable("recipes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: text("title").notNull(),
   summary: text("summary"),
+  prepTime: text("prep_time"),
   servings: integer("servings").notNull(),
   cuisine: text("cuisine"),
   cookTime: text("cook_time"),
+  difficulty: text("difficulty"),
   dietaryTags: text("dietary_tags").array(),
   ingredients: jsonb("ingredients").notNull(),
   steps: text("steps").array().notNull(),
+  chefsTips: text("chefs_tips"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -28,6 +31,15 @@ export const waitlist = pgTable("waitlist", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: text("email").notNull().unique(),
   name: text("name"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const meals = pgTable("meals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // "breakfast", "lunch", "dinner"
+  dayKey: text("day_key").notNull(), // ISO date string "2025-10-27"
+  recipeId: varchar("recipe_id").references(() => recipes.id),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -47,6 +59,11 @@ export const insertWaitlistSchema = createInsertSchema(waitlist).omit({
   createdAt: true,
 });
 
+export const insertMealSchema = createInsertSchema(meals).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Recipe generation request schema
 export const generateRecipeSchema = z.object({
   craving: z.string().min(1),
@@ -54,6 +71,14 @@ export const generateRecipeSchema = z.object({
   cuisine: z.string().optional(),
   cookTime: z.string().optional(),
   dietaryRestrictions: z.array(z.string()).optional(),
+});
+
+// Meal generation request schema
+export const generateMealSchema = z.object({
+  prompt: z.string().min(1),
+  type: z.enum(["breakfast", "lunch", "dinner"]),
+  dayKey: z.string(), // ISO date "2025-10-27"
+  servings: z.number().min(1).max(20).default(2),
 });
 
 // Types
@@ -66,7 +91,11 @@ export type InsertIngredientData = z.infer<typeof insertIngredientSchema>;
 export type Waitlist = typeof waitlist.$inferSelect;
 export type InsertWaitlist = z.infer<typeof insertWaitlistSchema>;
 
+export type Meal = typeof meals.$inferSelect;
+export type InsertMeal = z.infer<typeof insertMealSchema>;
+
 export type GenerateRecipeParams = z.infer<typeof generateRecipeSchema>;
+export type GenerateMealParams = z.infer<typeof generateMealSchema>;
 
 export interface Ingredient {
   name: string;

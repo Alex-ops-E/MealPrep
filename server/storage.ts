@@ -4,7 +4,9 @@ import {
   type RecipeWithDetails,
   type Ingredient,
   type Waitlist,
-  type InsertWaitlist
+  type InsertWaitlist,
+  type Meal,
+  type InsertMeal
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
@@ -15,6 +17,12 @@ export interface IStorage {
   createRecipe(recipe: InsertRecipe): Promise<Recipe>;
   getRecipe(id: string): Promise<RecipeWithDetails | undefined>;
   getAllRecipes(): Promise<Recipe[]>;
+  
+  // Meals
+  createMeal(meal: InsertMeal): Promise<Meal>;
+  getMeal(id: string): Promise<Meal | undefined>;
+  getMealsByWeek(startDate: string, endDate: string): Promise<Meal[]>;
+  deleteMeal(id: string): Promise<void>;
   
   // Waitlist
   createWaitlistEntry(entry: InsertWaitlist): Promise<Waitlist>;
@@ -45,6 +53,25 @@ export class DatabaseStorage implements IStorage {
 
   async getAllRecipes(): Promise<Recipe[]> {
     return await db.select().from(schema.recipes).orderBy(desc(schema.recipes.createdAt));
+  }
+
+  async createMeal(insertMeal: InsertMeal): Promise<Meal> {
+    const [meal] = await db.insert(schema.meals).values(insertMeal).returning();
+    return meal;
+  }
+
+  async getMeal(id: string): Promise<Meal | undefined> {
+    const [meal] = await db.select().from(schema.meals).where(eq(schema.meals.id, id));
+    return meal;
+  }
+
+  async getMealsByWeek(startDate: string, endDate: string): Promise<Meal[]> {
+    const meals = await db.select().from(schema.meals);
+    return meals.filter(meal => meal.dayKey >= startDate && meal.dayKey <= endDate);
+  }
+
+  async deleteMeal(id: string): Promise<void> {
+    await db.delete(schema.meals).where(eq(schema.meals.id, id));
   }
 
   async createWaitlistEntry(entry: InsertWaitlist): Promise<Waitlist> {

@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import type { GenerateRecipeParams, InsertRecipe, Ingredient } from "@shared/schema";
+import type { GenerateRecipeParams, GenerateMealParams, InsertRecipe, Ingredient } from "@shared/schema";
 
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -270,5 +270,95 @@ Make sure the recipe is practical, delicious, and matches the specified requirem
   } catch (error) {
     console.error("Error generating recipe:", error);
     throw new Error("Failed to generate recipe: " + (error as Error).message);
+  }
+}
+
+export async function generateMeal(params: GenerateMealParams): Promise<InsertRecipe> {
+  try {
+    const { prompt, type, servings } = params;
+    
+    const mealTypeContext = {
+      breakfast: "a breakfast dish that's energizing and nutritious",
+      lunch: "a lunch dish that's satisfying and balanced",
+      dinner: "a dinner dish that's hearty and delicious"
+    };
+    
+    const fullPrompt = `
+Generate a detailed recipe for ${mealTypeContext[type]}.
+
+User's Request: ${prompt}
+Servings: ${servings}
+Meal Type: ${type}
+
+Please create a complete recipe with:
+1. A creative and appetizing title suitable for ${type}
+2. A brief summary (2-3 sentences)
+3. Preparation time estimate
+4. Difficulty level (Easy, Medium, or Hard)
+5. A detailed list of ingredients with quantities and units
+6. Step-by-step cooking instructions
+7. Chef's tips for best results
+8. Total estimated cooking time
+
+Return the recipe in the following JSON format:
+{
+  "title": "Recipe Title",
+  "summary": "Brief description of the dish",
+  "prepTime": "15 minutes",
+  "servings": ${servings},
+  "cookTime": "30 minutes",
+  "difficulty": "Easy",
+  "cuisine": "American",
+  "dietaryTags": [],
+  "ingredients": [
+    {
+      "name": "ingredient name",
+      "quantity": 1.5,
+      "unit": "cups"
+    }
+  ],
+  "steps": [
+    "Step 1 instruction",
+    "Step 2 instruction"
+  ],
+  "chefsTips": "Helpful tips for preparing this dish"
+}
+
+Make sure the recipe is practical, delicious, and perfect for ${type}.
+`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-5",
+      messages: [
+        {
+          role: "system",
+          content: "You are a professional chef specializing in meal planning. Generate detailed, practical, and delicious recipes for specific meal types (breakfast, lunch, dinner)."
+        },
+        {
+          role: "user",
+          content: fullPrompt
+        }
+      ],
+      response_format: { type: "json_object" }
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{}');
+    
+    return {
+      title: result.title,
+      summary: result.summary,
+      prepTime: result.prepTime,
+      servings: result.servings,
+      cuisine: result.cuisine || 'Various',
+      cookTime: result.cookTime,
+      difficulty: result.difficulty,
+      dietaryTags: result.dietaryTags || [],
+      ingredients: result.ingredients,
+      steps: result.steps,
+      chefsTips: result.chefsTips
+    };
+  } catch (error) {
+    console.error("Error generating meal:", error);
+    throw new Error("Failed to generate meal: " + (error as Error).message);
   }
 }
