@@ -6,6 +6,7 @@ import {
   generateRecipeSchema,
   generateMealSchema,
   insertWaitlistSchema,
+  insertOnboardingResponseSchema,
   type RecipeWithDetails
 } from "@shared/schema";
 import { z } from "zod";
@@ -122,6 +123,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Delete meal error:", error);
       res.status(500).json({ error: "Failed to delete meal" });
+    }
+  });
+
+  // Onboarding endpoints
+  app.post("/api/onboarding", async (req, res) => {
+    try {
+      const onboardingData = insertOnboardingResponseSchema.parse(req.body);
+      const response = await storage.createOnboardingResponse(onboardingData);
+      res.json(response);
+    } catch (error) {
+      console.error("Create onboarding response error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to save onboarding response" });
     }
   });
 
