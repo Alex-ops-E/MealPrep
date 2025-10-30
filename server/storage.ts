@@ -6,7 +6,9 @@ import {
   type Waitlist,
   type InsertWaitlist,
   type Meal,
-  type InsertMeal
+  type InsertMeal,
+  type OnboardingResponse,
+  type InsertOnboardingResponse
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
@@ -27,6 +29,10 @@ export interface IStorage {
   // Waitlist
   createWaitlistEntry(entry: InsertWaitlist): Promise<Waitlist>;
   getWaitlistCount(): Promise<number>;
+  
+  // Onboarding
+  createOnboardingResponse(response: InsertOnboardingResponse): Promise<OnboardingResponse>;
+  getOnboardingBySession(sessionId: string): Promise<OnboardingResponse | undefined>;
 }
 
 // Reference: blueprint:javascript_database for database integration
@@ -82,6 +88,16 @@ export class DatabaseStorage implements IStorage {
   async getWaitlistCount(): Promise<number> {
     const entries = await db.select().from(schema.waitlist);
     return entries.length;
+  }
+
+  async createOnboardingResponse(response: InsertOnboardingResponse): Promise<OnboardingResponse> {
+    const [onboardingResponse] = await db.insert(schema.onboardingResponses).values(response).returning();
+    return onboardingResponse;
+  }
+
+  async getOnboardingBySession(sessionId: string): Promise<OnboardingResponse | undefined> {
+    const [response] = await db.select().from(schema.onboardingResponses).where(eq(schema.onboardingResponses.sessionId, sessionId));
+    return response;
   }
 }
 
