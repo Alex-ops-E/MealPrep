@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useRoute, Link } from "wouter";
+import { useRoute, Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,7 +12,8 @@ import type { RecipeWithDetails, Ingredient } from "@shared/schema";
 export default function RecipeDetail() {
   const { t } = useLanguage();
   const [, params] = useRoute("/recipe/:id");
-  const { setCurrentRecipe, setCurrentStep } = useShopping();
+  const [, setLocation] = useLocation();
+  const { setShoppingList } = useShopping();
   const recipeId = params?.id;
   
   const { data: recipe, isLoading } = useQuery<RecipeWithDetails>({
@@ -25,13 +26,16 @@ export default function RecipeDetail() {
     
     const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
     
-    setCurrentRecipe({
-      id: recipe.id,
-      title: recipe.title,
-      ingredients
-    });
-    setCurrentStep(3);
-    window.location.href = "/";
+    const shoppingItems = ingredients.map((ing, index) => ({
+      id: `${recipe.id}-${index}`,
+      ingredientName: ing.name,
+      quantity: ing.quantity,
+      unit: ing.unit,
+      acquired: false
+    }));
+    
+    setShoppingList(shoppingItems);
+    setLocation("/price-comparison");
   };
   
   if (isLoading) {

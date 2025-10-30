@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useShopping } from "@/contexts/ShoppingContext";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Plus, Trash2, TrendingDown } from "lucide-react";
@@ -32,6 +33,7 @@ interface IngredientRow {
 
 export default function PriceComparison() {
   const { t } = useLanguage();
+  const { shoppingList } = useShopping();
   
   const [ingredients, setIngredients] = useState<IngredientRow[]>([
     { id: "1", name: "", quantity: "", unit: "" },
@@ -40,6 +42,19 @@ export default function PriceComparison() {
   ]);
   
   const [showResults, setShowResults] = useState(false);
+  
+  useEffect(() => {
+    if (shoppingList && shoppingList.length > 0) {
+      const ingredientRows = shoppingList.map(item => ({
+        id: item.id,
+        name: item.ingredientName,
+        quantity: item.quantity,
+        unit: item.unit
+      }));
+      setIngredients(ingredientRows);
+      setShowResults(true);
+    }
+  }, [shoppingList]);
 
   // Mock stores data
   const stores: Store[] = [
