@@ -9,12 +9,14 @@ import Home from "@/pages/home";
 import MealPlanner from "@/pages/meal-planner";
 import RecipeDetail from "@/pages/recipe-detail";
 import PriceComparison from "@/pages/price-comparison";
+import Onboarding from "@/pages/onboarding";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/onboarding" component={Onboarding} />
       <Route path="/meal-planner" component={MealPlanner} />
       <Route path="/recipe/:id" component={RecipeDetail} />
       <Route path="/price-comparison" component={PriceComparison} />
