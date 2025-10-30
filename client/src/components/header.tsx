@@ -9,16 +9,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+type Language = "en" | "id";
+
 interface HeaderProps {
   currentStep?: number;
 }
 
 export default function Header({ currentStep }: HeaderProps) {
-  const [location] = useLocation();
-  const { language, setLanguage, t } = useLanguage();
+  const [location, setLocation] = useLocation();
+  const { language, t } = useLanguage();
   
   const isActive = (path: string) => {
     return location === `/${language}${path}` || location === `/${language}${path}/`;
+  };
+  
+  const handleLanguageChange = (newLang: Language) => {
+    const currentPath = location.replace(/^\/(en|id)/, '');
+    setLocation(`/${newLang}${currentPath || ''}`);
   };
 
   return (
@@ -70,14 +77,14 @@ export default function Header({ currentStep }: HeaderProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
-                  onClick={() => setLanguage("en")}
+                  onClick={() => handleLanguageChange("en")}
                   className={language === "en" ? "bg-blue-50" : ""}
                   data-testid="language-english"
                 >
                   🇺🇸 {t("language.english")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => setLanguage("id")}
+                  onClick={() => handleLanguageChange("id")}
                   className={language === "id" ? "bg-blue-50" : ""}
                   data-testid="language-indonesian"
                 >

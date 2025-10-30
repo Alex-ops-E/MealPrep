@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -47,12 +47,18 @@ function isSameDay(date1: Date, date2: Date): boolean {
 }
 
 export default function MealPlanner() {
-  const { t, language, setLanguage } = useLanguage();
+  const { t, language } = useLanguage();
+  const [location, setLocationNav] = useLocation();
   const { toast } = useToast();
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedSlot, setSelectedSlot] = useState<{ day: string; type: string; mode: 'add' | 'generate' } | null>(null);
   const [mealPrompt, setMealPrompt] = useState("");
   const [servings, setServings] = useState(2);
+  
+  const handleLanguageChange = (newLang: "en" | "id") => {
+    const currentPath = location.replace(/^\/(en|id)/, '');
+    setLocationNav(`/${newLang}${currentPath || ''}`);
+  };
   
   const { dates: weekDates, monday } = getWeekDates(weekOffset);
   const sunday = weekDates.sunday;
@@ -186,14 +192,14 @@ export default function MealPlanner() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
-                    onClick={() => setLanguage("en")}
+                    onClick={() => handleLanguageChange("en")}
                     className={language === "en" ? "bg-blue-50" : ""}
                     data-testid="language-english"
                   >
                     🇺🇸 {t("language.english")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => setLanguage("id")}
+                    onClick={() => handleLanguageChange("id")}
                     className={language === "id" ? "bg-blue-50" : ""}
                     data-testid="language-indonesian"
                   >

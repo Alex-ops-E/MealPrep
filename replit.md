@@ -14,7 +14,12 @@ Preferred communication style: Simple, everyday language.
 
 ### Frontend Architecture
 - **Framework**: React 18 with TypeScript for type safety and modern development
-- **Routing**: Wouter for lightweight, hook-based routing
+- **Routing**: Wouter for lightweight, hook-based routing with language-based URL structure
+- **Internationalization**: Full multilingual support with Indonesian as the default language
+  - Language prefix in URL structure (e.g., `/id/meal-planner`, `/en/onboarding`)
+  - Automatic language detection from URL path
+  - Language switcher that changes URL to maintain current page context
+  - Supported languages: Indonesian (id), English (en)
 - **State Management**: TanStack Query (React Query) for server state management and caching
 - **UI Components**: Radix UI primitives with shadcn/ui design system for consistent, accessible components
 - **Styling**: Tailwind CSS with CSS variables for theming and responsive design
