@@ -196,6 +196,10 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.q4.options.dairyFree": "Dairy-free",
     "onboarding.q4.options.other": "Other",
     "onboarding.q4.otherPlaceholder": "Please specify your preference",
+    "onboarding.q5.title": "Get Lifetime Beta Access",
+    "onboarding.q5.subtitle": "Enter your email to unlock exclusive lifetime beta features",
+    "onboarding.q5.placeholder": "your.email@example.com",
+    "onboarding.q5.privacy": "We respect your privacy. Your email will only be used for beta access and important updates.",
     
     // Footer
     "footer.rights": "All rights reserved.",
@@ -391,6 +395,10 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.q4.options.dairyFree": "Bebas susu",
     "onboarding.q4.options.other": "Lainnya",
     "onboarding.q4.otherPlaceholder": "Silakan sebutkan preferensi Anda",
+    "onboarding.q5.title": "Dapatkan Akses Beta Seumur Hidup",
+    "onboarding.q5.subtitle": "Masukkan email Anda untuk membuka fitur beta eksklusif seumur hidup",
+    "onboarding.q5.placeholder": "email.anda@example.com",
+    "onboarding.q5.privacy": "Kami menghormati privasi Anda. Email Anda hanya akan digunakan untuk akses beta dan pembaruan penting.",
     
     // Footer
     "footer.rights": "Hak cipta dilindungi.",
