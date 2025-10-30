@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from "react";
+import type { Ingredient } from "@shared/schema";
 
 interface ShoppingListItem {
   id: string;
@@ -8,17 +9,29 @@ interface ShoppingListItem {
   acquired: boolean;
 }
 
+interface CurrentRecipe {
+  id: string;
+  title: string;
+  ingredients: Ingredient[];
+}
+
 interface ShoppingContextType {
   shoppingList: ShoppingListItem[];
   setShoppingList: (items: ShoppingListItem[]) => void;
   toggleItemAcquired: (itemId: string) => void;
   clearShoppingList: () => void;
+  currentRecipe: CurrentRecipe | null;
+  setCurrentRecipe: (recipe: CurrentRecipe | null) => void;
+  currentStep: number;
+  setCurrentStep: (step: number) => void;
 }
 
 const ShoppingContext = createContext<ShoppingContextType | undefined>(undefined);
 
 export function ShoppingProvider({ children }: { children: ReactNode }) {
   const [shoppingList, setShoppingList] = useState<ShoppingListItem[]>([]);
+  const [currentRecipe, setCurrentRecipe] = useState<CurrentRecipe | null>(null);
+  const [currentStep, setCurrentStep] = useState(1);
 
   const toggleItemAcquired = (itemId: string) => {
     setShoppingList(items => 
@@ -33,7 +46,16 @@ export function ShoppingProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <ShoppingContext.Provider value={{ shoppingList, setShoppingList, toggleItemAcquired, clearShoppingList }}>
+    <ShoppingContext.Provider value={{ 
+      shoppingList, 
+      setShoppingList, 
+      toggleItemAcquired, 
+      clearShoppingList,
+      currentRecipe,
+      setCurrentRecipe,
+      currentStep,
+      setCurrentStep
+    }}>
       {children}
     </ShoppingContext.Provider>
   );

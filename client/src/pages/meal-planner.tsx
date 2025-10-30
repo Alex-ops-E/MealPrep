@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -234,9 +235,17 @@ export default function MealPlanner() {
                             <div className="pr-6">
                               <div className="flex items-start gap-2 mb-1">
                                 <ChefHat className="h-3.5 w-3.5 text-purple-600 mt-0.5 flex-shrink-0" />
-                                <h4 className="font-medium text-xs text-gray-900 line-clamp-2" data-testid={`text-meal-${meal.id}`}>
-                                  {meal.name}
-                                </h4>
+                                {meal.recipeId ? (
+                                  <Link href={`/recipe/${meal.recipeId}`}>
+                                    <h4 className="font-medium text-xs text-purple-700 hover:text-purple-900 underline cursor-pointer line-clamp-2" data-testid={`text-meal-${meal.id}`}>
+                                      {meal.name}
+                                    </h4>
+                                  </Link>
+                                ) : (
+                                  <h4 className="font-medium text-xs text-gray-900 line-clamp-2" data-testid={`text-meal-${meal.id}`}>
+                                    {meal.name}
+                                  </h4>
+                                )}
                               </div>
                               {meal.recipe && (
                                 <div className="text-xs text-gray-600 ml-5">

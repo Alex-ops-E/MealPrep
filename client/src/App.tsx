@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ShoppingProvider } from "@/contexts/ShoppingContext";
 import Home from "@/pages/home";
 import MealPlanner from "@/pages/meal-planner";
+import RecipeDetail from "@/pages/recipe-detail";
 import PriceComparison from "@/pages/price-comparison";
 import NotFound from "@/pages/not-found";
 
@@ -15,6 +16,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/meal-planner" component={MealPlanner} />
+      <Route path="/recipe/:id" component={RecipeDetail} />
       <Route path="/price-comparison" component={PriceComparison} />
       <Route component={NotFound} />
     </Switch>
