@@ -51,8 +51,9 @@ export default function Onboarding() {
   const [preferredStores, setPreferredStores] = useState<string[]>([]);
   const [dietPreferences, setDietPreferences] = useState<string[]>([]);
   const [otherDiet, setOtherDiet] = useState("");
+  const [email, setEmail] = useState("");
 
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   const handleStoreToggle = (store: string) => {
     setPreferredStores(prev =>
@@ -90,7 +91,13 @@ export default function Onboarding() {
       setDietPreferences([]);
       setOtherDiet("");
     }
-    handleNext();
+    if (currentStep === 5) setEmail("");
+    
+    if (currentStep < totalSteps) {
+      handleNext();
+    } else {
+      handleFinish();
+    }
   };
 
   const handleFinish = async () => {
@@ -108,6 +115,7 @@ export default function Onboarding() {
         cookingFrequency: cookingFrequency || null,
         preferredStores: preferredStores.length > 0 ? preferredStores : null,
         dietPreferences: finalDietPreferences.length > 0 ? finalDietPreferences : null,
+        email: email || null,
       });
 
       setLocation("/");
@@ -237,6 +245,33 @@ export default function Onboarding() {
                 />
               </div>
             )}
+          </div>
+        );
+
+      case 5:
+        return (
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-bold text-gray-900" data-testid="text-question-title">
+                {t("onboarding.q5.title")}
+              </h2>
+              <p className="text-gray-600" data-testid="text-question-subtitle">
+                {t("onboarding.q5.subtitle")}
+              </p>
+            </div>
+            <div className="max-w-md mx-auto">
+              <Input
+                type="email"
+                placeholder={t("onboarding.q5.placeholder")}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full text-lg py-6"
+                data-testid="input-email"
+              />
+              <p className="text-xs text-gray-500 mt-3 text-center">
+                {t("onboarding.q5.privacy")}
+              </p>
+            </div>
           </div>
         );
 
