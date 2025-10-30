@@ -112,15 +112,25 @@ export default function MealPlanner() {
     setMealPrompt("");
   };
   
+  const handleQuickGenerate = (day: string, type: string) => {
+    const date = weekDates[day as keyof typeof weekDates];
+    const dayKey = formatDate(date);
+    
+    generateMealMutation.mutate({
+      dayKey,
+      type,
+      prompt: `a delicious ${type} meal`,
+      servings: 2
+    });
+  };
+  
   const handleGenerateMeal = () => {
     if (!selectedSlot) return;
     
     const date = weekDates[selectedSlot.day as keyof typeof weekDates];
     const dayKey = formatDate(date);
     
-    const prompt = selectedSlot.mode === 'generate' 
-      ? `a delicious ${selectedSlot.type} meal`
-      : mealPrompt.trim() || `a delicious ${selectedSlot.type} meal`;
+    const prompt = mealPrompt.trim() || `a delicious ${selectedSlot.type} meal`;
     
     generateMealMutation.mutate({
       dayKey,
@@ -318,64 +328,17 @@ export default function MealPlanner() {
                               </DialogContent>
                             </Dialog>
                             
-                            <Dialog 
-                              open={selectedSlot?.day === day && selectedSlot?.type === type && selectedSlot?.mode === 'generate'} 
-                              onOpenChange={(open) => {
-                                if (!open) setSelectedSlot(null);
-                              }}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 h-9 text-xs text-purple-600 border-purple-300 hover:bg-purple-50"
+                              onClick={() => handleQuickGenerate(day, type)}
+                              disabled={generateMealMutation.isPending}
+                              data-testid={`button-generate-${day}-${type}`}
                             >
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex-1 h-9 text-xs text-purple-600 border-purple-300 hover:bg-purple-50"
-                                  onClick={() => handleOpenDialog(day, type, 'generate')}
-                                  data-testid={`button-generate-${day}-${type}`}
-                                >
-                                  <Sparkles className="h-3 w-3 mr-1" />
-                                  {t("mealPlanner.generate")}
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent data-testid="dialog-generate-meal">
-                                <DialogHeader>
-                                  <DialogTitle>{t("mealPlanner.generateMealTitle")}</DialogTitle>
-                                  <DialogDescription>
-                                    {t("mealPlanner.generateMealDescription", {
-                                      day: t(`mealPlanner.${day}`),
-                                      type: t(`mealPlanner.${type}`)
-                                    })}
-                                  </DialogDescription>
-                                </DialogHeader>
-                                
-                                <div className="space-y-4">
-                                  <div>
-                                    <Label htmlFor="servings-generate">{t("recipe.servings")}</Label>
-                                    <Select value={servings.toString()} onValueChange={(v) => setServings(parseInt(v))}>
-                                      <SelectTrigger id="servings-generate" data-testid="select-servings-generate">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {[1, 2, 3, 4, 5, 6, 8].map(num => (
-                                          <SelectItem key={num} value={num.toString()}>
-                                            {num} {num === 1 ? t("recipe.person") : t("recipe.people")}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  
-                                  <Button
-                                    className="w-full bg-purple-600 hover:bg-purple-700 gap-2"
-                                    onClick={handleGenerateMeal}
-                                    disabled={generateMealMutation.isPending}
-                                    data-testid="button-confirm-generate"
-                                  >
-                                    <Sparkles className="h-4 w-4" />
-                                    {generateMealMutation.isPending ? t("recipe.generating") : t("mealPlanner.generateWithAI")}
-                                  </Button>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
+                              <Sparkles className="h-3 w-3 mr-1" />
+                              {t("mealPlanner.generate")}
+                            </Button>
                           </div>
                         )}
                       </div>
