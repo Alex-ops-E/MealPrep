@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useShopping } from "@/contexts/ShoppingContext";
 import { Calendar, Plus, ChevronLeft, ChevronRight, ShoppingCart, Sparkles, Trash2, ChefHat } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Meal, Recipe } from "@shared/schema";
+import type { Meal, Recipe, RecipeWithDetails } from "@shared/schema";
 
 interface MealWithRecipe extends Meal {
   recipe?: Recipe;
@@ -48,6 +49,8 @@ function isSameDay(date1: Date, date2: Date): boolean {
 export default function MealPlanner() {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const { setCurrentRecipe, setCurrentStep } = useShopping();
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedSlot, setSelectedSlot] = useState<{ day: string; type: string; mode: 'add' | 'generate' } | null>(null);
   const [mealPrompt, setMealPrompt] = useState("");
@@ -102,6 +105,30 @@ export default function MealPlanner() {
     }
   });
   
+  const generateRecipeMutation = useMutation({
+    mutationFn: async (params: { craving: string; servings: number }) => {
+      const response = await apiRequest("POST", "/api/recipes/generate", params);
+      return await response.json() as RecipeWithDetails;
+    },
+    onSuccess: (recipe) => {
+      const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
+      setCurrentRecipe({
+        id: recipe.id,
+        title: recipe.title,
+        ingredients
+      });
+      setCurrentStep(2);
+      setLocation("/");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t("mealPlanner.errorTitle"),
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+  
   const getMealForSlot = (day: string, type: string): MealWithRecipe | undefined => {
     const date = weekDates[day as keyof typeof weekDates];
     const dayKey = formatDate(date);
@@ -114,13 +141,8 @@ export default function MealPlanner() {
   };
   
   const handleQuickGenerate = (day: string, type: string) => {
-    const date = weekDates[day as keyof typeof weekDates];
-    const dayKey = formatDate(date);
-    
-    generateMealMutation.mutate({
-      dayKey,
-      type,
-      prompt: `a delicious ${type} meal`,
+    generateRecipeMutation.mutate({
+      craving: `a delicious ${type} meal`,
       servings: 2
     });
   };
