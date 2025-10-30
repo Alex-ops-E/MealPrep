@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calendar, Plus, ChevronLeft, ChevronRight, ShoppingCart, Sparkles, Trash2, ChefHat } from "lucide-react";
+import { Calendar, Plus, ChevronLeft, ChevronRight, ShoppingCart, Sparkles, Trash2, ChefHat, Home, TrendingUp } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Meal, Recipe } from "@shared/schema";
 
@@ -162,10 +162,20 @@ export default function MealPlanner() {
               </div>
             </div>
             
-            <Button className="bg-blue-600 hover:bg-blue-700 gap-2" data-testid="button-generate-shopping-list">
-              <ShoppingCart className="h-4 w-4" />
-              {t("mealPlanner.generateShoppingList")}
-            </Button>
+            <div className="flex gap-2">
+              <Link href="/">
+                <Button variant="outline" className="gap-2" data-testid="button-nav-recipe-generator">
+                  <Home className="h-4 w-4" />
+                  {t("header.recipeGenerator")}
+                </Button>
+              </Link>
+              <Link href="/price-comparison">
+                <Button variant="outline" className="gap-2" data-testid="button-nav-price-comparison">
+                  <TrendingUp className="h-4 w-4" />
+                  {t("header.priceComparison")}
+                </Button>
+              </Link>
+            </div>
           </div>
           
           <div className="flex items-center justify-center gap-4 mb-6">
