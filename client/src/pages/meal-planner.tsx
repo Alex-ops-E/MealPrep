@@ -17,7 +17,7 @@ interface MealWithRecipe extends Meal {
   recipe?: Recipe;
 }
 
-const WEEKDAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday"] as const;
+const WEEKDAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
 const MEAL_TYPES = ["breakfast", "lunch", "dinner"] as const;
 
 function getWeekDates(weekOffset: number = 0) {
@@ -54,7 +54,7 @@ export default function MealPlanner() {
   const [servings, setServings] = useState(2);
   
   const { dates: weekDates, monday } = getWeekDates(weekOffset);
-  const friday = weekDates.friday;
+  const sunday = weekDates.sunday;
   const startDate = formatDate(monday);
   const endDate = formatDate(new Date(monday.getTime() + 6 * 24 * 60 * 60 * 1000));
   
@@ -181,7 +181,7 @@ export default function MealPlanner() {
             <div className="text-center">
               <div className="text-sm text-gray-500">{t("mealPlanner.weekOf")}</div>
               <div className="text-lg font-semibold text-gray-900" data-testid="text-week-range">
-                {monday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - {friday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                {monday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - {sunday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
               </div>
             </div>
             
@@ -196,7 +196,7 @@ export default function MealPlanner() {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4">
           {WEEKDAY_KEYS.map(day => {
             const dayDate = weekDates[day];
             const isToday = isSameDay(dayDate, today);
