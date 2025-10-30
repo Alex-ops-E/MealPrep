@@ -26,13 +26,15 @@ export default function RecipeDetail() {
     
     const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
     
-    const shoppingItems = ingredients.map((ing, index) => ({
-      id: `${recipe.id}-${index}`,
-      ingredientName: ing.name,
-      quantity: ing.quantity,
-      unit: ing.unit,
-      acquired: false
-    }));
+    const shoppingItems = ingredients
+      .filter((ing) => ing.name && ing.quantity && ing.unit)
+      .map((ing, index) => ({
+        id: `${recipe.id}-${index}`,
+        ingredientName: ing.name,
+        quantity: String(ing.quantity),
+        unit: ing.unit,
+        acquired: false
+      }));
     
     setShoppingList(shoppingItems);
     setLocation("/price-comparison");

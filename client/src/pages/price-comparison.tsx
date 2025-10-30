@@ -45,14 +45,19 @@ export default function PriceComparison() {
   
   useEffect(() => {
     if (shoppingList && shoppingList.length > 0) {
-      const ingredientRows = shoppingList.map(item => ({
-        id: item.id,
-        name: item.ingredientName,
-        quantity: item.quantity,
-        unit: item.unit
-      }));
-      setIngredients(ingredientRows);
-      setShowResults(true);
+      const ingredientRows = shoppingList
+        .filter(item => item.ingredientName.trim() && item.quantity.trim() && item.unit.trim())
+        .map(item => ({
+          id: item.id,
+          name: item.ingredientName,
+          quantity: item.quantity,
+          unit: item.unit
+        }));
+      
+      if (ingredientRows.length > 0) {
+        setIngredients(ingredientRows);
+        setShowResults(true);
+      }
     }
   }, [shoppingList]);
 
