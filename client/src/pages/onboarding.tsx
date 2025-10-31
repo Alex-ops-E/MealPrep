@@ -3,9 +3,15 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ChevronRight, ChevronLeft } from "lucide-react";
+import { ChevronRight, ChevronLeft, Globe } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const GROCERY_GOALS = [
   "saveMoney",
@@ -41,10 +47,15 @@ const DIET_PREFERENCES = [
 ];
 
 export default function Onboarding() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { t, language } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const handleLanguageChange = (newLang: "en" | "id") => {
+    const currentPath = location.replace(/^\/(en|id)/, '');
+    setLocation(`/${newLang}${currentPath || ''}`);
+  };
 
   const [groceryGoal, setGroceryGoal] = useState<string>("");
   const [cookingFrequency, setCookingFrequency] = useState<string>("");
@@ -288,15 +299,41 @@ export default function Onboarding() {
             <span className="text-sm text-gray-500" data-testid="text-step-counter">
               {t("onboarding.step")} {currentStep} {t("onboarding.of")} {totalSteps}
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSkip}
-              className="text-gray-500 hover:text-gray-700"
-              data-testid="button-skip"
-            >
-              {t("onboarding.skip")}
-            </Button>
+            <div className="flex gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2 font-semibold" data-testid="button-language">
+                    <Globe className="h-4 w-4" />
+                    <span className="uppercase text-sm">{language}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => handleLanguageChange("en")}
+                    className={language === "en" ? "bg-blue-50" : ""}
+                    data-testid="language-english"
+                  >
+                    🇺🇸 {t("language.english")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleLanguageChange("id")}
+                    className={language === "id" ? "bg-blue-50" : ""}
+                    data-testid="language-indonesian"
+                  >
+                    🇮🇩 {t("language.indonesian")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSkip}
+                className="text-gray-500 hover:text-gray-700"
+                data-testid="button-skip"
+              >
+                {t("onboarding.skip")}
+              </Button>
+            </div>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
