@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -7,11 +6,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Calendar, Plus, ChevronLeft, ChevronRight, ShoppingCart, Sparkles, Trash2, ChefHat, Home, TrendingUp, Globe } from "lucide-react";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import type { Meal, Recipe } from "@shared/schema";
 
 interface MealWithRecipe extends Meal {
@@ -54,6 +52,8 @@ export default function MealPlanner() {
   const [selectedSlot, setSelectedSlot] = useState<{ day: string; type: string; mode: 'add' | 'generate' } | null>(null);
   const [mealPrompt, setMealPrompt] = useState("");
   const [servings, setServings] = useState(2);
+  const [meals, setMeals] = useState<MealWithRecipe[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
   
   const handleLanguageChange = (newLang: "en" | "id") => {
     const currentPath = location.replace(/^\/(en|id)/, '');
@@ -65,49 +65,55 @@ export default function MealPlanner() {
   const startDate = formatDate(monday);
   const endDate = formatDate(new Date(monday.getTime() + 6 * 24 * 60 * 60 * 1000));
   
-  const { data: meals = [], isLoading } = useQuery<MealWithRecipe[]>({
-    queryKey: ["/api/meals/week", startDate, endDate],
-    queryFn: async () => {
-      const response = await fetch(`/api/meals/week?startDate=${startDate}&endDate=${endDate}`);
-      if (!response.ok) throw new Error("Failed to fetch meals");
-      return response.json();
-    }
-  });
-  
-  const generateMealMutation = useMutation({
-    mutationFn: async (params: { dayKey: string; type: string; prompt: string; servings: number }) => {
-      return apiRequest("POST", "/api/meals/generate", params);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/meals/week", startDate, endDate] });
+  const generateMeal = async (params: { dayKey: string; type: string; prompt: string; servings: number }) => {
+    setIsGenerating(true);
+    try {
+      const res = await apiRequest("POST", "/api/recipes/generate", {
+        craving: params.prompt,
+        servings: params.servings,
+        cuisine: "any",
+        cookTime: "30-60min",
+        dietaryRestrictions: []
+      });
+      
+      const recipe = await res.json();
+      
+      const newMeal: MealWithRecipe = {
+        id: `meal_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+        dayKey: params.dayKey,
+        type: params.type,
+        name: recipe.title,
+        recipeId: recipe.id,
+        recipe: recipe,
+        createdAt: new Date()
+      };
+      
+      setMeals(prev => [...prev.filter(m => !(m.dayKey === params.dayKey && m.type === params.type)), newMeal]);
       setSelectedSlot(null);
       setMealPrompt("");
+      
       toast({
         title: t("mealPlanner.successTitle"),
         description: t("mealPlanner.successMessage")
       });
-    },
-    onError: (error: Error) => {
+    } catch (error) {
       toast({
         title: t("mealPlanner.errorTitle"),
-        description: error.message,
+        description: error instanceof Error ? error.message : "Failed to generate meal",
         variant: "destructive"
       });
+    } finally {
+      setIsGenerating(false);
     }
-  });
+  };
   
-  const deleteMealMutation = useMutation({
-    mutationFn: async (mealId: string) => {
-      return apiRequest("DELETE", `/api/meals/${mealId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/meals/week", startDate, endDate] });
-      toast({
-        title: t("mealPlanner.deletedTitle"),
-        description: t("mealPlanner.deletedMessage")
-      });
-    }
-  });
+  const deleteMeal = (mealId: string) => {
+    setMeals(prev => prev.filter(m => m.id !== mealId));
+    toast({
+      title: t("mealPlanner.deletedTitle"),
+      description: t("mealPlanner.deletedMessage")
+    });
+  };
   
   const getMealForSlot = (day: string, type: string): MealWithRecipe | undefined => {
     const date = weekDates[day as keyof typeof weekDates];
@@ -124,7 +130,7 @@ export default function MealPlanner() {
     const date = weekDates[day as keyof typeof weekDates];
     const dayKey = formatDate(date);
     
-    generateMealMutation.mutate({
+    generateMeal({
       dayKey,
       type,
       prompt: `a delicious ${type} meal`,
@@ -140,7 +146,7 @@ export default function MealPlanner() {
     
     const prompt = mealPrompt.trim() || `a delicious ${selectedSlot.type} meal`;
     
-    generateMealMutation.mutate({
+    generateMeal({
       dayKey,
       type: selectedSlot.type,
       prompt,
@@ -270,9 +276,7 @@ export default function MealPlanner() {
                           {t(`mealPlanner.${type}`)}
                         </div>
                         
-                        {isLoading ? (
-                          <Skeleton className="h-20 w-full" />
-                        ) : meal ? (
+                        {meal ? (
                           <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 relative group">
                             <div className="pr-6">
                               <div className="flex items-start gap-2 mb-1">
@@ -299,7 +303,7 @@ export default function MealPlanner() {
                               variant="ghost"
                               size="sm"
                               className="absolute top-1 right-1 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => deleteMealMutation.mutate(meal.id)}
+                              onClick={() => deleteMeal(meal.id)}
                               data-testid={`button-delete-${meal.id}`}
                             >
                               <Trash2 className="h-3 w-3 text-red-600" />
@@ -370,10 +374,10 @@ export default function MealPlanner() {
                                   <Button
                                     className="w-full bg-blue-600 hover:bg-blue-700"
                                     onClick={handleGenerateMeal}
-                                    disabled={!mealPrompt.trim() || generateMealMutation.isPending}
+                                    disabled={!mealPrompt.trim() || isGenerating}
                                     data-testid="button-generate-meal"
                                   >
-                                    {generateMealMutation.isPending ? t("recipe.generating") : t("mealPlanner.generateMeal")}
+                                    {isGenerating ? t("recipe.generating") : t("mealPlanner.generateMeal")}
                                   </Button>
                                 </div>
                               </DialogContent>
@@ -384,11 +388,11 @@ export default function MealPlanner() {
                               size="sm"
                               className="flex-1 h-9 text-xs text-purple-600 border-purple-300 hover:bg-purple-50"
                               onClick={() => handleQuickGenerate(day, type)}
-                              disabled={generateMealMutation.isPending}
+                              disabled={isGenerating}
                               data-testid={`button-generate-${day}-${type}`}
                             >
                               <Sparkles className="h-3 w-3 mr-1" />
-                              {generateMealMutation.isPending ? t("recipe.generating") : t("mealPlanner.generate")}
+                              {isGenerating ? t("recipe.generating") : t("mealPlanner.generate")}
                             </Button>
                           </div>
                         )}

@@ -32,9 +32,13 @@ Preferred communication style: Simple, everyday language.
 - **AI Integration**: OpenAI GPT-5 for recipe generation and ingredient analysis
 
 ### Data Storage Architecture
-- **Storage Pattern**: IStorage interface with MemStorage implementation
+- **Storage Pattern**: Hybrid storage approach
+  - **Recipes**: Permanent storage in database (server-side via MemStorage)
+  - **Meal Planning**: Client-side only storage in React state
+  - **Shopping Lists & Price Quotes**: Database storage for persistence
 - **Schema Design**: Simple relational structure with recipes, shopping lists, stores, and price quotes
 - **In-Memory Storage**: MemStorage class for fast development and testing
+- **Client-Side Storage**: Meal plans stored in browser memory only (resets on page refresh)
 
 ### AI Integration Architecture
 - **Service**: OpenAI GPT-5 integration for recipe generation
