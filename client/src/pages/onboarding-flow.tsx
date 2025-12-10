@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ChevronRight, ChevronLeft, Globe, Calendar, Utensils, DollarSign, Flame, Dumbbell, Plus, RefreshCw, Edit, MessageSquare, ShoppingCart } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { apiRequest } from "@/lib/queryClient";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -137,10 +138,31 @@ export default function OnboardingFlow() {
     }
   };
 
-  const handleNext = () => {
-    if (currentStep === 4 && preferredStoresOnboarding.length > 0) {
-      setFavoriteStores(preferredStoresOnboarding);
+  const handleNext = async () => {
+    if (currentStep === 4) {
+      if (preferredStoresOnboarding.length > 0) {
+        setFavoriteStores(preferredStoresOnboarding);
+      }
+      
+      try {
+        const sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        const finalDietPreferences = dietPreferences.includes("other") && otherDiet
+          ? [...dietPreferences.filter(d => d !== "other"), otherDiet]
+          : dietPreferences;
+
+        await apiRequest("POST", "/api/onboarding", {
+          sessionId,
+          groceryGoal: groceryGoal || null,
+          cookingFrequency: cookingFrequency || null,
+          preferredStores: preferredStoresOnboarding.length > 0 ? preferredStoresOnboarding : null,
+          dietPreferences: finalDietPreferences.length > 0 ? finalDietPreferences : null,
+          email: null,
+        });
+      } catch (error) {
+        console.error("Failed to save onboarding:", error);
+      }
     }
+    
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
     }
@@ -154,8 +176,8 @@ export default function OnboardingFlow() {
     }
   };
 
-  const handleSkip = () => {
-    handleNext();
+  const handleSkip = async () => {
+    await handleNext();
   };
 
   const handleViewMealPlan = () => {
