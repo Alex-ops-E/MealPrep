@@ -6,7 +6,6 @@ export interface ScrapeResult {
   errors: string[];
 }
 
-// Mock e-commerce URLs for different countries
 const ECOMMERCE_SITES = {
   US: [
     'https://amazon.com',
@@ -38,10 +37,16 @@ const ECOMMERCE_SITES = {
     'https://mediamarkt.de',
     'https://saturn.de',
     'https://otto.de'
+  ],
+  AE: [
+    'https://gcc.luluhypermarket.com/en-ae/grocery/',
+    'https://www.carrefouruae.com/mafuae/en/',
+    'https://www.noon.com/uae-en/grocery-store/',
+    'https://www.talabat.com/uae'
   ]
 };
 
-export async function scrapeProductPrices(query: string, country: string = 'US'): Promise<ScrapeResult> {
+export async function scrapeProductPrices(query: string, country: string = 'AE'): Promise<ScrapeResult> {
   const result: ScrapeResult = {
     products: [],
     prices: [],
@@ -49,21 +54,15 @@ export async function scrapeProductPrices(query: string, country: string = 'US')
   };
 
   try {
-    // Get country-specific e-commerce sites
-    const sites = ECOMMERCE_SITES[country as keyof typeof ECOMMERCE_SITES] || ECOMMERCE_SITES.US;
+    const sites = ECOMMERCE_SITES[country as keyof typeof ECOMMERCE_SITES] || ECOMMERCE_SITES.AE;
     
-    // For MVP, we'll simulate web scraping by generating mock HTML content
-    // In production, you would use Puppeteer/Playwright to actually scrape websites
     const mockHtmlContent = generateMockHtmlContent(query, country);
     
-    // Extract product information using GPT
     const extractedProducts = await extractProductInfo(mockHtmlContent, query);
     result.products = extractedProducts;
 
-    // Generate URLs for price comparison
     const searchUrls = sites.map(site => `${site}/search?q=${encodeURIComponent(query)}`);
     
-    // Extract prices from URLs using GPT
     const extractedPrices = await extractPricesFromUrls(searchUrls, query);
     result.prices = extractedPrices;
 
@@ -76,9 +75,6 @@ export async function scrapeProductPrices(query: string, country: string = 'US')
 }
 
 function generateMockHtmlContent(query: string, country: string): string {
-  // This simulates HTML content that would be scraped from e-commerce sites
-  // In production, replace this with actual web scraping using Puppeteer/Playwright
-  
   const queryLower = query.toLowerCase();
   let mockProducts = '';
 
@@ -86,7 +82,7 @@ function generateMockHtmlContent(query: string, country: string): string {
     mockProducts = `
       <div class="product">
         <h2>iPhone 15 Pro 128GB</h2>
-        <span class="price">$999.00</span>
+        <span class="price">AED 4,299.00</span>
         <span class="shipping">Free shipping</span>
         <span class="stock">In stock</span>
         <img src="https://images.unsplash.com/photo-1592286075296-b1826c1ac2e7" alt="iPhone 15 Pro">
@@ -94,8 +90,8 @@ function generateMockHtmlContent(query: string, country: string): string {
       </div>
       <div class="product">
         <h2>iPhone 14 128GB</h2>
-        <span class="price">$699.00</span>
-        <span class="shipping">$15.99 shipping</span>
+        <span class="price">AED 2,899.00</span>
+        <span class="shipping">AED 29.99 shipping</span>
         <span class="stock">In stock</span>
         <p class="description">Previous generation iPhone with A15 Bionic chip</p>
       </div>
@@ -104,7 +100,7 @@ function generateMockHtmlContent(query: string, country: string): string {
     mockProducts = `
       <div class="product">
         <h2>MacBook Air M2 256GB</h2>
-        <span class="price">$1199.00</span>
+        <span class="price">AED 4,699.00</span>
         <span class="shipping">Free shipping</span>
         <span class="stock">In stock</span>
         <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853" alt="MacBook Air">
@@ -112,7 +108,7 @@ function generateMockHtmlContent(query: string, country: string): string {
       </div>
       <div class="product">
         <h2>MacBook Pro 14-inch M3</h2>
-        <span class="price">$1999.00</span>
+        <span class="price">AED 7,999.00</span>
         <span class="shipping">Free shipping</span>
         <span class="stock">Limited stock</span>
         <p class="description">Professional laptop with M3 Pro chip</p>
@@ -122,7 +118,7 @@ function generateMockHtmlContent(query: string, country: string): string {
     mockProducts = `
       <div class="product">
         <h2>AirPods Pro (2nd Gen)</h2>
-        <span class="price">$249.00</span>
+        <span class="price">AED 949.00</span>
         <span class="shipping">Free shipping</span>
         <span class="stock">In stock</span>
         <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90" alt="AirPods Pro">
@@ -130,19 +126,18 @@ function generateMockHtmlContent(query: string, country: string): string {
       </div>
     `;
   } else {
-    // Generic product template
     mockProducts = `
       <div class="product">
         <h2>${query} - Premium Model</h2>
-        <span class="price">$299.00</span>
+        <span class="price">AED 299.00</span>
         <span class="shipping">Free shipping</span>
         <span class="stock">In stock</span>
         <p class="description">High-quality ${query} with premium features</p>
       </div>
       <div class="product">
         <h2>${query} - Standard Model</h2>
-        <span class="price">$199.00</span>
-        <span class="shipping">$9.99 shipping</span>
+        <span class="price">AED 199.00</span>
+        <span class="shipping">AED 19.99 shipping</span>
         <span class="stock">In stock</span>
         <p class="description">Standard ${query} with essential features</p>
       </div>
@@ -162,8 +157,8 @@ function generateMockHtmlContent(query: string, country: string): string {
   `;
 }
 
-export async function getProductAvailabilityUrls(productName: string, country: string = 'US'): Promise<string[]> {
-  const sites = ECOMMERCE_SITES[country as keyof typeof ECOMMERCE_SITES] || ECOMMERCE_SITES.US;
+export async function getProductAvailabilityUrls(productName: string, country: string = 'AE'): Promise<string[]> {
+  const sites = ECOMMERCE_SITES[country as keyof typeof ECOMMERCE_SITES] || ECOMMERCE_SITES.AE;
   return sites.map(site => `${site}/search?q=${encodeURIComponent(productName)}`);
 }
 
@@ -175,15 +170,15 @@ export interface IngredientPrice {
   url?: string;
 }
 
-export async function scrapeIngredientPrices(ingredientName: string, country: string = 'ID'): Promise<IngredientPrice[]> {
+export async function scrapeIngredientPrices(ingredientName: string, country: string = 'AE'): Promise<IngredientPrice[]> {
   const groceryStores = [
-    { name: 'Grab Food', url: 'https://food.grab.com/id/en/' },
-    { name: 'Gojek GoFood', url: 'https://www.gojek.com/en-id/gofood' },
-    { name: 'Superindo', url: 'https://www.superindo.co.id/' }
+    { name: 'Lulu Hypermarket', url: 'https://gcc.luluhypermarket.com/en-ae/grocery/' },
+    { name: 'Carrefour', url: 'https://www.carrefouruae.com/mafuae/en/' },
+    { name: 'Noon', url: 'https://www.noon.com/uae-en/grocery-store/' },
+    { name: 'Talabat', url: 'https://www.talabat.com/uae' }
   ];
   
   try {
-    // Use OpenAI to generate realistic Indonesian grocery prices
     const OpenAI = (await import('openai')).default;
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     
@@ -192,17 +187,18 @@ export async function scrapeIngredientPrices(ingredientName: string, country: st
       messages: [
         {
           role: "system",
-          content: `You are a price data expert for Indonesian grocery delivery platforms. Generate realistic price data for ingredients from these stores:
-- Grab Food (https://food.grab.com/id/en/)
-- Gojek GoFood (https://www.gojek.com/en-id/gofood)
-- Superindo (https://www.superindo.co.id/)
+          content: `You are a price data expert for UAE grocery delivery platforms. Generate realistic price data for ingredients from these stores:
+- Lulu Hypermarket (https://gcc.luluhypermarket.com/en-ae/grocery/)
+- Carrefour (https://www.carrefouruae.com/mafuae/en/)
+- Noon (https://www.noon.com/uae-en/grocery-store/)
+- Talabat (https://www.talabat.com/uae)
 
-Return prices in Indonesian Rupiah (IDR). Use realistic Indonesian market prices for ${new Date().getFullYear()}. Return data as a JSON object with this exact structure:
-{"prices": [{"store": "Grab Food", "price": number, "unitSize": "string"}, {"store": "Gojek GoFood", "price": number, "unitSize": "string"}, {"store": "Superindo", "price": number, "unitSize": "string"}]}`
+Return prices in UAE Dirhams (AED). Use realistic UAE market prices for ${new Date().getFullYear()}. Return data as a JSON object with this exact structure:
+{"prices": [{"store": "Lulu Hypermarket", "price": number, "unitSize": "string"}, {"store": "Carrefour", "price": number, "unitSize": "string"}, {"store": "Noon", "price": number, "unitSize": "string"}, {"store": "Talabat", "price": number, "unitSize": "string"}]}`
         },
         {
           role: "user",
-          content: `Generate realistic price quotes for "${ingredientName}" from Grab Food, Gojek GoFood, and Superindo. Include unit sizes common in Indonesia (e.g., "250g", "500g", "1kg", "per piece", "per pack").`
+          content: `Generate realistic price quotes for "${ingredientName}" from Lulu Hypermarket, Carrefour, Noon, and Talabat. Include unit sizes common in UAE (e.g., "250g", "500g", "1kg", "per piece", "per pack").`
         }
       ],
       response_format: { type: "json_object" },
@@ -216,7 +212,7 @@ Return prices in Indonesian Rupiah (IDR). Use realistic Indonesian market prices
       return {
         storeName: item.store,
         price: item.price,
-        currency: 'IDR',
+        currency: 'AED',
         unitSize: item.unitSize,
         url: storeInfo.url
       };
@@ -229,15 +225,14 @@ Return prices in Indonesian Rupiah (IDR). Use realistic Indonesian market prices
     console.error('Error generating prices with OpenAI:', error);
   }
 
-  // Fallback to mock prices if OpenAI fails
   const prices: IngredientPrice[] = groceryStores.map(store => {
-    const basePrice = Math.random() * 30000 + 10000;
-    const storeMultiplier = store.name === 'Superindo' ? 0.9 : store.name === 'Grab Food' ? 1.1 : 1;
+    const basePrice = Math.random() * 30 + 5;
+    const storeMultiplier = store.name === 'Lulu Hypermarket' ? 0.9 : store.name === 'Carrefour' ? 0.95 : store.name === 'Noon' ? 1.0 : 1.1;
     
     return {
       storeName: store.name,
-      price: parseFloat((basePrice * storeMultiplier).toFixed(0)),
-      currency: 'IDR',
+      price: parseFloat((basePrice * storeMultiplier).toFixed(2)),
+      currency: 'AED',
       unitSize: getUnitSize(ingredientName),
       url: store.url
     };
@@ -249,25 +244,25 @@ Return prices in Indonesian Rupiah (IDR). Use realistic Indonesian market prices
 function getUnitSize(ingredientName: string): string {
   const lowerName = ingredientName.toLowerCase();
   
-  if (lowerName.includes('milk') || lowerName.includes('susu')) {
+  if (lowerName.includes('milk') || lowerName.includes('حليب')) {
     return '1 liter';
   }
-  if (lowerName.includes('egg') || lowerName.includes('telur')) {
-    return 'per 10 butir';
+  if (lowerName.includes('egg') || lowerName.includes('بيض')) {
+    return 'per 12 eggs';
   }
-  if (lowerName.includes('bread') || lowerName.includes('roti')) {
+  if (lowerName.includes('bread') || lowerName.includes('خبز')) {
     return 'per pack';
   }
-  if (lowerName.includes('chicken') || lowerName.includes('ayam') || lowerName.includes('beef') || lowerName.includes('daging')) {
+  if (lowerName.includes('chicken') || lowerName.includes('دجاج') || lowerName.includes('beef') || lowerName.includes('لحم')) {
     return '500g';
   }
-  if (lowerName.includes('rice') || lowerName.includes('beras')) {
+  if (lowerName.includes('rice') || lowerName.includes('أرز')) {
     return '1kg';
   }
-  if (lowerName.includes('oil') || lowerName.includes('minyak')) {
+  if (lowerName.includes('oil') || lowerName.includes('زيت')) {
     return '1 liter';
   }
-  if (lowerName.includes('vegetable') || lowerName.includes('sayur')) {
+  if (lowerName.includes('vegetable') || lowerName.includes('خضار')) {
     return '250g';
   }
   

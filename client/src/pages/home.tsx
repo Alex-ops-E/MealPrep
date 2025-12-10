@@ -507,42 +507,46 @@ export default function Home() {
 function PriceComparisonView({ shoppingList }: { shoppingList: ShoppingListItem[] }) {
   const { t } = useLanguage();
   
-  // Mock stores data
   const stores: Store[] = [
     {
       id: "1",
-      name: "Superindo",
+      name: "Lulu Hypermarket",
+      logo: "🛒",
+      rating: 4.6,
+    },
+    {
+      id: "2",
+      name: "Carrefour",
       logo: "🏪",
       rating: 4.5,
     },
     {
-      id: "2",
-      name: "Alfamart",
-      logo: "🏬",
-      rating: 4.3,
+      id: "3",
+      name: "Noon",
+      logo: "🌙",
+      rating: 4.4,
     },
     {
-      id: "3",
-      name: "Indomaret",
-      logo: "🏪",
-      rating: 4.4,
+      id: "4",
+      name: "Talabat",
+      logo: "🧡",
+      rating: 4.3,
     },
   ];
 
-  // Generate mock price quotes for each ingredient
   const priceQuotes: PriceQuote[] = useMemo(() => {
     const quotes: PriceQuote[] = [];
     shoppingList.forEach((item, itemIndex) => {
       stores.forEach((store, storeIndex) => {
-        const basePrice = 5000 + Math.random() * 45000;
-        const variation = storeIndex === 0 ? 0.9 : storeIndex === 1 ? 1.1 : 1.0;
+        const basePrice = 5 + Math.random() * 45;
+        const variation = storeIndex === 0 ? 0.9 : storeIndex === 1 ? 0.95 : storeIndex === 2 ? 1.0 : 1.1;
         quotes.push({
           id: `quote-${itemIndex}-${storeIndex}`,
           ingredientName: item.ingredientName,
           storeId: store.id,
-          price: Math.round(basePrice * variation / 100) * 100,
+          price: Math.round(basePrice * variation * 100) / 100,
           unitSize: `${item.quantity} ${item.unit}`,
-          currency: "IDR",
+          currency: "AED",
         });
       });
     });
@@ -569,10 +573,10 @@ function PriceComparisonView({ shoppingList }: { shoppingList: ShoppingListItem[
   }, [basketTotals]);
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("id-ID", {
+    return new Intl.NumberFormat("en-AE", {
       style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
+      currency: "AED",
+      minimumFractionDigits: 2,
     }).format(price);
   };
 
@@ -582,8 +586,7 @@ function PriceComparisonView({ shoppingList }: { shoppingList: ShoppingListItem[
         {t("priceComparison.title")}
       </h1>
 
-      {/* Basket Totals */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {basketTotals.map((basket) => {
           const store = stores.find((s) => s.id === basket.storeId);
           const isBestDeal = basket.storeId === bestDeal.storeId;

@@ -10,8 +10,8 @@ import { ChefHat, Clock, Users, ArrowLeft, ShoppingCart, Lightbulb } from "lucid
 import type { RecipeWithDetails, Ingredient } from "@shared/schema";
 
 export default function RecipeDetail() {
-  const { t, language } = useLanguage();
-  const [, params] = useRoute("/:lang(en|id)/recipe/:id");
+  const { t, language, isRTL } = useLanguage();
+  const [, params] = useRoute("/:lang(en|ar)/recipe/:id");
   const [, setLocation] = useLocation();
   const { setShoppingList } = useShopping();
   const recipeId = params?.id;

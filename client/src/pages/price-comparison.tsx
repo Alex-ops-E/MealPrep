@@ -13,6 +13,7 @@ interface Store {
   name: string;
   logo: string;
   rating: number;
+  url: string;
 }
 
 interface PriceQuote {
@@ -32,7 +33,7 @@ interface IngredientRow {
 }
 
 export default function PriceComparison() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { shoppingList } = useShopping();
   
   const [ingredients, setIngredients] = useState<IngredientRow[]>([
@@ -61,25 +62,34 @@ export default function PriceComparison() {
     }
   }, [shoppingList]);
 
-  // Mock stores data
   const stores: Store[] = [
     {
       id: "1",
-      name: "Superindo",
-      logo: "🏪",
-      rating: 4.5,
+      name: "Lulu Hypermarket",
+      logo: "🛒",
+      rating: 4.6,
+      url: "https://gcc.luluhypermarket.com/en-ae/grocery/",
     },
     {
       id: "2",
-      name: "Alfamart",
-      logo: "🏬",
-      rating: 4.3,
+      name: "Carrefour",
+      logo: "🏪",
+      rating: 4.5,
+      url: "https://www.carrefouruae.com/mafuae/en/",
     },
     {
       id: "3",
-      name: "Indomaret",
-      logo: "🏪",
+      name: "Noon",
+      logo: "🌙",
       rating: 4.4,
+      url: "https://www.noon.com/uae-en/grocery-store/",
+    },
+    {
+      id: "4",
+      name: "Talabat",
+      logo: "🧡",
+      rating: 4.3,
+      url: "https://www.talabat.com/uae",
     },
   ];
 
@@ -107,32 +117,29 @@ export default function PriceComparison() {
     }
   };
 
-  // Filter out empty ingredients for price comparison
   const validIngredients = ingredients.filter(ing => ing.name.trim() !== "");
 
-  // Generate mock price quotes for each ingredient
   const priceQuotes: PriceQuote[] = useMemo(() => {
     if (!showResults) return [];
     
     const quotes: PriceQuote[] = [];
     validIngredients.forEach((item, itemIndex) => {
       stores.forEach((store, storeIndex) => {
-        const basePrice = 5000 + Math.random() * 45000;
-        const variation = storeIndex === 0 ? 0.9 : storeIndex === 1 ? 1.1 : 1.0;
+        const basePrice = 5 + Math.random() * 45;
+        const variation = storeIndex === 0 ? 0.9 : storeIndex === 1 ? 1.0 : storeIndex === 2 ? 1.05 : 1.1;
         quotes.push({
           id: `quote-${itemIndex}-${storeIndex}`,
           ingredientName: item.name,
           storeId: store.id,
-          price: Math.round(basePrice * variation / 100) * 100,
+          price: Math.round(basePrice * variation * 100) / 100,
           unitSize: `${item.quantity} ${item.unit}`,
-          currency: "IDR",
+          currency: "AED",
         });
       });
     });
     return quotes;
   }, [showResults, validIngredients]);
 
-  // Calculate basket totals for each store
   const basketTotals = useMemo(() => {
     return stores.map((store) => {
       const storeQuotes = priceQuotes.filter((q) => q.storeId === store.id);
@@ -152,15 +159,15 @@ export default function PriceComparison() {
   }, [basketTotals]);
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("id-ID", {
+    return new Intl.NumberFormat("en-AE", {
       style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
+      currency: "AED",
+      minimumFractionDigits: 2,
     }).format(price);
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className={`min-h-screen flex flex-col bg-gray-50 ${isRTL ? 'rtl' : 'ltr'}`}>
       <Header />
       
       <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
@@ -169,7 +176,6 @@ export default function PriceComparison() {
             {t("priceComparison.title")}
           </h1>
 
-          {/* Ingredient Input Form */}
           {!showResults && (
             <div className="space-y-4 mb-6">
               <div className="grid grid-cols-12 gap-4 mb-2">
@@ -246,11 +252,9 @@ export default function PriceComparison() {
             </div>
           )}
 
-          {/* Price Comparison Results */}
           {showResults && validIngredients.length > 0 && (
             <>
-              {/* Basket Totals */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 {basketTotals.map((basket) => {
                   const store = stores.find((s) => s.id === basket.storeId);
                   const isBestDeal = basket.storeId === bestDeal.storeId;
@@ -263,7 +267,7 @@ export default function PriceComparison() {
                           ? "border-green-500 bg-green-50"
                           : "border-gray-200 bg-white"
                       }`}
-                      data-testid={`store-card-${store?.name.toLowerCase()}`}
+                      data-testid={`store-card-${store?.name.toLowerCase().replace(/\s+/g, '-')}`}
                     >
                       {isBestDeal && (
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full">
@@ -280,7 +284,7 @@ export default function PriceComparison() {
                           </div>
                         </div>
                       </div>
-                      <div className="text-2xl font-bold text-gray-900" data-testid={`total-${store?.name.toLowerCase()}`}>
+                      <div className="text-2xl font-bold text-gray-900" data-testid={`total-${store?.name.toLowerCase().replace(/\s+/g, '-')}`}>
                         {formatPrice(basket.total)}
                       </div>
                     </div>
@@ -288,18 +292,17 @@ export default function PriceComparison() {
                 })}
               </div>
 
-              {/* Price Breakdown Table */}
               <div className="overflow-x-auto mb-6">
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-b-2 border-gray-200">
-                      <th className="text-left py-3 px-4 font-semibold text-gray-900">
+                      <th className={`${isRTL ? 'text-right' : 'text-left'} py-3 px-4 font-semibold text-gray-900`}>
                         {t("priceComparison.ingredient")}
                       </th>
                       {stores.map((store) => (
                         <th
                           key={store.id}
-                          className="text-right py-3 px-4 font-semibold text-gray-900"
+                          className={`${isRTL ? 'text-left' : 'text-right'} py-3 px-4 font-semibold text-gray-900`}
                         >
                           {store.name}
                         </th>
@@ -315,7 +318,7 @@ export default function PriceComparison() {
 
                       return (
                         <tr key={item.id} className="border-b border-gray-100">
-                          <td className="py-3 px-4 text-gray-900" data-testid={`ingredient-${item.id}`}>
+                          <td className={`py-3 px-4 text-gray-900`} data-testid={`ingredient-${item.id}`}>
                             <div>
                               <div className="font-medium">{item.name}</div>
                               <div className="text-sm text-gray-500">
@@ -330,14 +333,14 @@ export default function PriceComparison() {
                             return (
                               <td
                                 key={store.id}
-                                className={`text-right py-3 px-4 ${
+                                className={`${isRTL ? 'text-left' : 'text-right'} py-3 px-4 ${
                                   isBest ? "font-bold text-green-600" : "text-gray-700"
                                 }`}
-                                data-testid={`price-${item.id}-${store.name.toLowerCase()}`}
+                                data-testid={`price-${item.id}-${store.name.toLowerCase().replace(/\s+/g, '-')}`}
                               >
                                 {quote ? formatPrice(quote.price) : "-"}
                                 {isBest && (
-                                  <span className="ml-2 text-xs text-green-600">
+                                  <span className={`${isRTL ? 'mr-2' : 'ml-2'} text-xs text-green-600`}>
                                     {t("priceComparison.bestDeal")}
                                   </span>
                                 )}

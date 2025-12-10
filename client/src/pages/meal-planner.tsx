@@ -55,8 +55,8 @@ export default function MealPlanner() {
   const [meals, setMeals] = useState<MealWithRecipe[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   
-  const handleLanguageChange = (newLang: "en" | "id") => {
-    const currentPath = location.replace(/^\/(en|id)/, '');
+  const handleLanguageChange = (newLang: "en" | "ar") => {
+    const currentPath = location.replace(/^\/(en|ar)/, '');
     setLocationNav(`/${newLang}${currentPath || ''}`);
   };
   
@@ -205,11 +205,11 @@ export default function MealPlanner() {
                     🇺🇸 {t("language.english")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => handleLanguageChange("id")}
-                    className={language === "id" ? "bg-blue-50" : ""}
-                    data-testid="language-indonesian"
+                    onClick={() => handleLanguageChange("ar")}
+                    className={language === "ar" ? "bg-blue-50" : ""}
+                    data-testid="language-arabic"
                   >
-                    🇮🇩 {t("language.indonesian")}
+                    🇦🇪 {t("language.arabic")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

@@ -16,14 +16,14 @@ function Router() {
   return (
     <Switch>
       <Route path="/">
-        <Redirect to="/id" />
+        <Redirect to="/ar" />
       </Route>
       
-      <Route path="/:lang(en|id)" component={Home} />
-      <Route path="/:lang(en|id)/onboarding" component={Onboarding} />
-      <Route path="/:lang(en|id)/meal-planner" component={MealPlanner} />
-      <Route path="/:lang(en|id)/recipe/:id" component={RecipeDetail} />
-      <Route path="/:lang(en|id)/price-comparison" component={PriceComparison} />
+      <Route path="/:lang(en|ar)" component={Home} />
+      <Route path="/:lang(en|ar)/onboarding" component={Onboarding} />
+      <Route path="/:lang(en|ar)/meal-planner" component={MealPlanner} />
+      <Route path="/:lang(en|ar)/recipe/:id" component={RecipeDetail} />
+      <Route path="/:lang(en|ar)/price-comparison" component={PriceComparison} />
       
       <Route component={NotFound} />
     </Switch>

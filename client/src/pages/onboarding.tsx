@@ -28,11 +28,10 @@ const COOKING_FREQUENCY = [
 ];
 
 const PREFERRED_STORES = [
-  "superindo",
-  "alfamart",
-  "indomaret",
-  "lazada",
-  "shopee"
+  "lulu",
+  "carrefour",
+  "noon",
+  "talabat"
 ];
 
 const DIET_PREFERENCES = [
@@ -48,12 +47,12 @@ const DIET_PREFERENCES = [
 
 export default function Onboarding() {
   const [location, setLocation] = useLocation();
-  const { t, language } = useLanguage();
+  const { t, language, isRTL } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const handleLanguageChange = (newLang: "en" | "id") => {
-    const currentPath = location.replace(/^\/(en|id)/, '');
+  const handleLanguageChange = (newLang: "en" | "ar") => {
+    const currentPath = location.replace(/^\/(en|ar)/, '');
     setLocation(`/${newLang}${currentPath || ''}`);
   };
 
@@ -292,7 +291,7 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-purple-50 flex items-center justify-center px-4">
+    <div className={`min-h-screen bg-gradient-to-br from-orange-50 via-white to-purple-50 flex items-center justify-center px-4 ${isRTL ? 'rtl' : 'ltr'}`}>
       <Card className="w-full max-w-2xl p-8 shadow-xl">
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
@@ -316,11 +315,11 @@ export default function Onboarding() {
                     🇺🇸 {t("language.english")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => handleLanguageChange("id")}
-                    className={language === "id" ? "bg-blue-50" : ""}
-                    data-testid="language-indonesian"
+                    onClick={() => handleLanguageChange("ar")}
+                    className={language === "ar" ? "bg-blue-50" : ""}
+                    data-testid="language-arabic"
                   >
-                    🇮🇩 {t("language.indonesian")}
+                    🇦🇪 {t("language.arabic")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -353,7 +352,7 @@ export default function Onboarding() {
             disabled={currentStep === 1}
             data-testid="button-back"
           >
-            <ChevronLeft className="h-4 w-4 mr-2" />
+            <ChevronLeft className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
             {t("onboarding.back")}
           </Button>
 
@@ -364,7 +363,7 @@ export default function Onboarding() {
               data-testid="button-next"
             >
               {t("onboarding.next")}
-              <ChevronRight className="h-4 w-4 ml-2" />
+              <ChevronRight className={`h-4 w-4 ${isRTL ? 'mr-2' : 'ml-2'}`} />
             </Button>
           ) : (
             <Button

@@ -15,11 +15,12 @@ Preferred communication style: Simple, everyday language.
 ### Frontend Architecture
 - **Framework**: React 18 with TypeScript for type safety and modern development
 - **Routing**: Wouter for lightweight, hook-based routing with language-based URL structure
-- **Internationalization**: Full multilingual support with Indonesian as the default language
-  - Language prefix in URL structure (e.g., `/id/meal-planner`, `/en/onboarding`)
+- **Internationalization**: Full multilingual support with Arabic as the default language
+  - Language prefix in URL structure (e.g., `/ar/meal-planner`, `/en/onboarding`)
   - Automatic language detection from URL path
   - Language switcher that changes URL to maintain current page context
-  - Supported languages: Indonesian (id), English (en)
+  - Supported languages: Arabic (ar), English (en)
+  - RTL (Right-to-Left) support for Arabic language
 - **State Management**: TanStack Query (React Query) for server state management and caching
 - **UI Components**: Radix UI primitives with shadcn/ui design system for consistent, accessible components
 - **Styling**: Tailwind CSS with CSS variables for theming and responsive design
@@ -141,7 +142,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Third-Party Service Integrations
 - **OpenAI API**: AI service for recipe generation and intelligent ingredient analysis
-- **Simulated Grocery Store APIs**: Mock price data for multiple Indonesian grocery platforms (Grab Food, Gojek GoFood, Superindo)
+- **Simulated Grocery Store APIs**: Mock price data for UAE grocery platforms (Lulu Hypermarket, Carrefour, Noon, Talabat)
 
 ## API Endpoints
 

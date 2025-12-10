@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-type Language = "en" | "id";
+type Language = "en" | "ar";
 
 interface HeaderProps {
   currentStep?: number;
@@ -17,19 +17,19 @@ interface HeaderProps {
 
 export default function Header({ currentStep }: HeaderProps) {
   const [location, setLocation] = useLocation();
-  const { language, t } = useLanguage();
+  const { language, t, isRTL } = useLanguage();
   
   const isActive = (path: string) => {
     return location === `/${language}${path}` || location === `/${language}${path}/`;
   };
   
   const handleLanguageChange = (newLang: Language) => {
-    const currentPath = location.replace(/^\/(en|id)/, '');
+    const currentPath = location.replace(/^\/(en|ar)/, '');
     setLocation(`/${newLang}${currentPath || ''}`);
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <header className={`bg-white border-b border-gray-200 sticky top-0 z-50 ${isRTL ? 'rtl' : 'ltr'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-2">
@@ -84,11 +84,11 @@ export default function Header({ currentStep }: HeaderProps) {
                   🇺🇸 {t("language.english")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => handleLanguageChange("id")}
-                  className={language === "id" ? "bg-blue-50" : ""}
-                  data-testid="language-indonesian"
+                  onClick={() => handleLanguageChange("ar")}
+                  className={language === "ar" ? "bg-blue-50" : ""}
+                  data-testid="language-arabic"
                 >
-                  🇮🇩 {t("language.indonesian")}
+                  🇦🇪 {t("language.arabic")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
