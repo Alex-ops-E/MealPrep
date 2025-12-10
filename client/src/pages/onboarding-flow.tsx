@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ChevronRight, ChevronLeft, Globe, Calendar, Clock, Utensils, DollarSign, Flame, Dumbbell, Plus, RefreshCw, Edit, MessageSquare, ShoppingCart } from "lucide-react";
+import { ChevronRight, ChevronLeft, Globe, Calendar, Utensils, DollarSign, Flame, Dumbbell, Plus, RefreshCw, Edit, MessageSquare, ShoppingCart } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   DropdownMenu,
@@ -14,12 +14,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+const GROCERY_GOALS = ["saveMoney", "eatHealthier", "tryNewRecipes", "trackProgress"];
+const COOKING_FREQUENCY = ["daily", "coupleTimes", "weekly", "rarely"];
+const DIET_PREFERENCES = ["noPreference", "vegetarian", "vegan", "keto", "halal", "glutenFree", "dairyFree", "other"];
+
 const DAYS_OF_WEEK = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
-
 const CUISINES = ["healthy", "arabic", "indian", "asian", "mediterranean", "western"];
-
 const PRICE_OPTIONS = ["20", "40", "90", "none"];
-
 const CALORIE_OPTIONS = ["custom", "300-650", "600+"];
 const PROTEIN_OPTIONS = ["custom", "20-40", "40+"];
 
@@ -38,7 +39,6 @@ interface MealPlan {
   calories: number;
   protein: number;
   price: number;
-  image?: string;
 }
 
 const SAMPLE_MEALS: MealPlan[] = [
@@ -64,6 +64,12 @@ export default function OnboardingFlow() {
     setLocation(`/${newLang}${currentPath || ''}`);
   };
 
+  const [groceryGoal, setGroceryGoal] = useState<string>("");
+  const [cookingFrequency, setCookingFrequency] = useState<string>("");
+  const [preferredStoresOnboarding, setPreferredStoresOnboarding] = useState<string[]>([]);
+  const [dietPreferences, setDietPreferences] = useState<string[]>([]);
+  const [otherDiet, setOtherDiet] = useState("");
+
   const [mealSlots, setMealSlots] = useState({
     breakfast: true,
     lunch: true,
@@ -86,7 +92,19 @@ export default function OnboardingFlow() {
   const [proteinOption, setProteinOption] = useState<string>("");
   const [customProtein, setCustomProtein] = useState("");
 
-  const totalSteps = 2;
+  const totalSteps = 6;
+
+  const handleOnboardingStoreToggle = (store: string) => {
+    setPreferredStoresOnboarding(prev =>
+      prev.includes(store) ? prev.filter(s => s !== store) : [...prev, store]
+    );
+  };
+
+  const handleDietToggle = (diet: string) => {
+    setDietPreferences(prev =>
+      prev.includes(diet) ? prev.filter(d => d !== diet) : [...prev, diet]
+    );
+  };
 
   const handleMealToggle = (meal: keyof typeof mealSlots) => {
     setMealSlots(prev => ({ ...prev, [meal]: !prev[meal] }));
@@ -94,25 +112,19 @@ export default function OnboardingFlow() {
 
   const handleDayToggle = (day: string) => {
     setSelectedDays(prev =>
-      prev.includes(day)
-        ? prev.filter(d => d !== day)
-        : [...prev, day]
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
     );
   };
 
   const handleCuisineToggle = (cuisine: string) => {
     setPreferredCuisines(prev =>
-      prev.includes(cuisine)
-        ? prev.filter(c => c !== cuisine)
-        : [...prev, cuisine]
+      prev.includes(cuisine) ? prev.filter(c => c !== cuisine) : [...prev, cuisine]
     );
   };
 
   const handleStoreToggle = (store: string) => {
     setFavoriteStores(prev =>
-      prev.includes(store)
-        ? prev.filter(s => s !== store)
-        : [...prev, store]
+      prev.includes(store) ? prev.filter(s => s !== store) : [...prev, store]
     );
   };
 
@@ -126,6 +138,9 @@ export default function OnboardingFlow() {
   };
 
   const handleNext = () => {
+    if (currentStep === 4 && preferredStoresOnboarding.length > 0) {
+      setFavoriteStores(preferredStoresOnboarding);
+    }
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
     }
@@ -139,12 +154,16 @@ export default function OnboardingFlow() {
     }
   };
 
+  const handleSkip = () => {
+    handleNext();
+  };
+
   const handleViewMealPlan = () => {
     setShowResults(true);
   };
 
-  const canProceedStep1 = startDate && selectedDays.length >= 2 && Object.values(mealSlots).some(v => v);
-  const canProceedStep2 = pricePerMeal !== "";
+  const canProceedStep5 = startDate && selectedDays.length >= 2 && Object.values(mealSlots).some(v => v);
+  const canProceedStep6 = pricePerMeal !== "";
 
   const getFilteredMeals = (type: "breakfast" | "lunch" | "dinner") => {
     return SAMPLE_MEALS.filter(meal => meal.type === type);
@@ -152,6 +171,35 @@ export default function OnboardingFlow() {
 
   const translations: Record<string, Record<string, string>> = {
     en: {
+      "onb.q1.title": "What's your main grocery goal?",
+      "onb.q1.subtitle": "Choose what matters most to you",
+      "onb.q1.saveMoney": "Save Money",
+      "onb.q1.eatHealthier": "Eat Healthier",
+      "onb.q1.tryNewRecipes": "Try New Recipes",
+      "onb.q1.trackProgress": "Track Progress",
+      "onb.q2.title": "How often do you cook at home?",
+      "onb.q2.subtitle": "Choose the option that best describes you",
+      "onb.q2.daily": "Daily",
+      "onb.q2.coupleTimes": "A couple times a week",
+      "onb.q2.weekly": "Weekly",
+      "onb.q2.rarely": "Rarely / I mostly order",
+      "onb.q3.title": "Where do you usually shop or order groceries?",
+      "onb.q3.subtitle": "Select all that apply",
+      "onb.q3.lulu": "Lulu Hypermarket",
+      "onb.q3.carrefour": "Carrefour",
+      "onb.q3.noon": "Noon",
+      "onb.q3.talabat": "Talabat",
+      "onb.q4.title": "Any dietary preferences or restrictions?",
+      "onb.q4.subtitle": "Select all that apply",
+      "onb.q4.noPreference": "No preference",
+      "onb.q4.vegetarian": "Vegetarian",
+      "onb.q4.vegan": "Vegan",
+      "onb.q4.keto": "Keto / Low Carb",
+      "onb.q4.halal": "Halal",
+      "onb.q4.glutenFree": "Gluten-Free",
+      "onb.q4.dairyFree": "Dairy-Free",
+      "onb.q4.other": "Other",
+      "onb.q4.otherPlaceholder": "Please specify your preference",
       "flow.step1Header": "Create my meal plan – Step 1 / 2",
       "flow.step2Header": "Create my meal plan – Step 2 / 2",
       "flow.basicSetup": "Basic Setup",
@@ -169,6 +217,7 @@ export default function OnboardingFlow() {
       "flow.selectAtLeast2": "Select at least 2 days",
       "flow.next": "Next",
       "flow.back": "Back",
+      "flow.skip": "Skip",
       "flow.preferences": "Preferences",
       "flow.pricePerMeal": "Price per meal",
       "flow.upTo": "Up to",
@@ -207,6 +256,35 @@ export default function OnboardingFlow() {
       "flow.sun": "Sun",
     },
     ar: {
+      "onb.q1.title": "ما هو هدفك الرئيسي من التسوق؟",
+      "onb.q1.subtitle": "اختر ما يهمك أكثر",
+      "onb.q1.saveMoney": "توفير المال",
+      "onb.q1.eatHealthier": "أكل صحي أكثر",
+      "onb.q1.tryNewRecipes": "تجربة وصفات جديدة",
+      "onb.q1.trackProgress": "تتبع التقدم",
+      "onb.q2.title": "كم مرة تطبخ في المنزل؟",
+      "onb.q2.subtitle": "اختر الخيار الذي يصفك أفضل",
+      "onb.q2.daily": "يومياً",
+      "onb.q2.coupleTimes": "عدة مرات في الأسبوع",
+      "onb.q2.weekly": "أسبوعياً",
+      "onb.q2.rarely": "نادراً / أطلب في الغالب",
+      "onb.q3.title": "أين تتسوق عادة أو تطلب البقالة؟",
+      "onb.q3.subtitle": "اختر كل ما ينطبق",
+      "onb.q3.lulu": "لولو هايبرماركت",
+      "onb.q3.carrefour": "كارفور",
+      "onb.q3.noon": "نون",
+      "onb.q3.talabat": "طلبات",
+      "onb.q4.title": "أي نظام غذائي أو تفضيلات طعام؟",
+      "onb.q4.subtitle": "اختر كل ما ينطبق",
+      "onb.q4.noPreference": "لا تفضيل محدد",
+      "onb.q4.vegetarian": "نباتي",
+      "onb.q4.vegan": "نباتي صرف",
+      "onb.q4.keto": "كيتو / منخفض الكربوهيدرات",
+      "onb.q4.halal": "حلال",
+      "onb.q4.glutenFree": "خالي من الغلوتين",
+      "onb.q4.dairyFree": "خالي من الألبان",
+      "onb.q4.other": "أخرى",
+      "onb.q4.otherPlaceholder": "يرجى تحديد تفضيلك",
       "flow.step1Header": "إنشاء خطة وجباتي – الخطوة 1 / 2",
       "flow.step2Header": "إنشاء خطة وجباتي – الخطوة 2 / 2",
       "flow.basicSetup": "الإعداد الأساسي",
@@ -224,6 +302,7 @@ export default function OnboardingFlow() {
       "flow.selectAtLeast2": "اختر يومين على الأقل",
       "flow.next": "التالي",
       "flow.back": "رجوع",
+      "flow.skip": "تخطي",
       "flow.preferences": "التفضيلات",
       "flow.pricePerMeal": "السعر لكل وجبة",
       "flow.upTo": "حتى",
@@ -265,7 +344,123 @@ export default function OnboardingFlow() {
 
   const tf = (key: string) => translations[language]?.[key] || translations.en[key] || key;
 
-  const renderStep1 = () => (
+  const renderOnboardingStep1 = () => (
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold text-gray-900" data-testid="text-question-title">
+          {tf("onb.q1.title")}
+        </h2>
+        <p className="text-gray-600" data-testid="text-question-subtitle">
+          {tf("onb.q1.subtitle")}
+        </p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {GROCERY_GOALS.map((goal) => (
+          <Button
+            key={goal}
+            variant={groceryGoal === goal ? "default" : "outline"}
+            className={`h-auto py-4 ${groceryGoal === goal ? "bg-orange-600 hover:bg-orange-700" : ""}`}
+            onClick={() => setGroceryGoal(goal)}
+            data-testid={`button-goal-${goal}`}
+          >
+            {tf(`onb.q1.${goal}`)}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderOnboardingStep2 = () => (
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold text-gray-900" data-testid="text-question-title">
+          {tf("onb.q2.title")}
+        </h2>
+        <p className="text-gray-600" data-testid="text-question-subtitle">
+          {tf("onb.q2.subtitle")}
+        </p>
+      </div>
+      <div className="grid grid-cols-1 gap-3">
+        {COOKING_FREQUENCY.map((freq) => (
+          <Button
+            key={freq}
+            variant={cookingFrequency === freq ? "default" : "outline"}
+            className={`h-auto py-4 ${cookingFrequency === freq ? "bg-orange-600 hover:bg-orange-700" : ""}`}
+            onClick={() => setCookingFrequency(freq)}
+            data-testid={`button-frequency-${freq}`}
+          >
+            {tf(`onb.q2.${freq}`)}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderOnboardingStep3 = () => (
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold text-gray-900" data-testid="text-question-title">
+          {tf("onb.q3.title")}
+        </h2>
+        <p className="text-gray-600" data-testid="text-question-subtitle">
+          {tf("onb.q3.subtitle")}
+        </p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {PREFERRED_STORES.map((store) => (
+          <Button
+            key={store.id}
+            variant={preferredStoresOnboarding.includes(store.id) ? "default" : "outline"}
+            className={`h-auto py-4 ${preferredStoresOnboarding.includes(store.id) ? "bg-orange-600 hover:bg-orange-700" : ""}`}
+            onClick={() => handleOnboardingStoreToggle(store.id)}
+            data-testid={`button-store-${store.id}`}
+          >
+            {tf(`onb.q3.${store.id}`)}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderOnboardingStep4 = () => (
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold text-gray-900" data-testid="text-question-title">
+          {tf("onb.q4.title")}
+        </h2>
+        <p className="text-gray-600" data-testid="text-question-subtitle">
+          {tf("onb.q4.subtitle")}
+        </p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {DIET_PREFERENCES.map((diet) => (
+          <Button
+            key={diet}
+            variant={dietPreferences.includes(diet) ? "default" : "outline"}
+            className={`h-auto py-4 ${dietPreferences.includes(diet) ? "bg-orange-600 hover:bg-orange-700" : ""}`}
+            onClick={() => handleDietToggle(diet)}
+            data-testid={`button-diet-${diet}`}
+          >
+            {tf(`onb.q4.${diet}`)}
+          </Button>
+        ))}
+      </div>
+      {dietPreferences.includes("other") && (
+        <div className="mt-4">
+          <Input
+            type="text"
+            placeholder={tf("onb.q4.otherPlaceholder")}
+            value={otherDiet}
+            onChange={(e) => setOtherDiet(e.target.value)}
+            className="w-full"
+            data-testid="input-other-diet"
+          />
+        </div>
+      )}
+    </div>
+  );
+
+  const renderMealPlanStep1 = () => (
     <div className="space-y-8">
       <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
         <h2 className="text-xl font-bold text-orange-800" data-testid="text-step1-header">
@@ -365,7 +560,7 @@ export default function OnboardingFlow() {
     </div>
   );
 
-  const renderStep2 = () => (
+  const renderMealPlanStep2 = () => (
     <div className="space-y-8">
       <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
         <h2 className="text-xl font-bold text-orange-800" data-testid="text-step2-header">
@@ -425,7 +620,7 @@ export default function OnboardingFlow() {
                 variant={favoriteStores.includes(store.id) ? "default" : "outline"}
                 className={`${favoriteStores.includes(store.id) ? "bg-orange-600 hover:bg-orange-700" : ""}`}
                 onClick={() => handleStoreToggle(store.id)}
-                data-testid={`button-store-${store.id}`}
+                data-testid={`button-fav-store-${store.id}`}
               >
                 {language === "ar" ? store.nameAr : store.name}
               </Button>
@@ -436,7 +631,7 @@ export default function OnboardingFlow() {
                 variant={favoriteStores.includes(store.id) ? "default" : "outline"}
                 className={`${favoriteStores.includes(store.id) ? "bg-orange-600 hover:bg-orange-700" : ""}`}
                 onClick={() => handleStoreToggle(store.id)}
-                data-testid={`button-store-${store.id}`}
+                data-testid={`button-fav-store-${store.id}`}
               >
                 {store.name}
               </Button>
@@ -646,12 +841,27 @@ export default function OnboardingFlow() {
     if (showResults) return renderResults();
     switch (currentStep) {
       case 1:
-        return renderStep1();
+        return renderOnboardingStep1();
       case 2:
-        return renderStep2();
+        return renderOnboardingStep2();
+      case 3:
+        return renderOnboardingStep3();
+      case 4:
+        return renderOnboardingStep4();
+      case 5:
+        return renderMealPlanStep1();
+      case 6:
+        return renderMealPlanStep2();
       default:
         return null;
     }
+  };
+
+  const getStepLabel = () => {
+    if (currentStep <= 4) {
+      return `${language === "ar" ? "الخطوة" : "Step"} ${currentStep} / 4`;
+    }
+    return "";
   };
 
   return (
@@ -668,22 +878,27 @@ export default function OnboardingFlow() {
             {language === "ar" ? "الرئيسية" : "Home"}
           </Button>
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2" data-testid="button-language">
-                <Globe className="h-4 w-4" />
-                <span className="uppercase">{language}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleLanguageChange("en")} data-testid="language-english">
-                🇺🇸 English
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleLanguageChange("ar")} data-testid="language-arabic">
-                🇦🇪 العربية
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-2">
+            {currentStep <= 4 && (
+              <span className="text-sm text-gray-500">{getStepLabel()}</span>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2" data-testid="button-language">
+                  <Globe className="h-4 w-4" />
+                  <span className="uppercase">{language}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleLanguageChange("en")} data-testid="language-english">
+                  🇺🇸 English
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleLanguageChange("ar")} data-testid="language-arabic">
+                  🇦🇪 العربية
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {!showResults && (
@@ -713,27 +928,40 @@ export default function OnboardingFlow() {
                 {tf("flow.back")}
               </Button>
 
-              {currentStep < totalSteps ? (
-                <Button
-                  onClick={handleNext}
-                  disabled={!canProceedStep1}
-                  className="bg-orange-600 hover:bg-orange-700"
-                  data-testid="button-next"
-                >
-                  {tf("flow.next")}
-                  <ChevronRight className={`h-4 w-4 ${isRTL ? 'mr-2' : 'ml-2'}`} />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleViewMealPlan}
-                  disabled={!canProceedStep2}
-                  className="bg-orange-600 hover:bg-orange-700"
-                  data-testid="button-view-plan"
-                >
-                  {tf("flow.viewMealPlan")}
-                  <ChevronRight className={`h-4 w-4 ${isRTL ? 'mr-2' : 'ml-2'}`} />
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {currentStep <= 4 && (
+                  <Button
+                    variant="ghost"
+                    onClick={handleSkip}
+                    className="text-gray-500"
+                    data-testid="button-skip"
+                  >
+                    {tf("flow.skip")}
+                  </Button>
+                )}
+
+                {currentStep < totalSteps ? (
+                  <Button
+                    onClick={handleNext}
+                    disabled={currentStep === 5 && !canProceedStep5}
+                    className="bg-orange-600 hover:bg-orange-700"
+                    data-testid="button-next"
+                  >
+                    {tf("flow.next")}
+                    <ChevronRight className={`h-4 w-4 ${isRTL ? 'mr-2' : 'ml-2'}`} />
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleViewMealPlan}
+                    disabled={!canProceedStep6}
+                    className="bg-orange-600 hover:bg-orange-700"
+                    data-testid="button-view-plan"
+                  >
+                    {tf("flow.viewMealPlan")}
+                    <ChevronRight className={`h-4 w-4 ${isRTL ? 'mr-2' : 'ml-2'}`} />
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </Card>
