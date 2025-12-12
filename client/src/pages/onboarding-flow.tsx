@@ -181,7 +181,7 @@ export default function OnboardingFlow() {
   };
 
   const handleViewMealPlan = () => {
-    setShowResults(true);
+    setLocation(`/${language}/meal-planner`);
   };
 
   const canProceedStep5 = startDate && selectedDays.length >= 2 && Object.values(mealSlots).some(v => v);
