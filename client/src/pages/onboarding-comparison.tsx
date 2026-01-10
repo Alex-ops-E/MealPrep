@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ChevronRight, ChevronLeft, Globe, Store, Search, TrendingDown, ShoppingCart, Plus, Check, Tag, Percent } from "lucide-react";
+import { ChevronRight, ChevronLeft, Globe, Store, Search, TrendingDown, ShoppingCart, Plus, Check, Percent, ArrowRight, Sparkles } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -20,28 +20,51 @@ const PREFERRED_STORES = [
   { id: "talabat", name: "Talabat", nameAr: "طلبات", logo: "🍽️", color: "bg-orange-500" },
 ];
 
-const SHOPPING_FREQUENCY = ["weekly", "biweekly", "monthly", "asNeeded"];
-const BUDGET_OPTIONS = ["under500", "500to1000", "1000to2000", "over2000"];
 const COMPARISON_PRIORITIES = ["lowestPrice", "bestDeals", "fastestDelivery", "organicOptions"];
 
-interface GroceryItem {
-  id: string;
-  name: string;
-  nameAr: string;
-  category: string;
+interface DemoPrice {
+  store: string;
+  storeAr: string;
+  price: number;
+  originalPrice: number;
+  logo: string;
+  color: string;
 }
 
-const SAMPLE_GROCERIES: GroceryItem[] = [
-  { id: "1", name: "Chicken Breast", nameAr: "صدور الدجاج", category: "meat" },
-  { id: "2", name: "Fresh Milk", nameAr: "حليب طازج", category: "dairy" },
-  { id: "3", name: "Eggs (30 pack)", nameAr: "بيض (30 حبة)", category: "dairy" },
-  { id: "4", name: "Rice (5kg)", nameAr: "أرز (5 كجم)", category: "grains" },
-  { id: "5", name: "Olive Oil", nameAr: "زيت زيتون", category: "oils" },
-  { id: "6", name: "Tomatoes", nameAr: "طماطم", category: "vegetables" },
-  { id: "7", name: "Onions", nameAr: "بصل", category: "vegetables" },
-  { id: "8", name: "Bananas", nameAr: "موز", category: "fruits" },
-  { id: "9", name: "Apples", nameAr: "تفاح", category: "fruits" },
-  { id: "10", name: "Bread", nameAr: "خبز", category: "bakery" },
+const DEMO_ITEMS = [
+  {
+    id: "chicken",
+    name: "Chicken Breast (1kg)",
+    nameAr: "صدور دجاج (1 كجم)",
+    prices: [
+      { store: "Lulu Hypermarket", storeAr: "لولو هايبرماركت", price: 28, originalPrice: 35, logo: "🛒", color: "bg-green-500" },
+      { store: "Carrefour", storeAr: "كارفور", price: 32, originalPrice: 32, logo: "🏪", color: "bg-blue-500" },
+      { store: "Noon", storeAr: "نون", price: 30, originalPrice: 38, logo: "🌙", color: "bg-yellow-500" },
+      { store: "Talabat", storeAr: "طلبات", price: 35, originalPrice: 35, logo: "🍽️", color: "bg-orange-500" },
+    ]
+  },
+  {
+    id: "milk",
+    name: "Fresh Milk (1L)",
+    nameAr: "حليب طازج (1 لتر)",
+    prices: [
+      { store: "Lulu Hypermarket", storeAr: "لولو هايبرماركت", price: 7, originalPrice: 7, logo: "🛒", color: "bg-green-500" },
+      { store: "Carrefour", storeAr: "كارفور", price: 6.5, originalPrice: 8, logo: "🏪", color: "bg-blue-500" },
+      { store: "Noon", storeAr: "نون", price: 7.5, originalPrice: 7.5, logo: "🌙", color: "bg-yellow-500" },
+      { store: "Talabat", storeAr: "طلبات", price: 8, originalPrice: 8, logo: "🍽️", color: "bg-orange-500" },
+    ]
+  },
+  {
+    id: "rice",
+    name: "Basmati Rice (5kg)",
+    nameAr: "أرز بسمتي (5 كجم)",
+    prices: [
+      { store: "Lulu Hypermarket", storeAr: "لولو هايبرماركت", price: 45, originalPrice: 52, logo: "🛒", color: "bg-green-500" },
+      { store: "Carrefour", storeAr: "كارفور", price: 48, originalPrice: 48, logo: "🏪", color: "bg-blue-500" },
+      { store: "Noon", storeAr: "نون", price: 42, originalPrice: 55, logo: "🌙", color: "bg-yellow-500" },
+      { store: "Talabat", storeAr: "طلبات", price: 50, originalPrice: 50, logo: "🍽️", color: "bg-orange-500" },
+    ]
+  }
 ];
 
 export default function OnboardingComparison() {
@@ -55,15 +78,12 @@ export default function OnboardingComparison() {
   };
 
   const [selectedStores, setSelectedStores] = useState<string[]>([]);
-  const [shoppingFrequency, setShoppingFrequency] = useState<string>("");
-  const [monthlyBudget, setMonthlyBudget] = useState<string>("");
   const [comparisonPriority, setComparisonPriority] = useState<string>("");
-  const [selectedGroceries, setSelectedGroceries] = useState<string[]>([]);
-  const [customItem, setCustomItem] = useState("");
-  const [customItems, setCustomItems] = useState<{id: string; name: string}[]>([]);
   const [showAddStore, setShowAddStore] = useState(false);
   const [customStoreName, setCustomStoreName] = useState("");
   const [customStores, setCustomStores] = useState<{id: string; name: string}[]>([]);
+  const [selectedDemoItem, setSelectedDemoItem] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const totalSteps = 4;
 
@@ -79,22 +99,8 @@ export default function OnboardingComparison() {
       "comp.enterStoreName": "Enter store name",
       "comp.add": "Add",
       
-      "comp.step2.title": "How often do you shop?",
-      "comp.step2.subtitle": "This helps us optimize your price alerts",
-      "comp.weekly": "Weekly",
-      "comp.biweekly": "Every 2 weeks",
-      "comp.monthly": "Monthly",
-      "comp.asNeeded": "As needed",
-      
-      "comp.step3.title": "What's your monthly grocery budget?",
-      "comp.step3.subtitle": "We'll help you find the best deals within your budget",
-      "comp.under500": "Under 500 AED",
-      "comp.500to1000": "500 - 1,000 AED",
-      "comp.1000to2000": "1,000 - 2,000 AED",
-      "comp.over2000": "Over 2,000 AED",
-      
-      "comp.step4.title": "What matters most to you?",
-      "comp.step4.subtitle": "We'll prioritize results based on your preference",
+      "comp.step2.title": "What matters most to you?",
+      "comp.step2.subtitle": "We'll prioritize results based on your preference",
       "comp.lowestPrice": "Lowest Price",
       "comp.lowestPriceDesc": "Always show the cheapest option first",
       "comp.bestDeals": "Best Deals & Offers",
@@ -104,11 +110,27 @@ export default function OnboardingComparison() {
       "comp.organicOptions": "Organic & Healthy",
       "comp.organicOptionsDesc": "Focus on organic and health products",
       
+      "comp.step3.title": "Let's try it! Search for an item",
+      "comp.step3.subtitle": "Type a grocery item to see prices across stores",
+      "comp.searchPlaceholder": "e.g. chicken, milk, rice...",
+      "comp.orTry": "Or try these popular items:",
+      "comp.bestPrice": "Best Price",
+      "comp.savings": "Save",
+      
+      "comp.step4.title": "See how easy it is!",
+      "comp.step4.subtitle": "Here's how we compare prices for you",
+      "comp.demoTitle": "Price Comparison",
+      "comp.lowestPriceLabel": "Lowest",
+      "comp.addToCart": "Add to Cart",
+      "comp.youSave": "You save",
+      "comp.comparedTo": "compared to highest price",
+      
       "comp.back": "Back",
       "comp.next": "Next",
       "comp.skip": "Skip",
       "comp.startComparing": "Start Comparing Prices",
       "comp.step": "Step",
+      "comp.tryAnother": "Try another item",
     },
     ar: {
       "comp.step1.title": "أين تتسوق عادة؟",
@@ -121,22 +143,8 @@ export default function OnboardingComparison() {
       "comp.enterStoreName": "أدخل اسم المتجر",
       "comp.add": "إضافة",
       
-      "comp.step2.title": "كم مرة تتسوق؟",
-      "comp.step2.subtitle": "يساعدنا هذا في تحسين تنبيهات الأسعار الخاصة بك",
-      "comp.weekly": "أسبوعياً",
-      "comp.biweekly": "كل أسبوعين",
-      "comp.monthly": "شهرياً",
-      "comp.asNeeded": "حسب الحاجة",
-      
-      "comp.step3.title": "ما هي ميزانيتك الشهرية للبقالة؟",
-      "comp.step3.subtitle": "سنساعدك في العثور على أفضل العروض ضمن ميزانيتك",
-      "comp.under500": "أقل من 500 درهم",
-      "comp.500to1000": "500 - 1,000 درهم",
-      "comp.1000to2000": "1,000 - 2,000 درهم",
-      "comp.over2000": "أكثر من 2,000 درهم",
-      
-      "comp.step4.title": "ما الأهم بالنسبة لك؟",
-      "comp.step4.subtitle": "سنعطي الأولوية للنتائج بناءً على تفضيلاتك",
+      "comp.step2.title": "ما الأهم بالنسبة لك؟",
+      "comp.step2.subtitle": "سنعطي الأولوية للنتائج بناءً على تفضيلاتك",
       "comp.lowestPrice": "أقل سعر",
       "comp.lowestPriceDesc": "عرض الخيار الأرخص دائماً أولاً",
       "comp.bestDeals": "أفضل العروض والخصومات",
@@ -146,11 +154,27 @@ export default function OnboardingComparison() {
       "comp.organicOptions": "عضوي وصحي",
       "comp.organicOptionsDesc": "التركيز على المنتجات العضوية والصحية",
       
+      "comp.step3.title": "لنجرب! ابحث عن منتج",
+      "comp.step3.subtitle": "اكتب منتج بقالة لترى الأسعار في المتاجر المختلفة",
+      "comp.searchPlaceholder": "مثال: دجاج، حليب، أرز...",
+      "comp.orTry": "أو جرب هذه المنتجات الشائعة:",
+      "comp.bestPrice": "أفضل سعر",
+      "comp.savings": "وفر",
+      
+      "comp.step4.title": "انظر كم هو سهل!",
+      "comp.step4.subtitle": "إليك كيف نقارن الأسعار لك",
+      "comp.demoTitle": "مقارنة الأسعار",
+      "comp.lowestPriceLabel": "الأقل",
+      "comp.addToCart": "أضف للسلة",
+      "comp.youSave": "توفر",
+      "comp.comparedTo": "مقارنة بأعلى سعر",
+      
       "comp.back": "رجوع",
       "comp.next": "التالي",
       "comp.skip": "تخطي",
       "comp.startComparing": "ابدأ مقارنة الأسعار",
       "comp.step": "الخطوة",
+      "comp.tryAnother": "جرب منتج آخر",
     }
   };
 
@@ -179,9 +203,9 @@ export default function OnboardingComparison() {
         await apiRequest("POST", "/api/onboarding", {
           sessionId,
           groceryGoal: comparisonPriority || null,
-          cookingFrequency: shoppingFrequency || null,
+          cookingFrequency: null,
           preferredStores: selectedStores.length > 0 ? selectedStores : null,
-          dietPreferences: monthlyBudget ? [monthlyBudget] : null,
+          dietPreferences: null,
           email: null,
         });
       } catch (error) {
@@ -209,12 +233,18 @@ export default function OnboardingComparison() {
   const canProceed = () => {
     switch (currentStep) {
       case 1: return selectedStores.length > 0;
-      case 2: return shoppingFrequency !== "";
-      case 3: return monthlyBudget !== "";
-      case 4: return comparisonPriority !== "";
+      case 2: return comparisonPriority !== "";
+      case 3: return true;
+      case 4: return true;
       default: return true;
     }
   };
+
+  const currentDemoItem = DEMO_ITEMS[selectedDemoItem];
+  const sortedPrices = [...currentDemoItem.prices].sort((a, b) => a.price - b.price);
+  const lowestPrice = sortedPrices[0].price;
+  const highestPrice = sortedPrices[sortedPrices.length - 1].price;
+  const potentialSavings = highestPrice - lowestPrice;
 
   const renderStep1 = () => (
     <div className="space-y-6">
@@ -314,90 +344,14 @@ export default function OnboardingComparison() {
   const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-          <ShoppingCart className="h-8 w-8 text-blue-600" />
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
+          <TrendingDown className="h-8 w-8 text-purple-600" />
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2" data-testid="text-step-title">
           {tf("comp.step2.title")}
         </h2>
         <p className="text-gray-600" data-testid="text-step-subtitle">
           {tf("comp.step2.subtitle")}
-        </p>
-      </div>
-
-      <div className="space-y-3">
-        {SHOPPING_FREQUENCY.map(freq => (
-          <button
-            key={freq}
-            onClick={() => setShoppingFrequency(freq)}
-            className={`w-full p-4 rounded-xl border-2 transition-all text-start ${
-              shoppingFrequency === freq
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-200 hover:border-gray-300"
-            }`}
-            data-testid={`button-frequency-${freq}`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-medium text-gray-900">{tf(`comp.${freq}`)}</span>
-              {shoppingFrequency === freq && (
-                <Check className="h-5 w-5 text-blue-600" />
-              )}
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderStep3 = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-          <Tag className="h-8 w-8 text-green-600" />
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2" data-testid="text-step-title">
-          {tf("comp.step3.title")}
-        </h2>
-        <p className="text-gray-600" data-testid="text-step-subtitle">
-          {tf("comp.step3.subtitle")}
-        </p>
-      </div>
-
-      <div className="space-y-3">
-        {BUDGET_OPTIONS.map(budget => (
-          <button
-            key={budget}
-            onClick={() => setMonthlyBudget(budget)}
-            className={`w-full p-4 rounded-xl border-2 transition-all text-start ${
-              monthlyBudget === budget
-                ? "border-green-500 bg-green-50"
-                : "border-gray-200 hover:border-gray-300"
-            }`}
-            data-testid={`button-budget-${budget}`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-medium text-gray-900">{tf(`comp.${budget}`)}</span>
-              {monthlyBudget === budget && (
-                <Check className="h-5 w-5 text-green-600" />
-              )}
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderStep4 = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
-          <TrendingDown className="h-8 w-8 text-purple-600" />
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2" data-testid="text-step-title">
-          {tf("comp.step4.title")}
-        </h2>
-        <p className="text-gray-600" data-testid="text-step-subtitle">
-          {tf("comp.step4.subtitle")}
         </p>
       </div>
 
@@ -439,6 +393,187 @@ export default function OnboardingComparison() {
             </button>
           );
         })}
+      </div>
+    </div>
+  );
+
+  const renderStep3 = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-6">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+          <Search className="h-8 w-8 text-blue-600" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2" data-testid="text-step-title">
+          {tf("comp.step3.title")}
+        </h2>
+        <p className="text-gray-600" data-testid="text-step-subtitle">
+          {tf("comp.step3.subtitle")}
+        </p>
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={tf("comp.searchPlaceholder")}
+          className="pl-10 h-12 text-lg"
+          data-testid="input-search"
+        />
+      </div>
+
+      <div>
+        <p className="text-sm text-gray-500 mb-3">{tf("comp.orTry")}</p>
+        <div className="flex flex-wrap gap-2">
+          {DEMO_ITEMS.map((item, index) => (
+            <Button
+              key={item.id}
+              variant={selectedDemoItem === index ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedDemoItem(index)}
+              className={selectedDemoItem === index ? "bg-blue-600" : ""}
+              data-testid={`button-demo-${item.id}`}
+            >
+              {language === "ar" ? item.nameAr : item.name}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 border border-green-200">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-gray-900">
+            {language === "ar" ? currentDemoItem.nameAr : currentDemoItem.name}
+          </h3>
+          <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+            <Sparkles className="h-3 w-3" />
+            {tf("comp.savings")} {potentialSavings} AED
+          </span>
+        </div>
+        
+        <div className="space-y-2">
+          {sortedPrices.map((price, index) => (
+            <div
+              key={price.store}
+              className={`flex items-center justify-between p-3 rounded-lg ${
+                index === 0 ? "bg-green-100 border-2 border-green-400" : "bg-white"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 ${price.color} rounded-lg flex items-center justify-center text-lg`}>
+                  {price.logo}
+                </div>
+                <span className="font-medium text-gray-800">
+                  {language === "ar" ? price.storeAr : price.store}
+                </span>
+                {index === 0 && (
+                  <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded">
+                    {tf("comp.bestPrice")}
+                  </span>
+                )}
+              </div>
+              <div className="text-right">
+                <span className={`font-bold ${index === 0 ? "text-green-600 text-lg" : "text-gray-700"}`}>
+                  {price.price} AED
+                </span>
+                {price.originalPrice > price.price && (
+                  <span className="text-xs text-gray-400 line-through ml-2">
+                    {price.originalPrice} AED
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStep4 = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-6">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+          <ShoppingCart className="h-8 w-8 text-green-600" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2" data-testid="text-step-title">
+          {tf("comp.step4.title")}
+        </h2>
+        <p className="text-gray-600" data-testid="text-step-subtitle">
+          {tf("comp.step4.subtitle")}
+        </p>
+      </div>
+
+      <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-4 text-white">
+          <h3 className="font-bold text-lg">{tf("comp.demoTitle")}</h3>
+        </div>
+        
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-4 pb-4 border-b">
+            <h4 className="font-semibold text-gray-900">
+              {language === "ar" ? currentDemoItem.nameAr : currentDemoItem.name}
+            </h4>
+          </div>
+          
+          {sortedPrices.slice(0, 3).map((price, index) => (
+            <div
+              key={price.store}
+              className={`flex items-center justify-between p-3 mb-2 rounded-lg ${
+                index === 0 ? "bg-green-50 border border-green-200" : "bg-gray-50"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 ${price.color} rounded-lg flex items-center justify-center text-xl`}>
+                  {price.logo}
+                </div>
+                <div>
+                  <span className="font-medium text-gray-800 block">
+                    {language === "ar" ? price.storeAr : price.store}
+                  </span>
+                  {index === 0 && (
+                    <span className="text-xs text-green-600 font-medium">
+                      {tf("comp.lowestPriceLabel")} ✓
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`font-bold text-lg ${index === 0 ? "text-green-600" : "text-gray-700"}`}>
+                  {price.price} AED
+                </span>
+                <Button
+                  size="sm"
+                  className={index === 0 ? "bg-green-600 hover:bg-green-700" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}
+                  data-testid={`button-add-cart-${price.store}`}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="bg-green-50 p-4 border-t border-green-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-green-700 font-medium">{tf("comp.youSave")} </span>
+              <span className="text-green-700 font-bold text-xl">{potentialSavings} AED</span>
+            </div>
+            <span className="text-sm text-green-600">{tf("comp.comparedTo")}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-center">
+        <Button
+          variant="outline"
+          onClick={() => setSelectedDemoItem((prev) => (prev + 1) % DEMO_ITEMS.length)}
+          className="gap-2"
+          data-testid="button-try-another"
+        >
+          {tf("comp.tryAnother")}
+          <ArrowRight className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
