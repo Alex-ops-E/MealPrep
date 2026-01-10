@@ -126,7 +126,6 @@ export default function OnboardingComparison() {
       "comp.step5.benefit1": "Free lifetime access to all premium features",
       "comp.step5.benefit2": "Early access to new stores and deals",
       "comp.step5.benefit3": "Priority customer support",
-      "comp.step5.benefit4": "Exclusive member-only discounts",
       "comp.emailPlaceholder": "Enter your email",
       "comp.namePlaceholder": "Your name (optional)",
       "comp.getBetaAccess": "Get Lifetime Beta Access",
@@ -184,7 +183,6 @@ export default function OnboardingComparison() {
       "comp.step5.benefit1": "وصول مجاني مدى الحياة لجميع الميزات المميزة",
       "comp.step5.benefit2": "وصول مبكر للمتاجر والعروض الجديدة",
       "comp.step5.benefit3": "دعم عملاء ذو أولوية",
-      "comp.step5.benefit4": "خصومات حصرية للأعضاء فقط",
       "comp.emailPlaceholder": "أدخل بريدك الإلكتروني",
       "comp.namePlaceholder": "اسمك (اختياري)",
       "comp.getBetaAccess": "احصل على وصول بيتا مدى الحياة",
@@ -656,7 +654,6 @@ export default function OnboardingComparison() {
             { icon: Gift, text: tf("comp.step5.benefit1") },
             { icon: Sparkles, text: tf("comp.step5.benefit2") },
             { icon: Mail, text: tf("comp.step5.benefit3") },
-            { icon: Percent, text: tf("comp.step5.benefit4") },
           ].map((benefit, index) => (
             <div key={index} className="flex items-center gap-3">
               <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
