@@ -3,9 +3,10 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ChevronRight, ChevronLeft, Globe, Store, Search, TrendingDown, ShoppingCart, Plus, Check, Percent, ArrowRight, Sparkles } from "lucide-react";
+import { ChevronRight, ChevronLeft, Globe, Store, Search, TrendingDown, ShoppingCart, Plus, Check, Percent, ArrowRight, Sparkles, Crown, Mail, Gift } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,15 +22,6 @@ const PREFERRED_STORES = [
 ];
 
 const COMPARISON_PRIORITIES = ["lowestPrice", "bestDeals", "fastestDelivery", "organicOptions"];
-
-interface DemoPrice {
-  store: string;
-  storeAr: string;
-  price: number;
-  originalPrice: number;
-  logo: string;
-  color: string;
-}
 
 const DEMO_ITEMS = [
   {
@@ -70,7 +62,9 @@ const DEMO_ITEMS = [
 export default function OnboardingComparison() {
   const [location, setLocation] = useLocation();
   const { language, isRTL } = useLanguage();
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLanguageChange = (newLang: "en" | "ar") => {
     const currentPath = location.replace(/^\/(en|ar)/, '');
@@ -84,8 +78,10 @@ export default function OnboardingComparison() {
   const [customStores, setCustomStores] = useState<{id: string; name: string}[]>([]);
   const [selectedDemoItem, setSelectedDemoItem] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [betaEmail, setBetaEmail] = useState("");
+  const [betaName, setBetaName] = useState("");
 
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   const translations: Record<string, Record<string, string>> = {
     en: {
@@ -124,6 +120,20 @@ export default function OnboardingComparison() {
       "comp.addToCart": "Add to Cart",
       "comp.youSave": "You save",
       "comp.comparedTo": "compared to highest price",
+      
+      "comp.step5.title": "Get Lifetime Beta Access",
+      "comp.step5.subtitle": "Be among the first to use our full price comparison features",
+      "comp.step5.benefit1": "Free lifetime access to all premium features",
+      "comp.step5.benefit2": "Early access to new stores and deals",
+      "comp.step5.benefit3": "Priority customer support",
+      "comp.step5.benefit4": "Exclusive member-only discounts",
+      "comp.emailPlaceholder": "Enter your email",
+      "comp.namePlaceholder": "Your name (optional)",
+      "comp.getBetaAccess": "Get Lifetime Beta Access",
+      "comp.skipForNow": "Skip for now",
+      "comp.joining": "Joining...",
+      "comp.successTitle": "Welcome to the Beta!",
+      "comp.successMessage": "You're now a lifetime beta member.",
       
       "comp.back": "Back",
       "comp.next": "Next",
@@ -169,6 +179,20 @@ export default function OnboardingComparison() {
       "comp.youSave": "توفر",
       "comp.comparedTo": "مقارنة بأعلى سعر",
       
+      "comp.step5.title": "احصل على وصول بيتا مدى الحياة",
+      "comp.step5.subtitle": "كن من أوائل المستخدمين لميزات مقارنة الأسعار الكاملة",
+      "comp.step5.benefit1": "وصول مجاني مدى الحياة لجميع الميزات المميزة",
+      "comp.step5.benefit2": "وصول مبكر للمتاجر والعروض الجديدة",
+      "comp.step5.benefit3": "دعم عملاء ذو أولوية",
+      "comp.step5.benefit4": "خصومات حصرية للأعضاء فقط",
+      "comp.emailPlaceholder": "أدخل بريدك الإلكتروني",
+      "comp.namePlaceholder": "اسمك (اختياري)",
+      "comp.getBetaAccess": "احصل على وصول بيتا مدى الحياة",
+      "comp.skipForNow": "تخطي الآن",
+      "comp.joining": "جاري الانضمام...",
+      "comp.successTitle": "مرحباً بك في البيتا!",
+      "comp.successMessage": "أنت الآن عضو بيتا مدى الحياة.",
+      
       "comp.back": "رجوع",
       "comp.next": "التالي",
       "comp.skip": "تخطي",
@@ -196,21 +220,54 @@ export default function OnboardingComparison() {
     }
   };
 
+  const saveOnboardingData = async (email?: string | null) => {
+    try {
+      const sessionId = `comparison_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      await apiRequest("POST", "/api/onboarding", {
+        sessionId,
+        groceryGoal: comparisonPriority || null,
+        cookingFrequency: null,
+        preferredStores: selectedStores.length > 0 ? selectedStores : null,
+        dietPreferences: null,
+        email: email || null,
+      });
+    } catch (error) {
+      console.error("Failed to save onboarding:", error);
+    }
+  };
+
+  const handleBetaSignup = async () => {
+    if (!betaEmail.trim()) return;
+    
+    setIsSubmitting(true);
+    try {
+      await apiRequest("POST", "/api/waitlist", {
+        email: betaEmail.trim(),
+        name: betaName.trim() || null,
+      });
+      
+      await saveOnboardingData(betaEmail.trim());
+      
+      toast({
+        title: tf("comp.successTitle"),
+        description: tf("comp.successMessage"),
+      });
+      
+      setLocation(`/${language}/price-comparison`);
+    } catch (error: any) {
+      toast({
+        title: language === "ar" ? "خطأ" : "Error",
+        description: error.message || (language === "ar" ? "حدث خطأ، حاول مرة أخرى" : "Something went wrong, please try again"),
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleNext = async () => {
     if (currentStep === totalSteps) {
-      try {
-        const sessionId = `comparison_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-        await apiRequest("POST", "/api/onboarding", {
-          sessionId,
-          groceryGoal: comparisonPriority || null,
-          cookingFrequency: null,
-          preferredStores: selectedStores.length > 0 ? selectedStores : null,
-          dietPreferences: null,
-          email: null,
-        });
-      } catch (error) {
-        console.error("Failed to save onboarding:", error);
-      }
+      await saveOnboardingData();
       setLocation(`/${language}/price-comparison`);
       return;
     }
@@ -236,6 +293,7 @@ export default function OnboardingComparison() {
       case 2: return comparisonPriority !== "";
       case 3: return true;
       case 4: return true;
+      case 5: return true;
       default: return true;
     }
   };
@@ -578,12 +636,87 @@ export default function OnboardingComparison() {
     </div>
   );
 
+  const renderStep5 = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-6">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full mb-4">
+          <Crown className="h-8 w-8 text-white" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2" data-testid="text-step-title">
+          {tf("comp.step5.title")}
+        </h2>
+        <p className="text-gray-600" data-testid="text-step-subtitle">
+          {tf("comp.step5.subtitle")}
+        </p>
+      </div>
+
+      <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-xl p-4 border border-orange-200">
+        <div className="space-y-3">
+          {[
+            { icon: Gift, text: tf("comp.step5.benefit1") },
+            { icon: Sparkles, text: tf("comp.step5.benefit2") },
+            { icon: Mail, text: tf("comp.step5.benefit3") },
+            { icon: Percent, text: tf("comp.step5.benefit4") },
+          ].map((benefit, index) => (
+            <div key={index} className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                <benefit.icon className="h-4 w-4 text-orange-600" />
+              </div>
+              <span className="text-gray-700">{benefit.text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="relative">
+          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Input
+            type="email"
+            value={betaEmail}
+            onChange={(e) => setBetaEmail(e.target.value)}
+            placeholder={tf("comp.emailPlaceholder")}
+            className="pl-10 h-12"
+            data-testid="input-beta-email"
+          />
+        </div>
+        <Input
+          value={betaName}
+          onChange={(e) => setBetaName(e.target.value)}
+          placeholder={tf("comp.namePlaceholder")}
+          className="h-12"
+          data-testid="input-beta-name"
+        />
+      </div>
+
+      <Button
+        onClick={handleBetaSignup}
+        disabled={!betaEmail.trim() || isSubmitting}
+        className="w-full h-12 bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white font-semibold"
+        data-testid="button-beta-signup"
+      >
+        {isSubmitting ? tf("comp.joining") : tf("comp.getBetaAccess")}
+        <Crown className="h-5 w-5 ml-2" />
+      </Button>
+
+      <Button
+        variant="ghost"
+        onClick={handleNext}
+        className="w-full text-gray-500"
+        data-testid="button-skip-beta"
+      >
+        {tf("comp.skipForNow")}
+      </Button>
+    </div>
+  );
+
   const renderStep = () => {
     switch (currentStep) {
       case 1: return renderStep1();
       case 2: return renderStep2();
       case 3: return renderStep3();
       case 4: return renderStep4();
+      case 5: return renderStep5();
       default: return null;
     }
   };
@@ -638,38 +771,54 @@ export default function OnboardingComparison() {
         <Card className="p-6 md:p-8 shadow-xl mb-24">
           {renderStep()}
 
-          <div className="mt-8 flex justify-between">
-            <Button
-              variant="outline"
-              onClick={handleBack}
-              disabled={currentStep === 1}
-              data-testid="button-back"
-            >
-              <ChevronLeft className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-              {tf("comp.back")}
-            </Button>
-
-            <div className="flex gap-2">
+          {currentStep !== 5 && (
+            <div className="mt-8 flex justify-between">
               <Button
-                variant="ghost"
-                onClick={handleSkip}
-                className="text-gray-500"
-                data-testid="button-skip"
+                variant="outline"
+                onClick={handleBack}
+                disabled={currentStep === 1}
+                data-testid="button-back"
               >
-                {tf("comp.skip")}
+                <ChevronLeft className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                {tf("comp.back")}
               </Button>
 
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={handleSkip}
+                  className="text-gray-500"
+                  data-testid="button-skip"
+                >
+                  {tf("comp.skip")}
+                </Button>
+
+                <Button
+                  onClick={handleNext}
+                  disabled={!canProceed()}
+                  className="bg-orange-600 hover:bg-orange-700"
+                  data-testid="button-next"
+                >
+                  {tf("comp.next")}
+                  <ChevronRight className={`h-4 w-4 ${isRTL ? 'mr-2' : 'ml-2'}`} />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 5 && (
+            <div className="mt-4">
               <Button
-                onClick={handleNext}
-                disabled={!canProceed()}
-                className="bg-orange-600 hover:bg-orange-700"
-                data-testid="button-next"
+                variant="outline"
+                onClick={handleBack}
+                className="w-full"
+                data-testid="button-back"
               >
-                {currentStep === totalSteps ? tf("comp.startComparing") : tf("comp.next")}
-                <ChevronRight className={`h-4 w-4 ${isRTL ? 'mr-2' : 'ml-2'}`} />
+                <ChevronLeft className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                {tf("comp.back")}
               </Button>
             </div>
-          </div>
+          )}
         </Card>
       </div>
     </div>
