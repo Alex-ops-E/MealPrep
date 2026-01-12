@@ -51,6 +51,7 @@ export const onboardingResponses = pgTable("onboarding_responses", {
   preferredStores: text("preferred_stores").array(),
   dietPreferences: text("diet_preferences").array(),
   email: text("email"),
+  ipHash: text("ip_hash"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
