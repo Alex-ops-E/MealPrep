@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { createHash } from "crypto";
 import { storage } from "./storage";
 import { generateRecipe, generateMeal } from "./services/openai";
 import { 
@@ -10,6 +11,18 @@ import {
   type RecipeWithDetails
 } from "@shared/schema";
 import { z } from "zod";
+
+function hashIP(ip: string): string {
+  return createHash("sha256").update(ip).digest("hex");
+}
+
+function getClientIP(req: any): string {
+  const forwarded = req.headers["x-forwarded-for"];
+  if (forwarded) {
+    return (typeof forwarded === "string" ? forwarded : forwarded[0]).split(",")[0].trim();
+  }
+  return req.socket?.remoteAddress || req.ip || "unknown";
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -130,7 +143,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/onboarding", async (req, res) => {
     try {
       const onboardingData = insertOnboardingResponseSchema.parse(req.body);
-      const response = await storage.createOnboardingResponse(onboardingData);
+      
+      const clientIP = getClientIP(req);
+      const ipHash = hashIP(clientIP);
+      
+      const response = await storage.createOnboardingResponse({
+        ...onboardingData,
+        ipHash,
+      });
       res.json(response);
     } catch (error) {
       console.error("Create onboarding response error:", error);
