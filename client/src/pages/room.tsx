@@ -3,7 +3,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogIn, LogOut, User, ShoppingCart, ChefHat, Tag, Loader2 } from "lucide-react";
+import { LogIn, LogOut, User, ShoppingCart, ChefHat, Tag, Loader2, Utensils } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 export default function Room() {
@@ -55,7 +55,17 @@ export default function Room() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-2">
+                <Link href={`/${language}/meal-tracker`}>
+                  <Button 
+                    variant="outline" 
+                    className="w-full h-24 flex flex-col gap-2 border-emerald-200 bg-emerald-50 hover:bg-emerald-100"
+                    data-testid="button-meal-tracker"
+                  >
+                    <Utensils className="h-6 w-6 text-emerald-600" />
+                    <span className="text-emerald-700">{t("room.mealTracker")}</span>
+                  </Button>
+                </Link>
                 <Link href={`/${language}/meal-planner`}>
                   <Button 
                     variant="outline" 
