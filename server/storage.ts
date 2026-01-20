@@ -8,7 +8,9 @@ import {
   type Meal,
   type InsertMeal,
   type OnboardingResponse,
-  type InsertOnboardingResponse
+  type InsertOnboardingResponse,
+  type MealLog,
+  type InsertMealLog
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
@@ -33,6 +35,11 @@ export interface IStorage {
   // Onboarding
   createOnboardingResponse(response: InsertOnboardingResponse): Promise<OnboardingResponse>;
   getOnboardingBySession(sessionId: string): Promise<OnboardingResponse | undefined>;
+  
+  // Meal Logs
+  createMealLog(mealLog: InsertMealLog): Promise<MealLog>;
+  getMealLogsByUser(userId: string, date?: string): Promise<MealLog[]>;
+  deleteMealLog(id: string): Promise<void>;
 }
 
 // Reference: blueprint:javascript_database for database integration
@@ -98,6 +105,26 @@ export class DatabaseStorage implements IStorage {
   async getOnboardingBySession(sessionId: string): Promise<OnboardingResponse | undefined> {
     const [response] = await db.select().from(schema.onboardingResponses).where(eq(schema.onboardingResponses.sessionId, sessionId));
     return response;
+  }
+
+  async createMealLog(mealLog: InsertMealLog): Promise<MealLog> {
+    const [log] = await db.insert(schema.mealLogs).values(mealLog).returning();
+    return log;
+  }
+
+  async getMealLogsByUser(userId: string, date?: string): Promise<MealLog[]> {
+    const logs = await db.select().from(schema.mealLogs)
+      .where(eq(schema.mealLogs.userId, userId))
+      .orderBy(desc(schema.mealLogs.createdAt));
+    
+    if (date) {
+      return logs.filter(log => log.logDate === date);
+    }
+    return logs;
+  }
+
+  async deleteMealLog(id: string): Promise<void> {
+    await db.delete(schema.mealLogs).where(eq(schema.mealLogs.id, id));
   }
 }
 

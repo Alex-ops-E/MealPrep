@@ -57,6 +57,21 @@ export const onboardingResponses = pgTable("onboarding_responses", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const mealLogs = pgTable("meal_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  name: text("name").notNull(),
+  mealType: text("meal_type").notNull(), // "breakfast", "lunch", "dinner", "snack"
+  calories: integer("calories").notNull(),
+  protein: integer("protein").notNull(), // grams
+  carbs: integer("carbs").notNull(), // grams
+  fat: integer("fat").notNull(), // grams
+  photoUrl: text("photo_url"),
+  inputType: text("input_type").notNull(), // "photo", "manual"
+  logDate: text("log_date").notNull(), // ISO date string "2026-01-20"
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertRecipeSchema = createInsertSchema(recipes).omit({
   id: true,
@@ -79,6 +94,11 @@ export const insertMealSchema = createInsertSchema(meals).omit({
 });
 
 export const insertOnboardingResponseSchema = createInsertSchema(onboardingResponses).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMealLogSchema = createInsertSchema(mealLogs).omit({
   id: true,
   createdAt: true,
 });
@@ -115,6 +135,9 @@ export type InsertMeal = z.infer<typeof insertMealSchema>;
 
 export type OnboardingResponse = typeof onboardingResponses.$inferSelect;
 export type InsertOnboardingResponse = z.infer<typeof insertOnboardingResponseSchema>;
+
+export type MealLog = typeof mealLogs.$inferSelect;
+export type InsertMealLog = z.infer<typeof insertMealLogSchema>;
 
 export type GenerateRecipeParams = z.infer<typeof generateRecipeSchema>;
 export type GenerateMealParams = z.infer<typeof generateMealSchema>;
