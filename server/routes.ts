@@ -8,10 +8,12 @@ import {
   generateMealSchema,
   insertWaitlistSchema,
   insertOnboardingResponseSchema,
+  insertMealLogSchema,
   type RecipeWithDetails
 } from "@shared/schema";
 import { z } from "zod";
-import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
+import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { analyzeNutritionFromImage } from "./services/openai";
 
 function hashIP(ip: string): string {
   return createHash("sha256").update(ip).digest("hex");
@@ -188,6 +190,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get waitlist count error:", error);
       res.status(500).json({ error: "Failed to get waitlist count" });
+    }
+  });
+
+  // Meal Log endpoints (protected - requires authentication)
+  app.post("/api/meal-logs/analyze", isAuthenticated, async (req: any, res) => {
+    try {
+      const { image } = req.body;
+      
+      if (!image) {
+        return res.status(400).json({ error: "Image data is required" });
+      }
+      
+      console.log("Analyzing food image for nutrition...");
+      const nutrition = await analyzeNutritionFromImage(image);
+      
+      res.json(nutrition);
+    } catch (error) {
+      console.error("Analyze nutrition error:", error);
+      res.status(500).json({ 
+        error: "Failed to analyze food image",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.post("/api/meal-logs", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const mealLogData = insertMealLogSchema.parse({
+        ...req.body,
+        userId,
+      });
+      
+      const mealLog = await storage.createMealLog(mealLogData);
+      res.json(mealLog);
+    } catch (error) {
+      console.error("Create meal log error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create meal log" });
+    }
+  });
+
+  app.get("/api/meal-logs", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const date = req.query.date as string | undefined;
+      const mealLogs = await storage.getMealLogsByUser(userId, date);
+      res.json(mealLogs);
+    } catch (error) {
+      console.error("Get meal logs error:", error);
+      res.status(500).json({ error: "Failed to get meal logs" });
+    }
+  });
+
+  app.delete("/api/meal-logs/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      await storage.deleteMealLog(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete meal log error:", error);
+      res.status(500).json({ error: "Failed to delete meal log" });
     }
   });
 

@@ -1,6 +1,14 @@
 import OpenAI from "openai";
 import type { GenerateRecipeParams, GenerateMealParams, InsertRecipe, Ingredient } from "@shared/schema";
 
+export interface NutritionInfo {
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
   apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || "default_key"
@@ -270,6 +278,60 @@ Make sure the recipe is practical, delicious, and matches the specified requirem
   } catch (error) {
     console.error("Error generating recipe:", error);
     throw new Error("Failed to generate recipe: " + (error as Error).message);
+  }
+}
+
+// the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+export async function analyzeNutritionFromImage(base64Image: string): Promise<NutritionInfo> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-5",
+      messages: [
+        {
+          role: "system",
+          content: "You are a nutrition analysis expert. Analyze food images and estimate the nutritional content based on visual inspection. Provide realistic estimates for a typical serving size shown in the image."
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Analyze this food image and estimate the nutritional content. Return JSON with:
+{
+  "name": "Name of the food/dish",
+  "calories": estimated total calories (number),
+  "protein": estimated grams of protein (number),
+  "carbs": estimated grams of carbohydrates (number),
+  "fat": estimated grams of fat (number)
+}
+
+Be realistic with estimates based on the visible portion size. If multiple items are present, sum them together.`
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: base64Image.startsWith('data:') ? base64Image : `data:image/jpeg;base64,${base64Image}`
+              }
+            }
+          ],
+        },
+      ],
+      response_format: { type: "json_object" },
+      max_completion_tokens: 1024,
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{}');
+    
+    return {
+      name: result.name || "Unknown Food",
+      calories: Math.round(result.calories || 0),
+      protein: Math.round(result.protein || 0),
+      carbs: Math.round(result.carbs || 0),
+      fat: Math.round(result.fat || 0),
+    };
+  } catch (error) {
+    console.error("Error analyzing nutrition from image:", error);
+    throw new Error("Failed to analyze food image: " + (error as Error).message);
   }
 }
 
