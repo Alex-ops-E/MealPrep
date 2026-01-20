@@ -39,7 +39,7 @@ export interface IStorage {
   // Meal Logs
   createMealLog(mealLog: InsertMealLog): Promise<MealLog>;
   getMealLogsByUser(userId: string, date?: string): Promise<MealLog[]>;
-  deleteMealLog(id: string): Promise<void>;
+  deleteMealLog(id: string, userId: string): Promise<void>;
 }
 
 // Reference: blueprint:javascript_database for database integration
@@ -123,8 +123,11 @@ export class DatabaseStorage implements IStorage {
     return logs;
   }
 
-  async deleteMealLog(id: string): Promise<void> {
-    await db.delete(schema.mealLogs).where(eq(schema.mealLogs.id, id));
+  async deleteMealLog(id: string, userId: string): Promise<void> {
+    const [log] = await db.select().from(schema.mealLogs).where(eq(schema.mealLogs.id, id));
+    if (log && log.userId === userId) {
+      await db.delete(schema.mealLogs).where(eq(schema.mealLogs.id, id));
+    }
   }
 }
 

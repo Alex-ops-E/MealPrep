@@ -256,7 +256,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/meal-logs/:id", isAuthenticated, async (req: any, res) => {
     try {
-      await storage.deleteMealLog(req.params.id);
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      await storage.deleteMealLog(req.params.id, userId);
       res.json({ success: true });
     } catch (error) {
       console.error("Delete meal log error:", error);
