@@ -17,6 +17,7 @@ const translations: Record<Language, Record<string, string>> = {
     "header.recipeGenerator": "Recipe Generator",
     "header.priceComparison": "Price Comparison",
     "header.mealPlanner": "Meal Planner",
+    "header.mealTracker": "Meal Tracker",
     
     // Waitlist
     "waitlist.comingSoon": "Coming Soon",
@@ -270,6 +271,7 @@ const translations: Record<Language, Record<string, string>> = {
     "header.recipeGenerator": "مولد الوصفات",
     "header.priceComparison": "مقارنة الأسعار",
     "header.mealPlanner": "مخطط الوجبات",
+    "header.mealTracker": "متتبع الوجبات",
     
     // Waitlist
     "waitlist.comingSoon": "قريباً",

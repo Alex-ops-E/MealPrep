@@ -1,7 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { UtensilsCrossed, Globe } from "lucide-react";
+import { UtensilsCrossed, Globe, Utensils } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/hooks/use-auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +19,7 @@ interface HeaderProps {
 export default function Header({ currentStep }: HeaderProps) {
   const [location, setLocation] = useLocation();
   const { language, t, isRTL } = useLanguage();
+  const { isAuthenticated } = useAuth();
   
   const isActive = (path: string) => {
     return location === `/${language}${path}` || location === `/${language}${path}/`;
@@ -67,6 +69,18 @@ export default function Header({ currentStep }: HeaderProps) {
                 {t("header.priceComparison")}
               </Button>
             </Link>
+            {isAuthenticated && (
+              <Link href={`/${language}/meal-tracker`}>
+                <Button
+                  variant={isActive("/meal-tracker") ? "default" : "ghost"}
+                  className={isActive("/meal-tracker") ? "bg-emerald-600 hover:bg-emerald-700" : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"}
+                  data-testid="link-meal-tracker"
+                >
+                  <Utensils className="h-4 w-4 me-1" />
+                  {t("header.mealTracker")}
+                </Button>
+              </Link>
+            )}
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
