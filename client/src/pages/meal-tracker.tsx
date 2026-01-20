@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Camera, 
@@ -20,10 +20,42 @@ import {
   Droplets,
   Trash2,
   ArrowLeft,
-  Plus
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  X
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import type { MealLog } from "@shared/schema";
+import Header from "@/components/header";
+
+const WEEKDAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
+const MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack"] as const;
+
+function getWeekDates(weekOffset: number = 0) {
+  const today = new Date();
+  const day = today.getDay();
+  const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(today.setDate(diff));
+  monday.setDate(monday.getDate() + (weekOffset * 7));
+  
+  const dates: Record<string, Date> = {};
+  WEEKDAY_KEYS.forEach((dayName, index) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + index);
+    dates[dayName] = date;
+  });
+  
+  return { dates, monday };
+}
+
+function formatDate(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
+
+function isSameDay(date1: Date, date2: Date): boolean {
+  return formatDate(date1) === formatDate(date2);
+}
 
 export default function MealTracker() {
   const { language, t, isRTL } = useLanguage();
@@ -33,8 +65,9 @@ export default function MealTracker() {
   const [, setLocation] = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [selectedSlot, setSelectedSlot] = useState<{ day: string; mealType: typeof MEAL_TYPES[number] } | null>(null);
   const [isManualMode, setIsManualMode] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [analyzedNutrition, setAnalyzedNutrition] = useState<{
     name: string;
@@ -46,12 +79,103 @@ export default function MealTracker() {
   
   const [manualForm, setManualForm] = useState({
     name: "",
-    mealType: "lunch" as "breakfast" | "lunch" | "dinner" | "snack",
     calories: "",
     protein: "",
     carbs: "",
     fat: "",
   });
+
+  const { dates: weekDates, monday } = getWeekDates(weekOffset);
+  const sunday = weekDates.sunday;
+
+  const translations: Record<string, Record<string, string>> = {
+    en: {
+      "mt.title": "Meal Tracker",
+      "mt.weekOf": "Week of",
+      "mt.addMeal": "Add Meal",
+      "mt.logMeal": "Log Your Meal",
+      "mt.photoMode": "Photo",
+      "mt.manualMode": "Manual",
+      "mt.uploadPhoto": "Tap to upload a food photo",
+      "mt.uploadHint": "AI will analyze calories and nutrients",
+      "mt.analyzing": "Analyzing...",
+      "mt.foodName": "Food Name",
+      "mt.foodNamePlaceholder": "e.g., Grilled Chicken Salad",
+      "mt.calories": "Calories",
+      "mt.protein": "Protein (g)",
+      "mt.carbs": "Carbs (g)",
+      "mt.fat": "Fat (g)",
+      "mt.save": "Save Meal",
+      "mt.cancel": "Cancel",
+      "mt.breakfast": "Breakfast",
+      "mt.lunch": "Lunch",
+      "mt.dinner": "Dinner",
+      "mt.snack": "Snack",
+      "mt.monday": "Mon",
+      "mt.tuesday": "Tue",
+      "mt.wednesday": "Wed",
+      "mt.thursday": "Thu",
+      "mt.friday": "Fri",
+      "mt.saturday": "Sat",
+      "mt.sunday": "Sun",
+      "mt.today": "Today",
+      "mt.dailyTotal": "Daily Total",
+      "mt.weeklyTotal": "Weekly Total",
+      "mt.kcal": "kcal",
+      "mt.noMeals": "No meals logged",
+      "mt.saved": "Meal Saved",
+      "mt.savedDescription": "Your meal has been logged",
+      "mt.deleted": "Meal Deleted",
+      "mt.deletedDescription": "The meal has been removed",
+      "mt.analyzeError": "Failed to analyze photo",
+      "mt.saveError": "Failed to save meal",
+      "mt.fillRequired": "Please fill in the food name and calories",
+    },
+    ar: {
+      "mt.title": "متتبع الوجبات",
+      "mt.weekOf": "أسبوع",
+      "mt.addMeal": "إضافة وجبة",
+      "mt.logMeal": "سجل وجبتك",
+      "mt.photoMode": "صورة",
+      "mt.manualMode": "يدوي",
+      "mt.uploadPhoto": "اضغط لرفع صورة طعام",
+      "mt.uploadHint": "سيحلل الذكاء الاصطناعي السعرات والعناصر الغذائية",
+      "mt.analyzing": "جاري التحليل...",
+      "mt.foodName": "اسم الطعام",
+      "mt.foodNamePlaceholder": "مثال: سلطة دجاج مشوي",
+      "mt.calories": "السعرات",
+      "mt.protein": "بروتين (غ)",
+      "mt.carbs": "كربوهيدرات (غ)",
+      "mt.fat": "دهون (غ)",
+      "mt.save": "حفظ الوجبة",
+      "mt.cancel": "إلغاء",
+      "mt.breakfast": "إفطار",
+      "mt.lunch": "غداء",
+      "mt.dinner": "عشاء",
+      "mt.snack": "وجبة خفيفة",
+      "mt.monday": "الإثنين",
+      "mt.tuesday": "الثلاثاء",
+      "mt.wednesday": "الأربعاء",
+      "mt.thursday": "الخميس",
+      "mt.friday": "الجمعة",
+      "mt.saturday": "السبت",
+      "mt.sunday": "الأحد",
+      "mt.today": "اليوم",
+      "mt.dailyTotal": "المجموع اليومي",
+      "mt.weeklyTotal": "المجموع الأسبوعي",
+      "mt.kcal": "سعرة",
+      "mt.noMeals": "لا توجد وجبات مسجلة",
+      "mt.saved": "تم حفظ الوجبة",
+      "mt.savedDescription": "تم تسجيل وجبتك",
+      "mt.deleted": "تم حذف الوجبة",
+      "mt.deletedDescription": "تمت إزالة الوجبة",
+      "mt.analyzeError": "فشل تحليل الصورة",
+      "mt.saveError": "فشل حفظ الوجبة",
+      "mt.fillRequired": "يرجى ملء اسم الطعام والسعرات الحرارية",
+    }
+  };
+
+  const tf = (key: string) => translations[language]?.[key] || translations.en[key] || key;
 
   useEffect(() => {
     document.documentElement.dir = isRTL ? "rtl" : "ltr";
@@ -64,10 +188,13 @@ export default function MealTracker() {
     }
   }, [authLoading, isAuthenticated, language, setLocation]);
 
+  const startDate = formatDate(monday);
+  const endDate = formatDate(sunday);
+
   const { data: mealLogs = [], isLoading: logsLoading } = useQuery<MealLog[]>({
-    queryKey: ["/api/meal-logs", selectedDate],
+    queryKey: ["/api/meal-logs", startDate, endDate],
     queryFn: async () => {
-      const res = await fetch(`/api/meal-logs?date=${selectedDate}`, { credentials: "include" });
+      const res = await fetch(`/api/meal-logs?startDate=${startDate}&endDate=${endDate}`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch meal logs");
       return res.json();
     },
@@ -81,14 +208,10 @@ export default function MealTracker() {
     },
     onSuccess: (data) => {
       setAnalyzedNutrition(data);
-      toast({
-        title: t("mealTracker.analyzed"),
-        description: `${data.name} - ${data.calories} ${t("mealTracker.cal")}`,
-      });
     },
     onError: (error) => {
       toast({
-        title: t("mealTracker.analyzeError"),
+        title: tf("mt.analyzeError"),
         description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive",
       });
@@ -101,16 +224,17 @@ export default function MealTracker() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/meal-logs", selectedDate] });
+      queryClient.invalidateQueries({ queryKey: ["/api/meal-logs"] });
       toast({
-        title: t("mealTracker.saved"),
-        description: t("mealTracker.savedDescription"),
+        title: tf("mt.saved"),
+        description: tf("mt.savedDescription"),
       });
       resetForm();
+      setSelectedSlot(null);
     },
     onError: (error) => {
       toast({
-        title: t("mealTracker.saveError"),
+        title: tf("mt.saveError"),
         description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive",
       });
@@ -123,10 +247,10 @@ export default function MealTracker() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/meal-logs", selectedDate] });
+      queryClient.invalidateQueries({ queryKey: ["/api/meal-logs"] });
       toast({
-        title: t("mealTracker.deleted"),
-        description: t("mealTracker.deletedDescription"),
+        title: tf("mt.deleted"),
+        description: tf("mt.deletedDescription"),
       });
     },
   });
@@ -136,12 +260,12 @@ export default function MealTracker() {
     setAnalyzedNutrition(null);
     setManualForm({
       name: "",
-      mealType: "lunch",
       calories: "",
       protein: "",
       carbs: "",
       fat: "",
     });
+    setIsManualMode(false);
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,45 +281,64 @@ export default function MealTracker() {
     reader.readAsDataURL(file);
   };
 
-  const handleSavePhoto = () => {
-    if (!analyzedNutrition) return;
+  const handleSave = () => {
+    if (!selectedSlot) return;
     
-    saveMutation.mutate({
-      name: analyzedNutrition.name,
-      mealType: "lunch",
-      calories: analyzedNutrition.calories,
-      protein: analyzedNutrition.protein,
-      carbs: analyzedNutrition.carbs,
-      fat: analyzedNutrition.fat,
-      photoUrl: previewImage,
-      inputType: "photo",
-      logDate: selectedDate,
-    });
-  };
-
-  const handleSaveManual = () => {
-    if (!manualForm.name || !manualForm.calories) {
-      toast({
-        title: t("mealTracker.validationError"),
-        description: t("mealTracker.fillRequired"),
-        variant: "destructive",
+    const dayDate = formatDate(weekDates[selectedSlot.day as keyof typeof weekDates]);
+    
+    if (isManualMode) {
+      if (!manualForm.name || !manualForm.calories) {
+        toast({
+          title: tf("mt.fillRequired"),
+          variant: "destructive",
+        });
+        return;
+      }
+      saveMutation.mutate({
+        name: manualForm.name,
+        mealType: selectedSlot.mealType,
+        calories: parseInt(manualForm.calories) || 0,
+        protein: parseInt(manualForm.protein) || 0,
+        carbs: parseInt(manualForm.carbs) || 0,
+        fat: parseInt(manualForm.fat) || 0,
+        inputType: "manual",
+        logDate: dayDate,
       });
-      return;
+    } else if (analyzedNutrition) {
+      saveMutation.mutate({
+        name: analyzedNutrition.name,
+        mealType: selectedSlot.mealType,
+        calories: analyzedNutrition.calories,
+        protein: analyzedNutrition.protein,
+        carbs: analyzedNutrition.carbs,
+        fat: analyzedNutrition.fat,
+        photoUrl: previewImage,
+        inputType: "photo",
+        logDate: dayDate,
+      });
     }
-
-    saveMutation.mutate({
-      name: manualForm.name,
-      mealType: manualForm.mealType,
-      calories: parseInt(manualForm.calories) || 0,
-      protein: parseInt(manualForm.protein) || 0,
-      carbs: parseInt(manualForm.carbs) || 0,
-      fat: parseInt(manualForm.fat) || 0,
-      inputType: "manual",
-      logDate: selectedDate,
-    });
   };
 
-  const totals = mealLogs.reduce(
+  const getMealsForSlot = (dayKey: string, mealType: string): MealLog[] => {
+    const dayDate = formatDate(weekDates[dayKey as keyof typeof weekDates]);
+    return mealLogs.filter(log => log.logDate === dayDate && log.mealType === mealType);
+  };
+
+  const getDayTotals = (dayKey: string) => {
+    const dayDate = formatDate(weekDates[dayKey as keyof typeof weekDates]);
+    const dayMeals = mealLogs.filter(log => log.logDate === dayDate);
+    return dayMeals.reduce(
+      (acc, log) => ({
+        calories: acc.calories + log.calories,
+        protein: acc.protein + log.protein,
+        carbs: acc.carbs + log.carbs,
+        fat: acc.fat + log.fat,
+      }),
+      { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    );
+  };
+
+  const weeklyTotals = mealLogs.reduce(
     (acc, log) => ({
       calories: acc.calories + log.calories,
       protein: acc.protein + log.protein,
@@ -204,6 +347,10 @@ export default function MealTracker() {
     }),
     { calories: 0, protein: 0, carbs: 0, fat: 0 }
   );
+
+  const isToday = (dayKey: string) => {
+    return isSameDay(weekDates[dayKey as keyof typeof weekDates], new Date());
+  };
 
   if (authLoading) {
     return (
@@ -215,307 +362,347 @@ export default function MealTracker() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-orange-50" dir={isRTL ? "rtl" : "ltr"}>
-      <div className="container mx-auto px-4 py-6 max-w-2xl">
-        <div className="flex items-center gap-4 mb-6">
-          <Link href={`/${language}/room`}>
-            <Button variant="ghost" size="icon" data-testid="button-back">
-              <ArrowLeft className="h-5 w-5" />
+      <Header />
+      
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Link href={`/${language}/room`}>
+              <Button variant="ghost" size="icon" data-testid="button-back">
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </Link>
+            <h1 className="text-2xl font-bold text-gray-900" data-testid="text-page-title">
+              {tf("mt.title")}
+            </h1>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => setWeekOffset(prev => prev - 1)}
+              data-testid="button-prev-week"
+            >
+              <ChevronLeft className="h-4 w-4" />
             </Button>
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900" data-testid="text-page-title">
-            {t("mealTracker.title")}
-          </h1>
+            <span className="text-sm font-medium px-3">
+              {tf("mt.weekOf")} {monday.toLocaleDateString(language === 'ar' ? 'ar-AE' : 'en-US', { month: 'short', day: 'numeric' })}
+            </span>
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => setWeekOffset(prev => prev + 1)}
+              data-testid="button-next-week"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-
-        <Card className="mb-6">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle data-testid="text-add-meal-title">{t("mealTracker.addMeal")}</CardTitle>
-                <CardDescription>{t("mealTracker.addMealDescription")}</CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Camera className="h-4 w-4 text-gray-500" />
-                <Switch
-                  checked={isManualMode}
-                  onCheckedChange={setIsManualMode}
-                  data-testid="switch-input-mode"
-                />
-                <span className="text-sm text-gray-500">{t("mealTracker.manual")}</span>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {!isManualMode ? (
-              <div className="space-y-4">
-                <div 
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-emerald-500 transition-colors"
-                  onClick={() => fileInputRef.current?.click()}
-                  data-testid="dropzone-photo"
-                >
-                  {previewImage ? (
-                    <div className="space-y-4">
-                      <img 
-                        src={previewImage} 
-                        alt="Food preview" 
-                        className="max-h-48 mx-auto rounded-lg"
-                        data-testid="img-preview"
-                      />
-                      {analyzeMutation.isPending && (
-                        <div className="flex items-center justify-center gap-2 text-emerald-600">
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                          <span>{t("mealTracker.analyzing")}</span>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Upload className="h-12 w-12 mx-auto text-gray-400" />
-                      <p className="text-gray-600">{t("mealTracker.uploadPhoto")}</p>
-                      <p className="text-sm text-gray-400">{t("mealTracker.uploadHint")}</p>
-                    </div>
-                  )}
-                </div>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageUpload}
-                  data-testid="input-photo"
-                />
-
-                {analyzedNutrition && (
-                  <Card className="bg-emerald-50 border-emerald-200">
-                    <CardContent className="pt-4">
-                      <h3 className="font-semibold text-lg mb-3" data-testid="text-analyzed-name">
-                        {analyzedNutrition.name}
-                      </h3>
-                      <div className="grid grid-cols-4 gap-4 text-center">
-                        <div>
-                          <Flame className="h-5 w-5 mx-auto text-orange-500 mb-1" />
-                          <p className="text-xl font-bold" data-testid="text-analyzed-calories">{analyzedNutrition.calories}</p>
-                          <p className="text-xs text-gray-500">{t("mealTracker.cal")}</p>
-                        </div>
-                        <div>
-                          <Beef className="h-5 w-5 mx-auto text-red-500 mb-1" />
-                          <p className="text-xl font-bold" data-testid="text-analyzed-protein">{analyzedNutrition.protein}g</p>
-                          <p className="text-xs text-gray-500">{t("mealTracker.protein")}</p>
-                        </div>
-                        <div>
-                          <Wheat className="h-5 w-5 mx-auto text-amber-500 mb-1" />
-                          <p className="text-xl font-bold" data-testid="text-analyzed-carbs">{analyzedNutrition.carbs}g</p>
-                          <p className="text-xs text-gray-500">{t("mealTracker.carbs")}</p>
-                        </div>
-                        <div>
-                          <Droplets className="h-5 w-5 mx-auto text-blue-500 mb-1" />
-                          <p className="text-xl font-bold" data-testid="text-analyzed-fat">{analyzedNutrition.fat}g</p>
-                          <p className="text-xs text-gray-500">{t("mealTracker.fat")}</p>
-                        </div>
-                      </div>
-                      <Button 
-                        className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700"
-                        onClick={handleSavePhoto}
-                        disabled={saveMutation.isPending}
-                        data-testid="button-save-photo"
-                      >
-                        {saveMutation.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin me-2" />
-                        ) : (
-                          <Plus className="h-4 w-4 me-2" />
-                        )}
-                        {t("mealTracker.save")}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="grid gap-4">
-                  <div>
-                    <Label htmlFor="name">{t("mealTracker.foodName")}</Label>
-                    <Input
-                      id="name"
-                      value={manualForm.name}
-                      onChange={(e) => setManualForm({ ...manualForm, name: e.target.value })}
-                      placeholder={t("mealTracker.foodNamePlaceholder")}
-                      data-testid="input-food-name"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="mealType">{t("mealTracker.mealType")}</Label>
-                    <Select
-                      value={manualForm.mealType}
-                      onValueChange={(value) => setManualForm({ ...manualForm, mealType: value as any })}
-                    >
-                      <SelectTrigger data-testid="select-meal-type">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="breakfast">{t("mealTracker.breakfast")}</SelectItem>
-                        <SelectItem value="lunch">{t("mealTracker.lunch")}</SelectItem>
-                        <SelectItem value="dinner">{t("mealTracker.dinner")}</SelectItem>
-                        <SelectItem value="snack">{t("mealTracker.snack")}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="calories">{t("mealTracker.calories")}</Label>
-                      <Input
-                        id="calories"
-                        type="number"
-                        value={manualForm.calories}
-                        onChange={(e) => setManualForm({ ...manualForm, calories: e.target.value })}
-                        placeholder="0"
-                        data-testid="input-calories"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="protein">{t("mealTracker.proteinG")}</Label>
-                      <Input
-                        id="protein"
-                        type="number"
-                        value={manualForm.protein}
-                        onChange={(e) => setManualForm({ ...manualForm, protein: e.target.value })}
-                        placeholder="0"
-                        data-testid="input-protein"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="carbs">{t("mealTracker.carbsG")}</Label>
-                      <Input
-                        id="carbs"
-                        type="number"
-                        value={manualForm.carbs}
-                        onChange={(e) => setManualForm({ ...manualForm, carbs: e.target.value })}
-                        placeholder="0"
-                        data-testid="input-carbs"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="fat">{t("mealTracker.fatG")}</Label>
-                      <Input
-                        id="fat"
-                        type="number"
-                        value={manualForm.fat}
-                        onChange={(e) => setManualForm({ ...manualForm, fat: e.target.value })}
-                        placeholder="0"
-                        data-testid="input-fat"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <Button 
-                  className="w-full bg-emerald-600 hover:bg-emerald-700"
-                  onClick={handleSaveManual}
-                  disabled={saveMutation.isPending}
-                  data-testid="button-save-manual"
-                >
-                  {saveMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin me-2" />
-                  ) : (
-                    <Plus className="h-4 w-4 me-2" />
-                  )}
-                  {t("mealTracker.save")}
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         <Card className="mb-6 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">{t("mealTracker.dailyTotal")}</h3>
-              <Input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-auto bg-white/20 border-white/30 text-white"
-                data-testid="input-date"
-              />
-            </div>
-            <div className="grid grid-cols-4 gap-4 text-center">
-              <div>
-                <Flame className="h-6 w-6 mx-auto mb-1 opacity-80" />
-                <p className="text-2xl font-bold" data-testid="text-total-calories">{totals.calories}</p>
-                <p className="text-xs opacity-80">{t("mealTracker.cal")}</p>
-              </div>
-              <div>
-                <Beef className="h-6 w-6 mx-auto mb-1 opacity-80" />
-                <p className="text-2xl font-bold" data-testid="text-total-protein">{totals.protein}g</p>
-                <p className="text-xs opacity-80">{t("mealTracker.protein")}</p>
-              </div>
-              <div>
-                <Wheat className="h-6 w-6 mx-auto mb-1 opacity-80" />
-                <p className="text-2xl font-bold" data-testid="text-total-carbs">{totals.carbs}g</p>
-                <p className="text-xs opacity-80">{t("mealTracker.carbs")}</p>
-              </div>
-              <div>
-                <Droplets className="h-6 w-6 mx-auto mb-1 opacity-80" />
-                <p className="text-2xl font-bold" data-testid="text-total-fat">{totals.fat}g</p>
-                <p className="text-xs opacity-80">{t("mealTracker.fat")}</p>
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">{tf("mt.weeklyTotal")}</h3>
+              <div className="flex items-center gap-6">
+                <div className="text-center">
+                  <p className="text-2xl font-bold" data-testid="text-weekly-calories">{weeklyTotals.calories}</p>
+                  <p className="text-xs opacity-80">{tf("mt.kcal")}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold">{weeklyTotals.protein}g</p>
+                  <p className="text-xs opacity-80">Protein</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold">{weeklyTotals.carbs}g</p>
+                  <p className="text-xs opacity-80">Carbs</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold">{weeklyTotals.fat}g</p>
+                  <p className="text-xs opacity-80">Fat</p>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <div className="space-y-3">
-          <h3 className="font-semibold text-gray-700">{t("mealTracker.todaysMeals")}</h3>
-          {logsLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
-            </div>
-          ) : mealLogs.length === 0 ? (
-            <Card className="bg-gray-50">
-              <CardContent className="py-8 text-center text-gray-500">
-                {t("mealTracker.noMeals")}
-              </CardContent>
-            </Card>
-          ) : (
-            mealLogs.map((log) => (
-              <Card key={log.id} className="overflow-hidden" data-testid={`card-meal-${log.id}`}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {log.photoUrl && (
-                        <img 
-                          src={log.photoUrl} 
-                          alt={log.name}
-                          className="w-12 h-12 rounded-lg object-cover"
-                        />
-                      )}
-                      <div>
-                        <p className="font-medium">{log.name}</p>
-                        <p className="text-sm text-gray-500 capitalize">{log.mealType}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-bold text-emerald-600">{log.calories} {t("mealTracker.cal")}</p>
-                        <p className="text-xs text-gray-500">
-                          P: {log.protein}g | C: {log.carbs}g | F: {log.fat}g
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteMutation.mutate(log.id)}
-                        disabled={deleteMutation.isPending}
-                        data-testid={`button-delete-${log.id}`}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </div>
+        <div className="overflow-x-auto">
+          <div className="min-w-[800px]">
+            <div className="grid grid-cols-8 gap-2 mb-2">
+              <div className="p-2"></div>
+              {WEEKDAY_KEYS.map((dayKey) => {
+                const date = weekDates[dayKey];
+                const today = isToday(dayKey);
+                return (
+                  <div 
+                    key={dayKey} 
+                    className={`p-2 text-center rounded-lg ${today ? 'bg-emerald-100 border-2 border-emerald-500' : 'bg-gray-50'}`}
+                  >
+                    <p className={`text-xs font-medium ${today ? 'text-emerald-700' : 'text-gray-500'}`}>
+                      {tf(`mt.${dayKey}`)}
+                    </p>
+                    <p className={`text-lg font-bold ${today ? 'text-emerald-700' : 'text-gray-900'}`}>
+                      {date.getDate()}
+                    </p>
+                    {today && (
+                      <span className="text-xs text-emerald-600 font-medium">{tf("mt.today")}</span>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+                );
+              })}
+            </div>
+
+            {MEAL_TYPES.map((mealType) => (
+              <div key={mealType} className="grid grid-cols-8 gap-2 mb-2">
+                <div className="p-3 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <span className="text-sm font-medium text-gray-700 capitalize">
+                    {tf(`mt.${mealType}`)}
+                  </span>
+                </div>
+                {WEEKDAY_KEYS.map((dayKey) => {
+                  const meals = getMealsForSlot(dayKey, mealType);
+                  const today = isToday(dayKey);
+                  return (
+                    <Card 
+                      key={`${dayKey}-${mealType}`} 
+                      className={`min-h-[100px] cursor-pointer hover:shadow-md transition-shadow ${today ? 'border-emerald-200' : ''}`}
+                      onClick={() => setSelectedSlot({ day: dayKey, mealType })}
+                      data-testid={`slot-${dayKey}-${mealType}`}
+                    >
+                      <CardContent className="p-2">
+                        {meals.length > 0 ? (
+                          <div className="space-y-1">
+                            {meals.map((meal) => (
+                              <div 
+                                key={meal.id} 
+                                className="bg-emerald-50 rounded p-1.5 text-xs group relative"
+                              >
+                                <p className="font-medium text-emerald-800 truncate">{meal.name}</p>
+                                <p className="text-emerald-600">{meal.calories} {tf("mt.kcal")}</p>
+                                <button
+                                  className="absolute top-1 end-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteMutation.mutate(meal.id);
+                                  }}
+                                  data-testid={`button-delete-${meal.id}`}
+                                >
+                                  <X className="h-3 w-3 text-red-500" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="h-full flex items-center justify-center text-gray-400 hover:text-emerald-500">
+                            <Plus className="h-5 w-5" />
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            ))}
+
+            <div className="grid grid-cols-8 gap-2 mt-4">
+              <div className="p-3 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <span className="text-sm font-medium text-emerald-700">{tf("mt.dailyTotal")}</span>
+              </div>
+              {WEEKDAY_KEYS.map((dayKey) => {
+                const totals = getDayTotals(dayKey);
+                const today = isToday(dayKey);
+                return (
+                  <div 
+                    key={`totals-${dayKey}`} 
+                    className={`p-2 rounded-lg text-center ${today ? 'bg-emerald-100' : 'bg-gray-50'}`}
+                  >
+                    <p className={`text-lg font-bold ${today ? 'text-emerald-700' : 'text-gray-900'}`}>
+                      {totals.calories}
+                    </p>
+                    <p className="text-xs text-gray-500">{tf("mt.kcal")}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
+
+      <Dialog open={!!selectedSlot} onOpenChange={(open) => !open && (setSelectedSlot(null), resetForm())}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{tf("mt.logMeal")}</DialogTitle>
+            <DialogDescription>
+              {selectedSlot && (
+                <>
+                  {tf(`mt.${selectedSlot.mealType}`)} - {tf(`mt.${selectedSlot.day}`)} {weekDates[selectedSlot.day as keyof typeof weekDates]?.getDate()}
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex items-center justify-center gap-4 py-2">
+            <span className={`text-sm ${!isManualMode ? 'text-emerald-600 font-medium' : 'text-gray-500'}`}>
+              {tf("mt.photoMode")}
+            </span>
+            <Switch
+              checked={isManualMode}
+              onCheckedChange={setIsManualMode}
+              data-testid="switch-input-mode"
+            />
+            <span className={`text-sm ${isManualMode ? 'text-emerald-600 font-medium' : 'text-gray-500'}`}>
+              {tf("mt.manualMode")}
+            </span>
+          </div>
+
+          {!isManualMode ? (
+            <div className="space-y-4">
+              <div 
+                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-emerald-500 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+                data-testid="dropzone-photo"
+              >
+                {previewImage ? (
+                  <div className="space-y-3">
+                    <img 
+                      src={previewImage} 
+                      alt="Food preview" 
+                      className="max-h-32 mx-auto rounded-lg"
+                      data-testid="img-preview"
+                    />
+                    {analyzeMutation.isPending && (
+                      <div className="flex items-center justify-center gap-2 text-emerald-600">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-sm">{tf("mt.analyzing")}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Camera className="h-10 w-10 mx-auto text-gray-400" />
+                    <p className="text-sm text-gray-600">{tf("mt.uploadPhoto")}</p>
+                    <p className="text-xs text-gray-400">{tf("mt.uploadHint")}</p>
+                  </div>
+                )}
+              </div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageUpload}
+                data-testid="input-photo"
+              />
+
+              {analyzedNutrition && (
+                <div className="bg-emerald-50 rounded-lg p-4">
+                  <p className="font-medium text-emerald-800 mb-2">{analyzedNutrition.name}</p>
+                  <div className="grid grid-cols-4 gap-2 text-center text-sm">
+                    <div>
+                      <p className="font-bold text-emerald-700">{analyzedNutrition.calories}</p>
+                      <p className="text-xs text-gray-500">{tf("mt.kcal")}</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-emerald-700">{analyzedNutrition.protein}g</p>
+                      <p className="text-xs text-gray-500">Protein</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-emerald-700">{analyzedNutrition.carbs}g</p>
+                      <p className="text-xs text-gray-500">Carbs</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-emerald-700">{analyzedNutrition.fat}g</p>
+                      <p className="text-xs text-gray-500">Fat</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="name">{tf("mt.foodName")}</Label>
+                <Input
+                  id="name"
+                  value={manualForm.name}
+                  onChange={(e) => setManualForm({ ...manualForm, name: e.target.value })}
+                  placeholder={tf("mt.foodNamePlaceholder")}
+                  data-testid="input-food-name"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="calories">{tf("mt.calories")}</Label>
+                  <Input
+                    id="calories"
+                    type="number"
+                    value={manualForm.calories}
+                    onChange={(e) => setManualForm({ ...manualForm, calories: e.target.value })}
+                    placeholder="0"
+                    data-testid="input-calories"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="protein">{tf("mt.protein")}</Label>
+                  <Input
+                    id="protein"
+                    type="number"
+                    value={manualForm.protein}
+                    onChange={(e) => setManualForm({ ...manualForm, protein: e.target.value })}
+                    placeholder="0"
+                    data-testid="input-protein"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="carbs">{tf("mt.carbs")}</Label>
+                  <Input
+                    id="carbs"
+                    type="number"
+                    value={manualForm.carbs}
+                    onChange={(e) => setManualForm({ ...manualForm, carbs: e.target.value })}
+                    placeholder="0"
+                    data-testid="input-carbs"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="fat">{tf("mt.fat")}</Label>
+                  <Input
+                    id="fat"
+                    type="number"
+                    value={manualForm.fat}
+                    onChange={(e) => setManualForm({ ...manualForm, fat: e.target.value })}
+                    placeholder="0"
+                    data-testid="input-fat"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-2 mt-4">
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              onClick={() => { setSelectedSlot(null); resetForm(); }}
+            >
+              {tf("mt.cancel")}
+            </Button>
+            <Button 
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+              onClick={handleSave}
+              disabled={saveMutation.isPending || (!isManualMode && !analyzedNutrition)}
+              data-testid="button-save-meal"
+            >
+              {saveMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin me-2" />
+              ) : (
+                <Plus className="h-4 w-4 me-2" />
+              )}
+              {tf("mt.save")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

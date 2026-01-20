@@ -245,8 +245,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "User not authenticated" });
       }
       
-      const date = req.query.date as string | undefined;
-      const mealLogs = await storage.getMealLogsByUser(userId, date);
+      const startDate = req.query.startDate as string | undefined;
+      const endDate = req.query.endDate as string | undefined;
+      const mealLogs = await storage.getMealLogsByUser(userId, startDate, endDate);
       res.json(mealLogs);
     } catch (error) {
       console.error("Get meal logs error:", error);

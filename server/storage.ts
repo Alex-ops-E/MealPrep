@@ -38,7 +38,7 @@ export interface IStorage {
   
   // Meal Logs
   createMealLog(mealLog: InsertMealLog): Promise<MealLog>;
-  getMealLogsByUser(userId: string, date?: string): Promise<MealLog[]>;
+  getMealLogsByUser(userId: string, startDate?: string, endDate?: string): Promise<MealLog[]>;
   deleteMealLog(id: string, userId: string): Promise<void>;
 }
 
@@ -112,13 +112,16 @@ export class DatabaseStorage implements IStorage {
     return log;
   }
 
-  async getMealLogsByUser(userId: string, date?: string): Promise<MealLog[]> {
+  async getMealLogsByUser(userId: string, startDate?: string, endDate?: string): Promise<MealLog[]> {
     const logs = await db.select().from(schema.mealLogs)
       .where(eq(schema.mealLogs.userId, userId))
       .orderBy(desc(schema.mealLogs.createdAt));
     
-    if (date) {
-      return logs.filter(log => log.logDate === date);
+    if (startDate && endDate) {
+      return logs.filter(log => log.logDate >= startDate && log.logDate <= endDate);
+    }
+    if (startDate) {
+      return logs.filter(log => log.logDate === startDate);
     }
     return logs;
   }
