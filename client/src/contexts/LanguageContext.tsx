@@ -209,6 +209,22 @@ const translations: Record<Language, Record<string, string>> = {
     // Language
     "language.english": "English",
     "language.arabic": "العربية",
+    
+    // Room (Auth)
+    "room.title": "Welcome to Grocery Agent",
+    "room.subtitle": "Sign in to save your recipes, meal plans, and shopping lists",
+    "room.loginButton": "Sign In / Register",
+    "room.registerHint": "New users will be registered automatically",
+    "room.authMethods": "Sign in with Google, GitHub, Apple, or email",
+    "room.backToHome": "Back to Home",
+    "room.loading": "Loading...",
+    "room.welcome": "Welcome back",
+    "room.welcomeSubtitle": "What would you like to do today?",
+    "room.user": "User",
+    "room.mealPlanner": "Meal Planner",
+    "room.priceComparison": "Price Comparison",
+    "room.recipeGenerator": "Recipe Generator",
+    "room.logout": "Sign Out",
   },
   ar: {
     // Header
@@ -404,6 +420,22 @@ const translations: Record<Language, Record<string, string>> = {
     
     // Footer
     "footer.rights": "جميع الحقوق محفوظة.",
+    
+    // Room (Auth)
+    "room.title": "مرحباً بك في وكيل البقالة",
+    "room.subtitle": "سجّل دخولك لحفظ وصفاتك وخطط وجباتك وقوائم التسوق",
+    "room.loginButton": "تسجيل الدخول / إنشاء حساب",
+    "room.registerHint": "سيتم تسجيل المستخدمين الجدد تلقائياً",
+    "room.authMethods": "سجّل الدخول بـ جوجل، جيت هب، آبل، أو البريد الإلكتروني",
+    "room.backToHome": "العودة للرئيسية",
+    "room.loading": "جاري التحميل...",
+    "room.welcome": "مرحباً بعودتك",
+    "room.welcomeSubtitle": "ماذا تريد أن تفعل اليوم؟",
+    "room.user": "مستخدم",
+    "room.mealPlanner": "مخطط الوجبات",
+    "room.priceComparison": "مقارنة الأسعار",
+    "room.recipeGenerator": "مولد الوصفات",
+    "room.logout": "تسجيل الخروج",
     
     // Language
     "language.english": "English",

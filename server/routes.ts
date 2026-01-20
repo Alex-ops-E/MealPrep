@@ -11,6 +11,7 @@ import {
   type RecipeWithDetails
 } from "@shared/schema";
 import { z } from "zod";
+import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
 function hashIP(ip: string): string {
   return createHash("sha256").update(ip).digest("hex");
@@ -25,6 +26,10 @@ function getClientIP(req: any): string {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // Setup authentication before other routes
+  await setupAuth(app);
+  registerAuthRoutes(app);
   
   // Generate recipe with AI
   app.post("/api/recipes/generate", async (req, res) => {
