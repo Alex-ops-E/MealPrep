@@ -167,18 +167,18 @@ export default function PriceComparison() {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col bg-gray-50 ${isRTL ? 'rtl' : 'ltr'}`}>
+    <div className={`min-h-screen flex flex-col bg-gray-50 overflow-x-hidden ${isRTL ? 'rtl' : 'ltr'}`}>
       <Header />
       
-      <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
-        <Card className="p-8 bg-white">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6" data-testid="text-price-comparison-title">
+      <div className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-12 w-full">
+        <Card className="p-4 sm:p-8 bg-white">
+          <h1 className="text-xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6" data-testid="text-price-comparison-title">
             {t("priceComparison.title")}
           </h1>
 
           {!showResults && (
-            <div className="space-y-4 mb-6">
-              <div className="grid grid-cols-12 gap-4 mb-2">
+            <div className="space-y-3 mb-6">
+              <div className="hidden sm:grid grid-cols-12 gap-4 mb-2">
                 <div className="col-span-5 text-sm font-semibold text-gray-700">Ingredient Name</div>
                 <div className="col-span-3 text-sm font-semibold text-gray-700">Quantity</div>
                 <div className="col-span-3 text-sm font-semibold text-gray-700">Unit</div>
@@ -186,8 +186,9 @@ export default function PriceComparison() {
               </div>
 
               {ingredients.map((ingredient) => (
-                <div key={ingredient.id} className="grid grid-cols-12 gap-4 items-center">
-                  <div className="col-span-5">
+                <div key={ingredient.id} className="flex flex-col sm:grid sm:grid-cols-12 gap-2 sm:gap-4 sm:items-center bg-gray-50 sm:bg-transparent p-3 sm:p-0 rounded-lg">
+                  <div className="sm:col-span-5">
+                    <label className="text-xs text-gray-500 sm:hidden mb-1 block">Ingredient</label>
                     <Input
                       value={ingredient.name}
                       onChange={(e) => updateIngredient(ingredient.id, 'name', e.target.value)}
@@ -196,34 +197,38 @@ export default function PriceComparison() {
                       data-testid={`input-ingredient-name-${ingredient.id}`}
                     />
                   </div>
-                  <div className="col-span-3">
-                    <Input
-                      value={ingredient.quantity}
-                      onChange={(e) => updateIngredient(ingredient.id, 'quantity', e.target.value)}
-                      placeholder="e.g., 500"
-                      className="w-full"
-                      data-testid={`input-ingredient-quantity-${ingredient.id}`}
-                    />
-                  </div>
-                  <div className="col-span-3">
-                    <Input
-                      value={ingredient.unit}
-                      onChange={(e) => updateIngredient(ingredient.id, 'unit', e.target.value)}
-                      placeholder="e.g., g"
-                      className="w-full"
-                      data-testid={`input-ingredient-unit-${ingredient.id}`}
-                    />
-                  </div>
-                  <div className="col-span-1 flex justify-center">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeRow(ingredient.id)}
-                      disabled={ingredients.length === 1}
-                      data-testid={`button-remove-${ingredient.id}`}
-                    >
-                      <Trash2 className="h-4 w-4 text-gray-500" />
-                    </Button>
+                  <div className="flex gap-2 sm:contents">
+                    <div className="flex-1 sm:col-span-3">
+                      <label className="text-xs text-gray-500 sm:hidden mb-1 block">Qty</label>
+                      <Input
+                        value={ingredient.quantity}
+                        onChange={(e) => updateIngredient(ingredient.id, 'quantity', e.target.value)}
+                        placeholder="e.g., 500"
+                        className="w-full"
+                        data-testid={`input-ingredient-quantity-${ingredient.id}`}
+                      />
+                    </div>
+                    <div className="flex-1 sm:col-span-3">
+                      <label className="text-xs text-gray-500 sm:hidden mb-1 block">Unit</label>
+                      <Input
+                        value={ingredient.unit}
+                        onChange={(e) => updateIngredient(ingredient.id, 'unit', e.target.value)}
+                        placeholder="e.g., g"
+                        className="w-full"
+                        data-testid={`input-ingredient-unit-${ingredient.id}`}
+                      />
+                    </div>
+                    <div className="sm:col-span-1 flex items-end sm:items-center justify-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeRow(ingredient.id)}
+                        disabled={ingredients.length === 1}
+                        data-testid={`button-remove-${ingredient.id}`}
+                      >
+                        <Trash2 className="h-4 w-4 text-gray-500" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}

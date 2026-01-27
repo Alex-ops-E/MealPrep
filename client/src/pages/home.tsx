@@ -126,18 +126,18 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <Header currentStep={currentStep} />
       
       <WaitlistSection />
       
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-center items-center mb-12">
+      <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="flex justify-between items-start mb-6 sm:mb-12 px-2">
           {steps.map((step, index) => (
-            <div key={step.number} className="flex items-center">
-              <div className="flex flex-col items-center">
+            <div key={step.number} className="flex items-center flex-1">
+              <div className="flex flex-col items-center flex-1">
                 <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold ${
+                  className={`w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-semibold text-sm sm:text-base ${
                     currentStep === step.number
                       ? "bg-blue-600 text-white"
                       : currentStep > step.number
@@ -149,7 +149,7 @@ export default function Home() {
                   {step.number}
                 </div>
                 <span
-                  className={`mt-2 text-sm font-medium ${
+                  className={`mt-1 sm:mt-2 text-[10px] sm:text-sm font-medium text-center leading-tight ${
                     currentStep === step.number
                       ? "text-blue-600"
                       : "text-gray-500"
@@ -160,7 +160,7 @@ export default function Home() {
               </div>
               {index < steps.length - 1 && (
                 <div
-                  className={`w-24 h-0.5 mx-4 ${
+                  className={`flex-1 h-0.5 -mt-4 sm:-mt-5 mx-1 sm:mx-2 max-w-[40px] sm:max-w-[80px] ${
                     currentStep > step.number ? "bg-blue-600" : "bg-gray-300"
                   }`}
                 />
@@ -170,8 +170,8 @@ export default function Home() {
         </div>
 
         {currentStep === 1 && (
-          <Card className="p-8 bg-white">
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">
+          <Card className="p-4 sm:p-8 bg-white">
+            <h1 className="text-xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">
               {t("recipe.whatToCook")}
             </h1>
 

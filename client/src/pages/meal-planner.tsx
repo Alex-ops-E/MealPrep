@@ -13,6 +13,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Calendar, Plus, ChevronLeft, ChevronRight, ShoppingCart, Sparkles, Trash2, ChefHat, Home, TrendingUp, Globe, Flame, Dumbbell, Edit, MessageSquare, RefreshCw } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Meal, Recipe } from "@shared/schema";
+import Header from "@/components/header";
 
 interface MealWithRecipe extends Meal {
   recipe?: Recipe;
@@ -257,64 +258,25 @@ export default function MealPlanner() {
   const today = new Date();
   
   return (
-    <div className={`min-h-screen bg-gray-50 ${isRTL ? 'rtl' : 'ltr'}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-orange-100 text-orange-600 p-3 rounded-lg">
-                <Calendar className="h-6 w-6" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900" data-testid="text-page-title">
-                  {t("mealPlanner.title")}
-                </h1>
-                <p className="text-gray-600 text-sm" data-testid="text-page-description">
-                  {t("mealPlanner.description")}
-                </p>
-              </div>
+    <div className={`min-h-screen bg-gray-50 overflow-x-hidden ${isRTL ? 'rtl' : 'ltr'}`}>
+      <Header />
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="mb-4 sm:mb-8">
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
+            <div className="bg-orange-100 text-orange-600 p-2 sm:p-3 rounded-lg">
+              <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            
-            <div className="flex gap-2">
-              <Link href={`/${language}`}>
-                <Button variant="outline" className="gap-2" data-testid="button-nav-recipe-generator">
-                  <Home className="h-4 w-4" />
-                  {t("header.recipeGenerator")}
-                </Button>
-              </Link>
-              <Link href={`/${language}/price-comparison`}>
-                <Button variant="outline" className="gap-2" data-testid="button-nav-price-comparison">
-                  <TrendingUp className="h-4 w-4" />
-                  {t("header.priceComparison")}
-                </Button>
-              </Link>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-2 font-semibold" data-testid="button-language">
-                    <Globe className="h-4 w-4" />
-                    <span className="uppercase text-sm">{language}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={() => handleLanguageChange("en")}
-                    className={language === "en" ? "bg-blue-50" : ""}
-                    data-testid="language-english"
-                  >
-                    🇺🇸 {t("language.english")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleLanguageChange("ar")}
-                    className={language === "ar" ? "bg-blue-50" : ""}
-                    data-testid="language-arabic"
-                  >
-                    🇦🇪 {t("language.arabic")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <div>
+              <h1 className="text-xl sm:text-3xl font-bold text-gray-900" data-testid="text-page-title">
+                {t("mealPlanner.title")}
+              </h1>
+              <p className="text-gray-600 text-xs sm:text-sm hidden sm:block" data-testid="text-page-description">
+                {t("mealPlanner.description")}
+              </p>
             </div>
           </div>
+          
+        </div>
           
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "recommendations" | "weekly")} className="w-full">
             <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
@@ -566,7 +528,6 @@ export default function MealPlanner() {
               </div>
             </TabsContent>
           </Tabs>
-        </div>
       </div>
     </div>
   );
