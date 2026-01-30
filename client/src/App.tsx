@@ -12,6 +12,7 @@ import PriceComparison from "@/pages/price-comparison";
 import Onboarding from "@/pages/onboarding";
 import OnboardingFlow from "@/pages/onboarding-flow";
 import OnboardingComparison from "@/pages/onboarding-comparison";
+import OnboardingBasket from "@/pages/onboarding-basket";
 import Room from "@/pages/room";
 import MealTrackerPage from "@/pages/meal-tracker";
 import NotFound from "@/pages/not-found";
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/:lang(en|ar)/onboarding" component={Onboarding} />
       <Route path="/:lang(en|ar)/onboarding-flow" component={OnboardingFlow} />
       <Route path="/:lang(en|ar)/onboarding-comparison" component={OnboardingComparison} />
+      <Route path="/:lang(en|ar)/onboarding-basket" component={OnboardingBasket} />
       <Route path="/:lang(en|ar)/room" component={Room} />
       <Route path="/:lang(en|ar)/meal-tracker" component={MealTrackerPage} />
       <Route path="/:lang(en|ar)/meal-planner" component={MealPlanner} />
