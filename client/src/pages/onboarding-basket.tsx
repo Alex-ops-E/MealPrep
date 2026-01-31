@@ -233,6 +233,20 @@ export default function OnboardingBasket() {
     setShowSearchResults(false);
   };
 
+  const handleAddCustomItem = (itemName: string) => {
+    const customId = `custom_${Date.now()}`;
+    const newItem = {
+      id: customId,
+      name: itemName,
+      nameAr: itemName,
+      quantity: "1",
+      quantityAr: "1"
+    };
+    setBasketItems(prev => [...prev, newItem]);
+    setSearchQuery("");
+    setShowSearchResults(false);
+  };
+
   const filteredSuggestions = SEARCH_SUGGESTIONS.filter(item => {
     const query = searchQuery.toLowerCase();
     const itemName = language === "ar" ? item.nameAr.toLowerCase() : item.name.toLowerCase();
@@ -529,29 +543,40 @@ export default function OnboardingBasket() {
         
         {showSearchResults && (
           <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 max-h-60 overflow-y-auto">
-            {filteredSuggestions.length > 0 ? (
-              filteredSuggestions.map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => handleAddItem(item)}
-                  className="w-full p-3 text-start hover:bg-gray-50 flex items-center justify-between border-b border-gray-100 last:border-0"
-                  data-testid={`button-add-${item.id}`}
-                >
-                  <div>
-                    <span className="font-medium text-gray-900">
-                      {language === "ar" ? item.nameAr : item.name}
-                    </span>
-                    <span className="text-sm text-gray-500 ml-2">
-                      ({language === "ar" ? item.quantityAr : item.quantity})
-                    </span>
-                  </div>
+            {filteredSuggestions.length > 0 && filteredSuggestions.map(item => (
+              <button
+                key={item.id}
+                onClick={() => handleAddItem(item)}
+                className="w-full p-3 text-start hover:bg-gray-50 flex items-center justify-between border-b border-gray-100 last:border-0"
+                data-testid={`button-add-${item.id}`}
+              >
+                <div>
+                  <span className="font-medium text-gray-900">
+                    {language === "ar" ? item.nameAr : item.name}
+                  </span>
+                  <span className="text-sm text-gray-500 ml-2">
+                    ({language === "ar" ? item.quantityAr : item.quantity})
+                  </span>
+                </div>
+                <Plus className="h-4 w-4 text-green-600" />
+              </button>
+            ))}
+            {searchQuery.trim() && (
+              <button
+                onClick={() => handleAddCustomItem(searchQuery.trim())}
+                className="w-full p-3 text-start hover:bg-green-50 flex items-center justify-between border-t border-gray-200 bg-green-50/50"
+                data-testid="button-add-custom"
+              >
+                <div className="flex items-center gap-2">
                   <Plus className="h-4 w-4 text-green-600" />
-                </button>
-              ))
-            ) : (
-              <div className="p-4 text-center text-gray-500">
-                {tf("basket.noResults")}
-              </div>
+                  <span className="font-medium text-green-700">
+                    {language === "ar" ? `أضف "${searchQuery.trim()}"` : `Add "${searchQuery.trim()}"`}
+                  </span>
+                </div>
+                <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded">
+                  {language === "ar" ? "منتج مخصص" : "Custom item"}
+                </span>
+              </button>
             )}
           </div>
         )}
