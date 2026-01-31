@@ -255,6 +255,15 @@ export default function OnboardingBasket() {
 
   const handleNext = () => {
     if (currentStep === totalSteps) {
+      // Save basket items to localStorage for price comparison page
+      const itemsForComparison = basketItems.map(item => ({
+        id: item.id,
+        name: language === "ar" ? item.nameAr : item.name,
+        quantity: language === "ar" ? item.quantityAr : item.quantity,
+        unit: ""
+      }));
+      localStorage.setItem("onboardingBasketItems", JSON.stringify(itemsForComparison));
+      localStorage.setItem("onboardingSelectedStores", JSON.stringify(selectedStores));
       setLocation(`/${language}/price-comparison`);
       return;
     }

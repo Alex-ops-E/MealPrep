@@ -45,6 +45,24 @@ export default function PriceComparison() {
   const [showResults, setShowResults] = useState(false);
   
   useEffect(() => {
+    // Check for items from onboarding basket flow
+    const storedBasketItems = localStorage.getItem("onboardingBasketItems");
+    if (storedBasketItems) {
+      try {
+        const basketItems = JSON.parse(storedBasketItems);
+        if (basketItems && basketItems.length > 0) {
+          setIngredients(basketItems);
+          setShowResults(true);
+          // Clear the stored items after loading
+          localStorage.removeItem("onboardingBasketItems");
+          return;
+        }
+      } catch (e) {
+        console.error("Failed to parse basket items:", e);
+      }
+    }
+    
+    // Fall back to shopping list from context
     if (shoppingList && shoppingList.length > 0) {
       const ingredientRows = shoppingList
         .filter(item => item.ingredientName.trim() && item.quantity.trim() && item.unit.trim())
