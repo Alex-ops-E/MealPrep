@@ -123,18 +123,18 @@ export default function OnboardingBasket() {
       "basket.organicOptions": "Organic & Healthy",
       "basket.organicOptionsDesc": "Focus on organic and health products",
       
-      "basket.step3.title": "Let's pre-assemble your basket",
-      "basket.step3.subtitle": "Choose a starting basket that fits your lifestyle",
-      "basket.everyday": "Basket for Every Day",
-      "basket.everydayDesc": "Essential items for daily meals",
-      "basket.movienight": "Basket for Movie Night",
-      "basket.movienightDesc": "Snacks and treats for entertainment",
-      "basket.training": "Basket for Training",
-      "basket.trainingDesc": "High-protein fitness essentials",
+      "basket.step3.title": "What do you want to compare prices for?",
+      "basket.step3.subtitle": "Pick a basket and we'll find the best prices across stores",
+      "basket.everyday": "Everyday Essentials",
+      "basket.everydayDesc": "Compare prices for daily grocery staples",
+      "basket.movienight": "Movie Night Snacks",
+      "basket.movienightDesc": "Compare prices for snacks and treats",
+      "basket.training": "Fitness & Training",
+      "basket.trainingDesc": "Compare prices for high-protein essentials",
       "basket.items": "items",
       
-      "basket.step4.title": "Your Shopping Basket",
-      "basket.step4.subtitle": "Add more items or proceed to compare prices",
+      "basket.step4.title": "Review Items for Price Comparison",
+      "basket.step4.subtitle": "Add or remove items, then compare prices across stores",
       "basket.searchPlaceholder": "Search for items to add...",
       "basket.yourItems": "Your Items",
       "basket.addMore": "Add More Items",
@@ -169,18 +169,18 @@ export default function OnboardingBasket() {
       "basket.organicOptions": "عضوي وصحي",
       "basket.organicOptionsDesc": "التركيز على المنتجات العضوية والصحية",
       
-      "basket.step3.title": "لنجهز سلتك مسبقاً",
-      "basket.step3.subtitle": "اختر سلة بداية تناسب نمط حياتك",
-      "basket.everyday": "سلة لكل يوم",
-      "basket.everydayDesc": "منتجات أساسية للوجبات اليومية",
-      "basket.movienight": "سلة ليلة الفيلم",
-      "basket.movienightDesc": "وجبات خفيفة وحلويات للترفيه",
-      "basket.training": "سلة التدريب",
-      "basket.trainingDesc": "أساسيات اللياقة الغنية بالبروتين",
+      "basket.step3.title": "ما الذي تريد مقارنة أسعاره؟",
+      "basket.step3.subtitle": "اختر سلة وسنجد لك أفضل الأسعار في المتاجر",
+      "basket.everyday": "أساسيات يومية",
+      "basket.everydayDesc": "قارن أسعار مستلزمات البقالة اليومية",
+      "basket.movienight": "وجبات ليلة الفيلم",
+      "basket.movienightDesc": "قارن أسعار الوجبات الخفيفة والحلويات",
+      "basket.training": "لياقة وتدريب",
+      "basket.trainingDesc": "قارن أسعار أساسيات البروتين العالي",
       "basket.items": "منتجات",
       
-      "basket.step4.title": "سلة التسوق الخاصة بك",
-      "basket.step4.subtitle": "أضف المزيد من المنتجات أو انتقل لمقارنة الأسعار",
+      "basket.step4.title": "راجع المنتجات لمقارنة الأسعار",
+      "basket.step4.subtitle": "أضف أو أزل منتجات، ثم قارن الأسعار في المتاجر",
       "basket.searchPlaceholder": "ابحث عن منتجات لإضافتها...",
       "basket.yourItems": "منتجاتك",
       "basket.addMore": "أضف المزيد",
@@ -454,8 +454,8 @@ export default function OnboardingBasket() {
   const renderStep3 = () => (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-          <ShoppingBasket className="h-8 w-8 text-green-600" />
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+          <TrendingDown className="h-8 w-8 text-blue-600" />
         </div>
         <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2" data-testid="text-step-title">
           {tf("basket.step3.title")}
@@ -525,8 +525,8 @@ export default function OnboardingBasket() {
   const renderStep4 = () => (
     <div className="space-y-6">
       <div className="text-center mb-4">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-          <ShoppingCart className="h-8 w-8 text-blue-600" />
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+          <Search className="h-8 w-8 text-green-600" />
         </div>
         <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2" data-testid="text-step-title">
           {tf("basket.step4.title")}
