@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ChevronRight, ChevronLeft, Globe, Store, Search, ShoppingCart, Plus, Check, Percent, TrendingDown, ShoppingBasket, Dumbbell, Film, Coffee, X, Sparkles } from "lucide-react";
+import { ChevronRight, ChevronLeft, Globe, Store, Search, ShoppingCart, Plus, Check, Percent, TrendingDown, ShoppingBasket, Dumbbell, Film, Coffee, X, Sparkles, Bell, Mail } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   DropdownMenu,
@@ -97,6 +97,9 @@ export default function OnboardingBasket() {
   const [basketItems, setBasketItems] = useState<typeof PREASSEMBLED_BASKETS.everyday.items>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [showWaitlist, setShowWaitlist] = useState(false);
+  const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
 
   const totalSteps = 4;
 
@@ -146,6 +149,14 @@ export default function OnboardingBasket() {
       "basket.skip": "Skip",
       "basket.comparePrices": "Compare Prices",
       "basket.step": "Step",
+      
+      "waitlist.title": "We're almost ready!",
+      "waitlist.subtitle": "Price comparison is launching soon. Join the waitlist to be the first to know when it's live.",
+      "waitlist.emailPlaceholder": "Enter your email",
+      "waitlist.join": "Join Waitlist",
+      "waitlist.skip": "Skip, continue anyway",
+      "waitlist.success": "You're on the list!",
+      "waitlist.successMsg": "We'll notify you as soon as price comparison goes live.",
     },
     ar: {
       "basket.step1.title": "أين تتسوق عادة؟",
@@ -192,6 +203,14 @@ export default function OnboardingBasket() {
       "basket.skip": "تخطي",
       "basket.comparePrices": "قارن الأسعار",
       "basket.step": "الخطوة",
+      
+      "waitlist.title": "نحن على وشك الإطلاق!",
+      "waitlist.subtitle": "مقارنة الأسعار ستتوفر قريباً. انضم لقائمة الانتظار لتكون أول من يعرف.",
+      "waitlist.emailPlaceholder": "أدخل بريدك الإلكتروني",
+      "waitlist.join": "انضم لقائمة الانتظار",
+      "waitlist.skip": "تخطي، تابع على أي حال",
+      "waitlist.success": "أنت في القائمة!",
+      "waitlist.successMsg": "سنبلغك فور توفر مقارنة الأسعار.",
     }
   };
 
@@ -253,18 +272,31 @@ export default function OnboardingBasket() {
     return itemName.includes(query) && !basketItems.find(i => i.id === item.id);
   });
 
+  const proceedToComparison = () => {
+    const itemsForComparison = basketItems.map(item => ({
+      id: item.id,
+      name: language === "ar" ? item.nameAr : item.name,
+      quantity: language === "ar" ? item.quantityAr : item.quantity,
+      unit: ""
+    }));
+    localStorage.setItem("onboardingBasketItems", JSON.stringify(itemsForComparison));
+    localStorage.setItem("onboardingSelectedStores", JSON.stringify(selectedStores));
+    setLocation(`/${language}/price-comparison`);
+  };
+
+  const handleWaitlistSubmit = () => {
+    if (waitlistEmail.trim()) {
+      setWaitlistSubmitted(true);
+      setTimeout(() => {
+        setShowWaitlist(false);
+        proceedToComparison();
+      }, 1500);
+    }
+  };
+
   const handleNext = () => {
     if (currentStep === totalSteps) {
-      // Save basket items to localStorage for price comparison page
-      const itemsForComparison = basketItems.map(item => ({
-        id: item.id,
-        name: language === "ar" ? item.nameAr : item.name,
-        quantity: language === "ar" ? item.quantityAr : item.quantity,
-        unit: ""
-      }));
-      localStorage.setItem("onboardingBasketItems", JSON.stringify(itemsForComparison));
-      localStorage.setItem("onboardingSelectedStores", JSON.stringify(selectedStores));
-      setLocation(`/${language}/price-comparison`);
+      setShowWaitlist(true);
       return;
     }
     
@@ -740,6 +772,82 @@ export default function OnboardingBasket() {
           </div>
         </Card>
       </div>
+
+      {showWaitlist && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 relative animate-in fade-in zoom-in-95 duration-200">
+            <button
+              onClick={() => {
+                setShowWaitlist(false);
+              }}
+              className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+              data-testid="button-close-waitlist"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {!waitlistSubmitted ? (
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-4">
+                  <Bell className="h-8 w-8 text-orange-600" />
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+                  {tf("waitlist.title")}
+                </h3>
+                <p className="text-gray-600 text-sm sm:text-base mb-6">
+                  {tf("waitlist.subtitle")}
+                </p>
+
+                <div className="flex gap-2 mb-4">
+                  <div className="relative flex-1">
+                    <Mail className={`absolute top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 ${isRTL ? 'right-3' : 'left-3'}`} />
+                    <Input
+                      type="email"
+                      value={waitlistEmail}
+                      onChange={(e) => setWaitlistEmail(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleWaitlistSubmit()}
+                      placeholder={tf("waitlist.emailPlaceholder")}
+                      className={`h-12 ${isRTL ? 'pr-10' : 'pl-10'}`}
+                      data-testid="input-waitlist-email"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleWaitlistSubmit}
+                    disabled={!waitlistEmail.trim()}
+                    className="h-12 bg-orange-600 hover:bg-orange-700 px-4 sm:px-6 whitespace-nowrap"
+                    data-testid="button-join-waitlist"
+                  >
+                    {tf("waitlist.join")}
+                  </Button>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setShowWaitlist(false);
+                    proceedToComparison();
+                  }}
+                  className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2 transition-colors"
+                  data-testid="button-skip-waitlist"
+                >
+                  {tf("waitlist.skip")}
+                </button>
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                  <Check className="h-8 w-8 text-green-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  {tf("waitlist.success")}
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  {tf("waitlist.successMsg")}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
