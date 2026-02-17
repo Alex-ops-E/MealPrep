@@ -28,7 +28,10 @@ function Router() {
       <Route path="/:lang(en|ar)/onboarding" component={Onboarding} />
       <Route path="/:lang(en|ar)/onboarding-flow" component={OnboardingFlow} />
       <Route path="/:lang(en|ar)/onboarding-comparison" component={OnboardingComparison} />
-      <Route path="/:lang(en|ar)/onboarding-basket" component={OnboardingBasket} />
+      <Route path="/:lang(en|ar)/onboarding-basket">
+        {(params: { lang: string }) => <Redirect to={`/${params.lang}/onboarding-basket/1`} />}
+      </Route>
+      <Route path="/:lang(en|ar)/onboarding-basket/:step" component={OnboardingBasket} />
       <Route path="/:lang(en|ar)/room" component={Room} />
       <Route path="/:lang(en|ar)/meal-tracker" component={MealTrackerPage} />
       <Route path="/:lang(en|ar)/meal-planner" component={MealPlanner} />

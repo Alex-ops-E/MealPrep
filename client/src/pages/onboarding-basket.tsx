@@ -78,14 +78,19 @@ const SEARCH_SUGGESTIONS = [
   { id: "spinach", name: "Spinach", nameAr: "سبانخ", quantity: "500g", quantityAr: "500 جم" },
 ];
 
-export default function OnboardingBasket() {
+export default function OnboardingBasket({ params }: { params?: { step?: string } }) {
   const [location, setLocation] = useLocation();
   const { language, isRTL } = useLanguage();
-  const [currentStep, setCurrentStep] = useState(1);
+
+  const stepParam = params?.step ? parseInt(params.step, 10) : 1;
+  const currentStep = stepParam >= 1 && stepParam <= 4 ? stepParam : 1;
+
+  const setCurrentStep = (step: number) => {
+    setLocation(`/${language}/onboarding-basket/${step}`);
+  };
 
   const handleLanguageChange = (newLang: "en" | "ar") => {
-    const currentPath = location.replace(/^\/(en|ar)/, '');
-    setLocation(`/${newLang}${currentPath || ''}`);
+    setLocation(`/${newLang}/onboarding-basket/${currentStep}`);
   };
 
   const [selectedStores, setSelectedStores] = useState<string[]>([]);
