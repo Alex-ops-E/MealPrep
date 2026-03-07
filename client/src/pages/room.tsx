@@ -76,7 +76,7 @@ export default function Room() {
                     <span>{t("room.mealPlanner")}</span>
                   </Button>
                 </Link>
-                <Link href={`/${language}/price-comparison`}>
+                <Link href={`/${language}`}>
                   <Button 
                     variant="outline" 
                     className="w-full h-24 flex flex-col gap-2"

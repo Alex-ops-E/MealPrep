@@ -251,7 +251,7 @@ export default function OnboardingComparison() {
         description: tf("comp.successMessage"),
       });
       
-      setLocation(`/${language}/price-comparison`);
+      setLocation(`/${language}`);
     } catch (error: any) {
       toast({
         title: language === "ar" ? "خطأ" : "Error",
@@ -266,7 +266,7 @@ export default function OnboardingComparison() {
   const handleNext = async () => {
     if (currentStep === totalSteps) {
       await saveOnboardingData();
-      setLocation(`/${language}/price-comparison`);
+      setLocation(`/${language}`);
       return;
     }
     

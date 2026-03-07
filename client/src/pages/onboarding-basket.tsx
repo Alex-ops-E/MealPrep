@@ -286,7 +286,7 @@ export default function OnboardingBasket({ params }: { params?: { step?: string 
     }));
     localStorage.setItem("onboardingBasketItems", JSON.stringify(itemsForComparison));
     localStorage.setItem("onboardingSelectedStores", JSON.stringify(selectedStores));
-    setLocation(`/${language}/price-comparison`);
+    setLocation(`/${language}`);
   };
 
   const handleWaitlistSubmit = () => {

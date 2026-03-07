@@ -35,7 +35,7 @@ export default function Header({ currentStep }: HeaderProps) {
   const navItems = [
     { path: "", label: t("header.recipeGenerator"), testId: "link-recipe-generator" },
     { path: "/meal-planner", label: t("header.mealPlanner"), testId: "link-meal-planner" },
-    { path: "/price-comparison", label: t("header.priceComparison"), testId: "link-price-comparison" },
+
   ];
 
   return (

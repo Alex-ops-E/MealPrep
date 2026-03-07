@@ -37,7 +37,7 @@ export default function RecipeDetail() {
       }));
     
     setShoppingList(shoppingItems);
-    setLocation(`/${language}/price-comparison`);
+    setLocation(`/${language}`);
   };
   
   if (isLoading) {
