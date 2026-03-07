@@ -763,6 +763,17 @@ export default function OnboardingBasket({ params }: { params?: { step?: string 
                   {tf("basket.skip")}
                 </Button>
               )}
+
+              {currentStep === totalSteps && (
+                <Button
+                  variant="ghost"
+                  onClick={() => setLocation(`/${language}`)}
+                  className="text-gray-500"
+                  data-testid="button-skip-home"
+                >
+                  {language === "ar" ? "تخطي" : "Skip"}
+                </Button>
+              )}
               
               <Button
                 onClick={handleNext}
