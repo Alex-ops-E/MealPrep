@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { createHash } from "crypto";
 import { storage } from "./storage";
-import { generateRecipe, generateMeal } from "./services/openai";
+import { generateRecipe, generateMeal, analyzeFridgeAndGenerateRecipe } from "./services/openai";
 import { 
   generateRecipeSchema,
   generateMealSchema,
@@ -56,6 +56,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         error: "Failed to generate recipe", 
         message: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  });
+
+  // Fridge scan: analyze image -> detect ingredients -> generate recipe
+  app.post("/api/fridge-scan", async (req, res) => {
+    try {
+      const { image } = req.body;
+      if (!image || typeof image !== "string") {
+        return res.status(400).json({ error: "Image data is required" });
+      }
+      const result = await analyzeFridgeAndGenerateRecipe(image);
+      const savedRecipe = await storage.createRecipe(result.recipe);
+      const recipeWithDetails = await storage.getRecipe(savedRecipe.id);
+      res.json({ ingredients: result.ingredients, recipe: recipeWithDetails });
+    } catch (error) {
+      console.error("Fridge scan error:", error);
+      res.status(500).json({
+        error: "Failed to analyze image",
+        message: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });

@@ -335,6 +335,98 @@ Be realistic with estimates based on the visible portion size. If multiple items
   }
 }
 
+export interface FridgeScanResult {
+  ingredients: string[];
+  recipe: InsertRecipe;
+}
+
+export async function analyzeFridgeAndGenerateRecipe(base64Image: string): Promise<FridgeScanResult> {
+  const recognitionResponse = await openai.chat.completions.create({
+    model: "gpt-5",
+    messages: [
+      {
+        role: "system",
+        content: "You are an expert chef who can identify ingredients from photos of fridges, pantries, or ingredient layouts. Be thorough but practical — only list ingredients that are clearly visible and usable."
+      },
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: `Look at this image and identify all visible food ingredients. Return a JSON object like:
+{
+  "ingredients": ["ingredient1", "ingredient2", "ingredient3"]
+}
+List only ingredients you can clearly see. Be specific (e.g. "chicken breast" not just "meat").`
+          },
+          {
+            type: "image_url",
+            image_url: {
+              url: base64Image.startsWith("data:") ? base64Image : `data:image/jpeg;base64,${base64Image}`
+            }
+          }
+        ]
+      }
+    ],
+    response_format: { type: "json_object" },
+    max_completion_tokens: 1024
+  });
+
+  const recognized = JSON.parse(recognitionResponse.choices[0].message.content || '{"ingredients":[]}');
+  const ingredients: string[] = recognized.ingredients || [];
+
+  if (ingredients.length === 0) {
+    throw new Error("No ingredients detected in the image");
+  }
+
+  const ingredientList = ingredients.join(", ");
+
+  const recipeResponse = await openai.chat.completions.create({
+    model: "gpt-5",
+    messages: [
+      {
+        role: "system",
+        content: "You are a professional chef. Create practical, delicious recipes using the available ingredients."
+      },
+      {
+        role: "user",
+        content: `I have these ingredients: ${ingredientList}. Create the best possible recipe using mainly these ingredients. You may assume basic pantry staples (salt, pepper, oil, water) are available.
+
+Return JSON in this exact format:
+{
+  "title": "Recipe Title",
+  "summary": "Brief description",
+  "servings": 2,
+  "cuisine": "cuisine type",
+  "cookTime": "30 minutes",
+  "dietaryTags": [],
+  "ingredients": [
+    { "name": "ingredient name", "quantity": 1.5, "unit": "cups" }
+  ],
+  "steps": ["Step 1", "Step 2"]
+}`
+      }
+    ],
+    response_format: { type: "json_object" },
+    max_completion_tokens: 2048
+  });
+
+  const recipeData = JSON.parse(recipeResponse.choices[0].message.content || '{}');
+
+  const recipe: InsertRecipe = {
+    title: recipeData.title,
+    summary: recipeData.summary,
+    servings: recipeData.servings || 2,
+    cuisine: recipeData.cuisine || "Various",
+    cookTime: recipeData.cookTime || "30 minutes",
+    dietaryTags: recipeData.dietaryTags || [],
+    ingredients: recipeData.ingredients || [],
+    steps: recipeData.steps || []
+  };
+
+  return { ingredients, recipe };
+}
+
 export async function generateMeal(params: GenerateMealParams): Promise<InsertRecipe> {
   try {
     const { prompt, type, servings } = params;

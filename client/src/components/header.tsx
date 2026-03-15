@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { UtensilsCrossed, Globe, Utensils, Menu, X } from "lucide-react";
+import { UtensilsCrossed, Globe, Utensils, Menu, X, Camera } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -35,7 +35,7 @@ export default function Header({ currentStep }: HeaderProps) {
   const navItems = [
     { path: "", label: t("header.recipeGenerator"), testId: "link-recipe-generator" },
     { path: "/meal-planner", label: t("header.mealPlanner"), testId: "link-meal-planner" },
-
+    { path: "/fridge-scan", label: language === "ar" ? "مسح الثلاجة" : "Fridge Scan", testId: "link-fridge-scan" },
   ];
 
   return (

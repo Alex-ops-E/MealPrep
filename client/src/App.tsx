@@ -15,6 +15,7 @@ import OnboardingComparison from "@/pages/onboarding-comparison";
 import OnboardingBasket from "@/pages/onboarding-basket";
 import Room from "@/pages/room";
 import MealTrackerPage from "@/pages/meal-tracker";
+import FridgeScan from "@/pages/fridge-scan";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/:lang(en|ar)/meal-tracker" component={MealTrackerPage} />
       <Route path="/:lang(en|ar)/meal-planner" component={MealPlanner} />
       <Route path="/:lang(en|ar)/recipe/:id" component={RecipeDetail} />
+      <Route path="/:lang(en|ar)/fridge-scan" component={FridgeScan} />
 
       
       <Route component={NotFound} />
