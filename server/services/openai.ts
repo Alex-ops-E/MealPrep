@@ -284,44 +284,29 @@ Make sure the recipe is practical, delicious, and matches the specified requirem
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
 export async function analyzeNutritionFromImage(base64Image: string): Promise<NutritionInfo> {
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-5",
-      messages: [
-        {
-          role: "system",
-          content: "You are a nutrition analysis expert. Analyze food images and estimate the nutritional content based on visual inspection. Provide realistic estimates for a typical serving size shown in the image."
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `Analyze this food image and estimate the nutritional content. Return JSON with:
-{
-  "name": "Name of the food/dish",
-  "calories": estimated total calories (number),
-  "protein": estimated grams of protein (number),
-  "carbs": estimated grams of carbohydrates (number),
-  "fat": estimated grams of fat (number)
-}
-
+    const imageUrl = base64Image.startsWith('data:') ? base64Image : `data:image/jpeg;base64,${base64Image}`;
+    const response = await openai.responses.create({
+      model: "gpt-4.1-mini",
+      input: [{
+        role: "user",
+        content: [
+          {
+            type: "input_text",
+            text: `Analyze this food image and estimate the nutritional content. Return valid JSON only with no extra text:
+{"name":"Name of the food/dish","calories":number,"protein":number,"carbs":number,"fat":number}
 Be realistic with estimates based on the visible portion size. If multiple items are present, sum them together.`
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: base64Image.startsWith('data:') ? base64Image : `data:image/jpeg;base64,${base64Image}`
-              }
-            }
-          ],
-        },
-      ],
-      response_format: { type: "json_object" },
-      max_completion_tokens: 1024,
-    });
+          },
+          {
+            type: "input_image",
+            image_url: imageUrl,
+            detail: "high"
+          }
+        ] as any
+      }]
+    } as any);
 
-    const result = JSON.parse(response.choices[0].message.content || '{}');
-    
+    const result = JSON.parse((response as any).output_text || '{}');
+
     return {
       name: result.name || "Unknown Food",
       calories: Math.round(result.calories || 0),
@@ -341,38 +326,29 @@ export interface FridgeScanResult {
 }
 
 export async function analyzeFridgeAndGenerateRecipe(base64Image: string): Promise<FridgeScanResult> {
-  const recognitionResponse = await openai.chat.completions.create({
-    model: "gpt-5",
-    messages: [
-      {
-        role: "system",
-        content: "You are an expert chef who can identify ingredients from photos of fridges, pantries, or ingredient layouts. Be thorough but practical — only list ingredients that are clearly visible and usable."
-      },
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: `Look at this image and identify all visible food ingredients. Return a JSON object like:
-{
-  "ingredients": ["ingredient1", "ingredient2", "ingredient3"]
-}
-List only ingredients you can clearly see. Be specific (e.g. "chicken breast" not just "meat").`
-          },
-          {
-            type: "image_url",
-            image_url: {
-              url: base64Image.startsWith("data:") ? base64Image : `data:image/jpeg;base64,${base64Image}`
-            }
-          }
-        ]
-      }
-    ],
-    response_format: { type: "json_object" },
-    max_completion_tokens: 1024
-  });
+  const imageUrl = base64Image.startsWith("data:") ? base64Image : `data:image/jpeg;base64,${base64Image}`;
 
-  const recognized = JSON.parse(recognitionResponse.choices[0].message.content || '{"ingredients":[]}');
+  const recognitionResponse = await openai.responses.create({
+    model: "gpt-4.1-mini",
+    input: [{
+      role: "user",
+      content: [
+        {
+          type: "input_text",
+          text: `Identify all visible food ingredients in this fridge or ingredient photo. Ignore non-food items. Return valid JSON only with no extra text:
+{"ingredients":["ingredient1","ingredient2","ingredient3"]}
+Be specific (e.g. "chicken breast" not just "meat"). Only list what you can clearly see.`
+        },
+        {
+          type: "input_image",
+          image_url: imageUrl,
+          detail: "high"
+        }
+      ] as any
+    }]
+  } as any);
+
+  const recognized = JSON.parse((recognitionResponse as any).output_text || '{"ingredients":[]}');
   const ingredients: string[] = recognized.ingredients || [];
 
   if (ingredients.length === 0) {
