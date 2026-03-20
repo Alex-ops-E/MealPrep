@@ -320,6 +320,25 @@ Be realistic with estimates based on the visible portion size. If multiple items
   }
 }
 
+function parseJsonFromText(text: string): any {
+  if (!text) return {};
+  // Strip markdown code fences if present
+  const cleaned = text.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
+  // Find the first { or [ and last } or ]
+  const firstBrace = cleaned.indexOf('{');
+  const firstBracket = cleaned.indexOf('[');
+  let start = -1;
+  if (firstBrace === -1 && firstBracket === -1) return {};
+  if (firstBrace === -1) start = firstBracket;
+  else if (firstBracket === -1) start = firstBrace;
+  else start = Math.min(firstBrace, firstBracket);
+  const lastBrace = cleaned.lastIndexOf('}');
+  const lastBracket = cleaned.lastIndexOf(']');
+  const end = Math.max(lastBrace, lastBracket);
+  if (start === -1 || end === -1) return {};
+  return JSON.parse(cleaned.slice(start, end + 1));
+}
+
 export interface FridgeScanResult {
   ingredients: string[];
   recipe: InsertRecipe;
@@ -328,6 +347,7 @@ export interface FridgeScanResult {
 export async function analyzeFridgeAndGenerateRecipe(base64Image: string): Promise<FridgeScanResult> {
   const imageUrl = base64Image.startsWith("data:") ? base64Image : `data:image/jpeg;base64,${base64Image}`;
 
+  // Step 1: Detect ingredients using vision model
   const recognitionResponse = await openai.responses.create({
     model: "gpt-4.1-mini",
     input: [{
@@ -335,9 +355,9 @@ export async function analyzeFridgeAndGenerateRecipe(base64Image: string): Promi
       content: [
         {
           type: "input_text",
-          text: `Identify all visible food ingredients in this fridge or ingredient photo. Ignore non-food items. Return valid JSON only with no extra text:
+          text: `Identify all visible food ingredients in this fridge or ingredient photo. Ignore non-food items. Return ONLY a JSON object, no extra text, no markdown:
 {"ingredients":["ingredient1","ingredient2","ingredient3"]}
-Be specific (e.g. "chicken breast" not just "meat"). Only list what you can clearly see.`
+Be specific (e.g. "chicken breast" not just "meat").`
         },
         {
           type: "input_image",
@@ -348,50 +368,58 @@ Be specific (e.g. "chicken breast" not just "meat"). Only list what you can clea
     }]
   } as any);
 
-  const recognized = JSON.parse((recognitionResponse as any).output_text || '{"ingredients":[]}');
-  const ingredients: string[] = recognized.ingredients || [];
+  const rawIngredients = (recognitionResponse as any).output_text || '';
+  console.log("Fridge scan - raw ingredient response:", rawIngredients);
+
+  let ingredients: string[] = [];
+  try {
+    const recognized = parseJsonFromText(rawIngredients);
+    ingredients = Array.isArray(recognized.ingredients) ? recognized.ingredients : [];
+  } catch (e) {
+    console.error("Failed to parse ingredient JSON:", e);
+  }
 
   if (ingredients.length === 0) {
     throw new Error("No ingredients detected in the image");
   }
 
+  console.log("Fridge scan - detected ingredients:", ingredients);
   const ingredientList = ingredients.join(", ");
 
-  const recipeResponse = await openai.chat.completions.create({
-    model: "gpt-5",
-    messages: [
-      {
-        role: "system",
-        content: "You are a professional chef. Create practical, delicious recipes using the available ingredients."
-      },
-      {
-        role: "user",
-        content: `I have these ingredients: ${ingredientList}. Create the best possible recipe using mainly these ingredients. You may assume basic pantry staples (salt, pepper, oil, water) are available.
+  // Step 2: Generate recipe using detected ingredients
+  const recipeResponse = await openai.responses.create({
+    model: "gpt-4.1-mini",
+    input: [{
+      role: "user",
+      content: [{
+        type: "input_text",
+        text: `You are a professional chef. I have these ingredients: ${ingredientList}. Basic pantry staples (salt, pepper, oil, water) are also available.
 
-Return JSON in this exact format:
-{
-  "title": "Recipe Title",
-  "summary": "Brief description",
-  "servings": 2,
-  "cuisine": "cuisine type",
-  "cookTime": "30 minutes",
-  "dietaryTags": [],
-  "ingredients": [
-    { "name": "ingredient name", "quantity": 1.5, "unit": "cups" }
-  ],
-  "steps": ["Step 1", "Step 2"]
-}`
-      }
-    ],
-    response_format: { type: "json_object" },
-    max_completion_tokens: 2048
-  });
+Create the best possible recipe and return ONLY a JSON object, no extra text, no markdown:
+{"title":"Recipe Title","summary":"Brief 1-2 sentence description","servings":2,"cuisine":"cuisine type","cookTime":"30 minutes","dietaryTags":[],"ingredients":[{"name":"ingredient","quantity":1.5,"unit":"cups"}],"steps":["Step 1","Step 2"]}`
+      }] as any
+    }]
+  } as any);
 
-  const recipeData = JSON.parse(recipeResponse.choices[0].message.content || '{}');
+  const rawRecipe = (recipeResponse as any).output_text || '';
+  console.log("Fridge scan - raw recipe response:", rawRecipe.slice(0, 300));
+
+  let recipeData: any = {};
+  try {
+    recipeData = parseJsonFromText(rawRecipe);
+  } catch (e) {
+    console.error("Failed to parse recipe JSON:", e);
+    throw new Error("Failed to parse recipe from AI response");
+  }
+
+  if (!recipeData.title) {
+    console.error("Recipe missing title, full response:", rawRecipe);
+    throw new Error("AI returned an incomplete recipe");
+  }
 
   const recipe: InsertRecipe = {
     title: recipeData.title,
-    summary: recipeData.summary,
+    summary: recipeData.summary || "",
     servings: recipeData.servings || 2,
     cuisine: recipeData.cuisine || "Various",
     cookTime: recipeData.cookTime || "30 minutes",
