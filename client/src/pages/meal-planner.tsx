@@ -777,10 +777,23 @@ export default function MealPlanner() {
                                   variant="ghost"
                                   className="h-7 text-[11px] text-orange-600 hover:bg-orange-50 px-2"
                                   onClick={() => {
-                                    if (selectedSlot) return;
+                                    const todayKey = formatDate(new Date());
+                                    const takenTypes = new Set(meals.filter(m => m.dayKey === todayKey).map(m => m.type));
+                                    const mealType = (["breakfast", "lunch", "dinner"] as const).find(t => !takenTypes.has(t)) ?? "lunch";
+                                    const newMeal: MealWithRecipe = {
+                                      id: `meal_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+                                      dayKey: todayKey,
+                                      type: mealType,
+                                      name: meal.nameEn,
+                                      calories: meal.kcal,
+                                      protein: meal.protein,
+                                      recipeId: undefined,
+                                      createdAt: new Date()
+                                    };
+                                    setMeals(prev => [...prev.filter(m => !(m.dayKey === todayKey && m.type === mealType)), newMeal]);
                                     toast({
-                                      title: language === "ar" ? "تمت الإضافة!" : "Added to today!",
-                                      description: mealName
+                                      title: language === "ar" ? "تمت الإضافة إلى خطتك!" : "Added to your plan!",
+                                      description: `${mealName} → ${language === "ar" ? (mealType === "breakfast" ? "الإفطار" : mealType === "lunch" ? "الغداء" : "العشاء") : mealType}`
                                     });
                                   }}
                                   data-testid={`button-add-signature-${expert.id}-${i}`}
