@@ -54,6 +54,47 @@ const SAMPLE_MEALS: RecommendedMeal[] = [
 const WEEKDAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
 const MEAL_TYPES = ["breakfast", "lunch", "dinner"] as const;
 
+const EXPERTS = [
+  {
+    id: "fitness-trainer",
+    emoji: "💪",
+    avatarBg: "from-blue-500 to-cyan-500",
+    nameEn: "Alex Carter",
+    nameAr: "أليكس كارتر",
+    titleEn: "Certified Fitness Trainer",
+    titleAr: "مدرب لياقة معتمد",
+    bioEn: "ISSA-certified PT with 10+ years helping clients burn fat and build muscle through strategic nutrition. High-protein, whole-food focused.",
+    bioAr: "مدرب معتمد من ISSA مع أكثر من 10 سنوات خبرة في مساعدة العملاء على حرق الدهون وبناء العضلات من خلال التغذية السليمة.",
+    tags: ["High Protein", "Low Carb", "Meal Prep", "Muscle Gain"],
+    tagsAr: ["بروتين عالي", "كارب منخفض", "تحضير وجبات", "بناء عضلات"],
+    followers: "42.8K",
+    meals: [
+      { nameEn: "Grilled Chicken & Quinoa Bowl", nameAr: "وعاء دجاج مشوي وكينوا", kcal: 520, protein: 48 },
+      { nameEn: "Egg White Omelette & Spinach", nameAr: "أومليت بياض البيض والسبانخ", kcal: 310, protein: 36 },
+      { nameEn: "Salmon with Sweet Potato", nameAr: "سلمون مع بطاطا حلوة", kcal: 580, protein: 44 },
+    ]
+  },
+  {
+    id: "michelin-chef",
+    emoji: "👨‍🍳",
+    avatarBg: "from-amber-500 to-orange-500",
+    nameEn: "Hiroshi Beaumont",
+    nameAr: "هيروشي بومون",
+    titleEn: "Michelin-Star Chef",
+    titleAr: "شيف نجمة ميشلان",
+    bioEn: "Tokyo-trained, Paris-refined. 2 Michelin stars across French, Mediterranean, and Japanese cuisines. Elevation of everyday ingredients into extraordinary dishes.",
+    bioAr: "تدرّب في طوكيو وتألّق في باريس. نجمتا ميشلان في المطابخ الفرنسية والمتوسطية واليابانية. يحوّل المكونات اليومية إلى أطباق استثنائية.",
+    tags: ["French", "Japanese", "Mediterranean", "Fusion"],
+    tagsAr: ["فرنسي", "ياباني", "متوسطي", "فيوجن"],
+    followers: "128K",
+    meals: [
+      { nameEn: "Duck Confit with Lentil Jus", nameAr: "بط كونفي مع صلصة العدس", kcal: 680, protein: 38 },
+      { nameEn: "Miso-Glazed Black Cod", nameAr: "سمك القد الأسود بالميسو", kcal: 490, protein: 34 },
+      { nameEn: "Saffron Risotto & Scallops", nameAr: "ريزوتو الزعفران مع الإسكالوب", kcal: 620, protein: 29 },
+    ]
+  }
+] as const;
+
 function getWeekDates(weekOffset: number = 0) {
   const today = new Date();
   const day = today.getDay();
@@ -90,6 +131,8 @@ export default function MealPlanner() {
   const [meals, setMeals] = useState<MealWithRecipe[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [addMode, setAddMode] = useState<"type" | "photo">("type");
+  const [followedExperts, setFollowedExperts] = useState<Set<string>>(new Set());
+  const [expandedExpert, setExpandedExpert] = useState<string | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoData, setPhotoData] = useState<string | null>(null);
   const [photoResult, setPhotoResult] = useState<NutritionResult | null>(null);
@@ -628,6 +671,146 @@ export default function MealPlanner() {
             </div>
 
           </div>
+
+          {/* Who to Follow */}
+          <div className="mt-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-purple-100 text-purple-600 p-2 rounded-lg">
+                <TrendingUp className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">
+                  {language === "ar" ? "تابع خبراء التغذية" : "Who to Follow"}
+                </h2>
+                <p className="text-xs text-gray-500">
+                  {language === "ar" ? "خبراء منتقون لإلهامك في التخطيط" : "Curated experts to inspire your meal planning"}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {EXPERTS.map(expert => {
+                const isFollowed = followedExperts.has(expert.id);
+                const isExpanded = expandedExpert === expert.id;
+                const name = language === "ar" ? expert.nameAr : expert.nameEn;
+                const title = language === "ar" ? expert.titleAr : expert.titleEn;
+                const bio = language === "ar" ? expert.bioAr : expert.bioEn;
+                const tags = language === "ar" ? expert.tagsAr : expert.tags;
+
+                return (
+                  <div
+                    key={expert.id}
+                    className={`bg-white rounded-xl border-2 shadow-sm transition-all ${isFollowed ? "border-orange-300" : "border-gray-100"}`}
+                    data-testid={`card-expert-${expert.id}`}
+                  >
+                    <div className="p-4">
+                      <div className="flex items-start gap-4">
+                        <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${expert.avatarBg} flex items-center justify-center text-2xl flex-shrink-0 shadow-md`}>
+                          {expert.emoji}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <div>
+                              <h3 className="font-bold text-gray-900 text-sm" data-testid={`text-expert-name-${expert.id}`}>{name}</h3>
+                              <p className="text-xs text-gray-500">{title}</p>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <span className="text-xs text-gray-400">{expert.followers}</span>
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setFollowedExperts(prev => {
+                                    const next = new Set(prev);
+                                    if (next.has(expert.id)) next.delete(expert.id);
+                                    else next.add(expert.id);
+                                    return next;
+                                  });
+                                }}
+                                className={`text-xs h-8 px-3 ${isFollowed ? "bg-gray-100 hover:bg-gray-200 text-gray-700" : "bg-orange-600 hover:bg-orange-700 text-white"}`}
+                                data-testid={`button-follow-${expert.id}`}
+                              >
+                                {isFollowed
+                                  ? (language === "ar" ? "متابَع ✓" : "Following ✓")
+                                  : (language === "ar" ? "تابع" : "Follow")}
+                              </Button>
+                            </div>
+                          </div>
+
+                          <p className="text-xs text-gray-600 mt-1.5 line-clamp-2">{bio}</p>
+
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {tags.map((tag, i) => (
+                              <span key={i} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{tag}</span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setExpandedExpert(isExpanded ? null : expert.id)}
+                        className="mt-3 w-full text-xs text-orange-600 hover:text-orange-700 flex items-center justify-center gap-1"
+                        data-testid={`button-toggle-expert-${expert.id}`}
+                      >
+                        {isExpanded
+                          ? (language === "ar" ? "إخفاء الوجبات ▲" : "Hide meals ▲")
+                          : (language === "ar" ? "عرض وجبات مقترحة ▼" : "View signature meals ▼")}
+                      </button>
+
+                      {isExpanded && (
+                        <div className="mt-3 space-y-2 border-t pt-3">
+                          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                            {language === "ar" ? "وجبات مقترحة" : "Signature Meals"}
+                          </p>
+                          {expert.meals.map((meal, i) => {
+                            const mealName = language === "ar" ? meal.nameAr : meal.nameEn;
+                            return (
+                              <div key={i} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                                <div>
+                                  <p className="text-xs font-medium text-gray-800">{mealName}</p>
+                                  <div className="flex gap-2 text-[10px] text-gray-500 mt-0.5">
+                                    <span className="flex items-center gap-0.5"><Flame className="h-2.5 w-2.5 text-red-400" />{meal.kcal} kcal</span>
+                                    <span className="flex items-center gap-0.5"><Dumbbell className="h-2.5 w-2.5 text-blue-400" />{meal.protein}g</span>
+                                  </div>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 text-[11px] text-orange-600 hover:bg-orange-50 px-2"
+                                  onClick={() => {
+                                    if (selectedSlot) return;
+                                    toast({
+                                      title: language === "ar" ? "تمت الإضافة!" : "Added to today!",
+                                      description: mealName
+                                    });
+                                  }}
+                                  data-testid={`button-add-signature-${expert.id}-${i}`}
+                                >
+                                  <Plus className="h-3 w-3 mr-0.5" />
+                                  {language === "ar" ? "أضف" : "Add"}
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {isFollowed && (
+                      <div className="px-4 pb-3">
+                        <div className="bg-orange-50 border border-orange-100 rounded-lg px-3 py-2 text-[11px] text-orange-700 flex items-center gap-1.5">
+                          <CheckCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                          {language === "ar"
+                            ? `ستظهر وجبات ${name} في اقتراحاتك`
+                            : `${name}'s meals will appear in your suggestions`}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
       </div>
     </div>
   );
