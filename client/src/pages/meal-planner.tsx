@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Calendar, Plus, ChevronLeft, ChevronRight, ShoppingCart, Sparkles, Trash2, ChefHat, Home, TrendingUp, Globe, Flame, Dumbbell, Edit, MessageSquare, RefreshCw } from "lucide-react";
@@ -79,7 +79,6 @@ export default function MealPlanner() {
   const [servings, setServings] = useState(2);
   const [meals, setMeals] = useState<MealWithRecipe[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [activeTab, setActiveTab] = useState<"recommendations" | "weekly">("recommendations");
   
   const isRTL = language === "ar";
   
@@ -278,256 +277,216 @@ export default function MealPlanner() {
           
         </div>
           
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "recommendations" | "weekly")} className="w-full">
-            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
-              <TabsTrigger value="recommendations" data-testid="tab-recommendations">
-                {tf("mp.recommendations")}
-              </TabsTrigger>
-              <TabsTrigger value="weekly" data-testid="tab-weekly">
-                {tf("mp.weeklyPlan")}
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="recommendations" className="space-y-8">
-              <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white">
-                <h2 className="text-2xl font-bold mb-2" data-testid="text-plan-title">
-                  {tf("mp.myCustomPlan")}
-                </h2>
-                <p className="text-orange-100">
-                  {tf("mp.planDescription")}
-                </p>
-              </div>
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white">
+              <h2 className="text-2xl font-bold mb-2" data-testid="text-plan-title">
+                {tf("mp.myCustomPlan")}
+              </h2>
+              <p className="text-orange-100">
+                {tf("mp.planDescription")}
+              </p>
+            </div>
 
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4" data-testid="text-breakfast-section">
-                  {tf("mp.recommendedBreakfast")}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {getFilteredMeals("breakfast").map(renderMealCard)}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4" data-testid="text-lunch-section">
-                  {tf("mp.recommendedLunch")}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {getFilteredMeals("lunch").map(renderMealCard)}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4" data-testid="text-dinner-section">
-                  {tf("mp.recommendedDinner")}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {getFilteredMeals("dinner").map(renderMealCard)}
-                </div>
-              </div>
-
-              <div className="h-20" />
+            <div className="flex items-center justify-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setWeekOffset(weekOffset - 1)}
+                data-testid="button-prev-week"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
               
-              <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-50">
-                <div className="max-w-4xl mx-auto flex justify-between items-center">
-                  <span className="text-green-600 font-medium">{tf("mp.totalSavings")}</span>
-                  <Button className="bg-orange-600 hover:bg-orange-700" data-testid="button-view-cart">
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    {tf("mp.viewCart")}
-                  </Button>
+              <div className="text-center">
+                <div className="text-sm text-gray-500">{t("mealPlanner.weekOf")}</div>
+                <div className="text-lg font-semibold text-gray-900" data-testid="text-week-range">
+                  {monday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - {sunday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                 </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="weekly">
-              <div className="flex items-center justify-center gap-4 mb-6">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setWeekOffset(weekOffset - 1)}
-                  data-testid="button-prev-week"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </Button>
-                
-                <div className="text-center">
-                  <div className="text-sm text-gray-500">{t("mealPlanner.weekOf")}</div>
-                  <div className="text-lg font-semibold text-gray-900" data-testid="text-week-range">
-                    {monday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - {sunday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                  </div>
-                </div>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setWeekOffset(weekOffset + 1)}
-                  data-testid="button-next-week"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </Button>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 gap-4">
-                {WEEKDAY_KEYS.map(day => {
-                  const dayDate = weekDates[day];
-                  const isToday = isSameDay(dayDate, today);
-                  
-                  return (
-                    <div
-                      key={day}
-                      className={`bg-white rounded-lg border-2 transition-all ${
-                        isToday ? 'border-blue-400 shadow-md' : 'border-gray-200'
-                      }`}
-                      data-testid={`card-${day}`}
-                    >
-                      <div className="p-4 border-b">
-                        <div className={`font-semibold capitalize ${isToday ? 'text-blue-600' : 'text-gray-900'}`}>
-                          {t(`mealPlanner.${day}`)}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {dayDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                        </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setWeekOffset(weekOffset + 1)}
+                data-testid="button-next-week"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 gap-4">
+              {WEEKDAY_KEYS.map(day => {
+                const dayDate = weekDates[day];
+                const isToday = isSameDay(dayDate, today);
+                
+                return (
+                  <div
+                    key={day}
+                    className={`bg-white rounded-lg border-2 shadow-sm transition-all ${
+                      isToday ? 'border-orange-400 shadow-md' : 'border-gray-100'
+                    }`}
+                    data-testid={`card-${day}`}
+                  >
+                    <div className={`p-4 border-b rounded-t-lg ${isToday ? 'bg-orange-50' : 'bg-white'}`}>
+                      <div className={`font-semibold capitalize ${isToday ? 'text-orange-600' : 'text-gray-900'}`}>
+                        {t(`mealPlanner.${day}`)}
                       </div>
-                      
-                      <div className="p-3 space-y-4">
-                        {MEAL_TYPES.map(type => {
-                          const meal = getMealForSlot(day, type);
-                          
-                          return (
-                            <div key={type} className="space-y-2">
-                              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide" data-testid={`label-${day}-${type}`}>
-                                {t(`mealPlanner.${type}`)}
-                              </div>
-                              
-                              {meal ? (
-                                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 relative group">
-                                  <div className="pr-6">
-                                    <div className="flex items-start gap-2 mb-1">
-                                      <ChefHat className="h-3.5 w-3.5 text-purple-600 mt-0.5 flex-shrink-0" />
-                                      {meal.recipeId ? (
-                                        <Link href={`/${language}/recipe/${meal.recipeId}`}>
-                                          <h4 className="font-medium text-xs text-purple-700 hover:text-purple-900 underline cursor-pointer line-clamp-2" data-testid={`text-meal-${meal.id}`}>
-                                            {meal.name}
-                                          </h4>
-                                        </Link>
-                                      ) : (
-                                        <h4 className="font-medium text-xs text-gray-900 line-clamp-2" data-testid={`text-meal-${meal.id}`}>
-                                          {meal.name}
-                                        </h4>
-                                      )}
-                                    </div>
-                                    {meal.recipe && (
-                                      <div className="text-xs text-gray-600 ml-5">
-                                        {meal.recipe.cookTime}
-                                      </div>
-                                    )}
-                                  </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="absolute top-1 right-1 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    onClick={() => deleteMeal(meal.id)}
-                                    data-testid={`button-delete-${meal.id}`}
-                                  >
-                                    <Trash2 className="h-3 w-3 text-red-600" />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <div className="flex gap-2">
-                                  <Dialog 
-                                    open={selectedSlot?.day === day && selectedSlot?.type === type && selectedSlot?.mode === 'add'} 
-                                    onOpenChange={(open) => {
-                                      if (!open) {
-                                        setSelectedSlot(null);
-                                        setMealPrompt("");
-                                      }
-                                    }}
-                                  >
-                                    <DialogTrigger asChild>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="flex-1 h-9 text-xs border-dashed hover:bg-gray-50"
-                                        onClick={() => handleOpenDialog(day, type, 'add')}
-                                        data-testid={`button-add-${day}-${type}`}
-                                      >
-                                        <Plus className="h-3 w-3 mr-1" />
-                                        {t("mealPlanner.add")}
-                                      </Button>
-                                    </DialogTrigger>
-                                    <DialogContent data-testid="dialog-add-meal">
-                                      <DialogHeader>
-                                        <DialogTitle>{t("mealPlanner.addMeal")}</DialogTitle>
-                                        <DialogDescription>
-                                          {t("mealPlanner.addMealDescription", {
-                                            day: t(`mealPlanner.${day}`),
-                                            type: t(`mealPlanner.${type}`)
-                                          })}
-                                        </DialogDescription>
-                                      </DialogHeader>
-                                      
-                                      <div className="space-y-4">
-                                        <div>
-                                          <Label htmlFor="meal-prompt">{t("mealPlanner.whatToMake")}</Label>
-                                          <Input
-                                            id="meal-prompt"
-                                            value={mealPrompt}
-                                            onChange={(e) => setMealPrompt(e.target.value)}
-                                            placeholder={t("mealPlanner.promptPlaceholder")}
-                                            data-testid="input-meal-prompt"
-                                          />
-                                        </div>
-                                        
-                                        <div>
-                                          <Label htmlFor="servings">{t("recipe.servings")}</Label>
-                                          <Select value={servings.toString()} onValueChange={(v) => setServings(parseInt(v))}>
-                                            <SelectTrigger id="servings" data-testid="select-servings">
-                                              <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              {[1, 2, 3, 4, 5, 6, 8].map(num => (
-                                                <SelectItem key={num} value={num.toString()}>
-                                                  {num} {num === 1 ? t("recipe.person") : t("recipe.people")}
-                                                </SelectItem>
-                                              ))}
-                                            </SelectContent>
-                                          </Select>
-                                        </div>
-                                        
-                                        <Button
-                                          className="w-full bg-blue-600 hover:bg-blue-700"
-                                          onClick={handleGenerateMeal}
-                                          disabled={!mealPrompt.trim() || isGenerating}
-                                          data-testid="button-generate-meal"
-                                        >
-                                          {isGenerating ? t("recipe.generating") : t("mealPlanner.generateMeal")}
-                                        </Button>
-                                      </div>
-                                    </DialogContent>
-                                  </Dialog>
-                                  
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="flex-1 h-9 text-xs text-purple-600 border-purple-300 hover:bg-purple-50"
-                                    onClick={() => handleQuickGenerate(day, type)}
-                                    disabled={isGenerating}
-                                    data-testid={`button-generate-${day}-${type}`}
-                                  >
-                                    <Sparkles className="h-3 w-3 mr-1" />
-                                    {isGenerating ? t("recipe.generating") : t("mealPlanner.generate")}
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
+                      <div className="text-xs text-gray-500">
+                        {dayDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </TabsContent>
-          </Tabs>
+                    
+                    <div className="p-3 space-y-4">
+                      {MEAL_TYPES.map(type => {
+                        const meal = getMealForSlot(day, type);
+                        
+                        return (
+                          <div key={type} className="space-y-2">
+                            <div className="text-xs font-medium text-gray-500 uppercase tracking-wide" data-testid={`label-${day}-${type}`}>
+                              {t(`mealPlanner.${type}`)}
+                            </div>
+                            
+                            {meal ? (
+                              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 relative group">
+                                <div className="pr-6">
+                                  <div className="flex items-start gap-2 mb-1">
+                                    <ChefHat className="h-3.5 w-3.5 text-orange-600 mt-0.5 flex-shrink-0" />
+                                    {meal.recipeId ? (
+                                      <Link href={`/${language}/recipe/${meal.recipeId}`}>
+                                        <h4 className="font-medium text-xs text-orange-700 hover:text-orange-900 underline cursor-pointer line-clamp-2" data-testid={`text-meal-${meal.id}`}>
+                                          {meal.name}
+                                        </h4>
+                                      </Link>
+                                    ) : (
+                                      <h4 className="font-medium text-xs text-gray-900 line-clamp-2" data-testid={`text-meal-${meal.id}`}>
+                                        {meal.name}
+                                      </h4>
+                                    )}
+                                  </div>
+                                  {meal.recipe && (
+                                    <div className="text-xs text-gray-500 ml-5">
+                                      {meal.recipe.cookTime}
+                                    </div>
+                                  )}
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="absolute top-1 right-1 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={() => deleteMeal(meal.id)}
+                                  data-testid={`button-delete-${meal.id}`}
+                                >
+                                  <Trash2 className="h-3 w-3 text-red-500" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex gap-2">
+                                <Dialog 
+                                  open={selectedSlot?.day === day && selectedSlot?.type === type && selectedSlot?.mode === 'add'} 
+                                  onOpenChange={(open) => {
+                                    if (!open) {
+                                      setSelectedSlot(null);
+                                      setMealPrompt("");
+                                    }
+                                  }}
+                                >
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="flex-1 h-9 text-xs border-dashed hover:bg-orange-50 hover:border-orange-300"
+                                      onClick={() => handleOpenDialog(day, type, 'add')}
+                                      data-testid={`button-add-${day}-${type}`}
+                                    >
+                                      <Plus className="h-3 w-3 mr-1" />
+                                      {t("mealPlanner.add")}
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent data-testid="dialog-add-meal">
+                                    <DialogHeader>
+                                      <DialogTitle>{t("mealPlanner.addMeal")}</DialogTitle>
+                                      <DialogDescription>
+                                        {t("mealPlanner.addMealDescription", {
+                                          day: t(`mealPlanner.${day}`),
+                                          type: t(`mealPlanner.${type}`)
+                                        })}
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    
+                                    <div className="space-y-4">
+                                      <div>
+                                        <Label htmlFor="meal-prompt">{t("mealPlanner.whatToMake")}</Label>
+                                        <Input
+                                          id="meal-prompt"
+                                          value={mealPrompt}
+                                          onChange={(e) => setMealPrompt(e.target.value)}
+                                          placeholder={t("mealPlanner.promptPlaceholder")}
+                                          data-testid="input-meal-prompt"
+                                        />
+                                      </div>
+                                      
+                                      <div>
+                                        <Label htmlFor="servings">{t("recipe.servings")}</Label>
+                                        <Select value={servings.toString()} onValueChange={(v) => setServings(parseInt(v))}>
+                                          <SelectTrigger id="servings" data-testid="select-servings">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {[1, 2, 3, 4, 5, 6, 8].map(num => (
+                                              <SelectItem key={num} value={num.toString()}>
+                                                {num} {num === 1 ? t("recipe.person") : t("recipe.people")}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      
+                                      <Button
+                                        className="w-full bg-orange-600 hover:bg-orange-700"
+                                        onClick={handleGenerateMeal}
+                                        disabled={!mealPrompt.trim() || isGenerating}
+                                        data-testid="button-generate-meal"
+                                      >
+                                        {isGenerating ? t("recipe.generating") : t("mealPlanner.generateMeal")}
+                                      </Button>
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                                
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1 h-9 text-xs text-orange-600 border-orange-300 hover:bg-orange-50"
+                                  onClick={() => handleQuickGenerate(day, type)}
+                                  disabled={isGenerating}
+                                  data-testid={`button-generate-${day}-${type}`}
+                                >
+                                  <Sparkles className="h-3 w-3 mr-1" />
+                                  {isGenerating ? t("recipe.generating") : t("mealPlanner.generate")}
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="h-20" />
+          </div>
+
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-50">
+            <div className="max-w-4xl mx-auto flex justify-between items-center">
+              <span className="text-green-600 font-medium">{tf("mp.totalSavings")}</span>
+              <Button className="bg-orange-600 hover:bg-orange-700" data-testid="button-view-cart">
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                {tf("mp.viewCart")}
+              </Button>
+            </div>
+          </div>
       </div>
     </div>
   );
