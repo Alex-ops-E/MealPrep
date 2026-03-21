@@ -133,6 +133,7 @@ export default function MealPlanner() {
   const [addMode, setAddMode] = useState<"type" | "photo">("type");
   const [followedExperts, setFollowedExperts] = useState<Set<string>>(new Set());
   const [expandedExpert, setExpandedExpert] = useState<string | null>(null);
+  const [generatingExpertMeal, setGeneratingExpertMeal] = useState<string | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoData, setPhotoData] = useState<string | null>(null);
   const [photoResult, setPhotoResult] = useState<NutritionResult | null>(null);
@@ -325,6 +326,47 @@ export default function MealPlanner() {
     });
   };
   
+  const handleAddExpertMeal = async (expertId: string, mealIndex: number, mealNameEn: string, mealNameAr: string) => {
+    const key = `${expertId}-${mealIndex}`;
+    if (generatingExpertMeal) return;
+    setGeneratingExpertMeal(key);
+
+    const todayKey = formatDate(new Date());
+    const takenTypes = new Set(meals.filter(m => m.dayKey === todayKey).map(m => m.type));
+    const mealType = (["breakfast", "lunch", "dinner"] as const).find(t => !takenTypes.has(t)) ?? "lunch";
+    const mealName = language === "ar" ? mealNameAr : mealNameEn;
+
+    try {
+      const res = await apiRequest("POST", "/api/recipes/generate", {
+        craving: mealNameEn,
+        servings: 2,
+        cuisine: "any",
+        cookTime: "30-60min",
+        dietaryRestrictions: []
+      });
+      const recipe = await res.json();
+
+      const newMeal: MealWithRecipe = {
+        id: `meal_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+        dayKey: todayKey,
+        type: mealType,
+        name: recipe.title,
+        recipeId: recipe.id,
+        recipe,
+        createdAt: new Date()
+      };
+      setMeals(prev => [...prev.filter(m => !(m.dayKey === todayKey && m.type === mealType)), newMeal]);
+      toast({
+        title: language === "ar" ? "تمت الإضافة مع الوصفة!" : "Recipe added to your plan!",
+        description: `${recipe.title} → ${mealType}`
+      });
+    } catch {
+      toast({ title: language === "ar" ? "خطأ" : "Error", description: language === "ar" ? "فشل توليد الوصفة" : "Failed to generate recipe", variant: "destructive" });
+    } finally {
+      setGeneratingExpertMeal(null);
+    }
+  };
+
   const getFilteredMeals = (type: "breakfast" | "lunch" | "dinner") => {
     return SAMPLE_MEALS.filter(meal => meal.type === type);
   };
@@ -775,31 +817,16 @@ export default function MealPlanner() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="h-7 text-[11px] text-orange-600 hover:bg-orange-50 px-2"
-                                  onClick={() => {
-                                    const todayKey = formatDate(new Date());
-                                    const takenTypes = new Set(meals.filter(m => m.dayKey === todayKey).map(m => m.type));
-                                    const mealType = (["breakfast", "lunch", "dinner"] as const).find(t => !takenTypes.has(t)) ?? "lunch";
-                                    const newMeal: MealWithRecipe = {
-                                      id: `meal_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-                                      dayKey: todayKey,
-                                      type: mealType,
-                                      name: meal.nameEn,
-                                      calories: meal.kcal,
-                                      protein: meal.protein,
-                                      recipeId: undefined,
-                                      createdAt: new Date()
-                                    };
-                                    setMeals(prev => [...prev.filter(m => !(m.dayKey === todayKey && m.type === mealType)), newMeal]);
-                                    toast({
-                                      title: language === "ar" ? "تمت الإضافة إلى خطتك!" : "Added to your plan!",
-                                      description: `${mealName} → ${language === "ar" ? (mealType === "breakfast" ? "الإفطار" : mealType === "lunch" ? "الغداء" : "العشاء") : mealType}`
-                                    });
-                                  }}
+                                  className="h-7 text-[11px] text-orange-600 hover:bg-orange-50 px-2 min-w-[60px]"
+                                  onClick={() => handleAddExpertMeal(expert.id, i, meal.nameEn, meal.nameAr)}
+                                  disabled={generatingExpertMeal === `${expert.id}-${i}`}
                                   data-testid={`button-add-signature-${expert.id}-${i}`}
                                 >
-                                  <Plus className="h-3 w-3 mr-0.5" />
-                                  {language === "ar" ? "أضف" : "Add"}
+                                  {generatingExpertMeal === `${expert.id}-${i}` ? (
+                                    <><RefreshCw className="h-3 w-3 animate-spin" /></>
+                                  ) : (
+                                    <><Plus className="h-3 w-3 mr-0.5" />{language === "ar" ? "أضف" : "Add"}</>
+                                  )}
                                 </Button>
                               </div>
                             );
