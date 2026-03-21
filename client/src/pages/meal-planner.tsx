@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -10,13 +10,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calendar, Plus, ChevronLeft, ChevronRight, Sparkles, Trash2, ChefHat, Home, TrendingUp, Globe, Flame, Dumbbell, Edit, MessageSquare, RefreshCw } from "lucide-react";
+import { Calendar, Plus, ChevronLeft, ChevronRight, Sparkles, Trash2, ChefHat, Home, TrendingUp, Globe, Flame, Dumbbell, Edit, MessageSquare, RefreshCw, Camera, Upload, X, CheckCircle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Meal, Recipe } from "@shared/schema";
 import Header from "@/components/header";
 
 interface MealWithRecipe extends Meal {
   recipe?: Recipe;
+  calories?: number;
+  protein?: number;
+}
+
+interface NutritionResult {
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
 }
 
 interface RecommendedMeal {
@@ -79,6 +89,13 @@ export default function MealPlanner() {
   const [servings, setServings] = useState(2);
   const [meals, setMeals] = useState<MealWithRecipe[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [addMode, setAddMode] = useState<"type" | "photo">("type");
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoData, setPhotoData] = useState<string | null>(null);
+  const [photoResult, setPhotoResult] = useState<NutritionResult | null>(null);
+  const [isAnalyzingPhoto, setIsAnalyzingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   
   const isRTL = language === "ar";
   
@@ -182,6 +199,59 @@ export default function MealPlanner() {
   const handleOpenDialog = (day: string, type: string, mode: 'add' | 'generate') => {
     setSelectedSlot({ day, type, mode });
     setMealPrompt("");
+    setAddMode("type");
+    setPhotoPreview(null);
+    setPhotoData(null);
+    setPhotoResult(null);
+  };
+
+  const handlePhotoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string;
+      setPhotoPreview(dataUrl);
+      setPhotoData(dataUrl);
+      setPhotoResult(null);
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  const handleAnalyzePhoto = async () => {
+    if (!photoData) return;
+    setIsAnalyzingPhoto(true);
+    try {
+      const res = await apiRequest("POST", "/api/meals/analyze-photo", { image: photoData });
+      const result: NutritionResult = await res.json();
+      setPhotoResult(result);
+    } catch (err) {
+      toast({ title: language === "ar" ? "خطأ" : "Error", description: language === "ar" ? "فشل تحليل الصورة" : "Failed to analyze photo", variant: "destructive" });
+    } finally {
+      setIsAnalyzingPhoto(false);
+    }
+  };
+
+  const handleAddPhotoMeal = () => {
+    if (!photoResult || !selectedSlot) return;
+    const date = weekDates[selectedSlot.day as keyof typeof weekDates];
+    const dayKey = formatDate(date);
+    const newMeal: MealWithRecipe = {
+      id: `meal_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+      dayKey,
+      type: selectedSlot.type,
+      name: photoResult.name,
+      calories: photoResult.calories,
+      protein: photoResult.protein,
+      recipeId: undefined,
+      createdAt: new Date()
+    };
+    setMeals(prev => [...prev.filter(m => !(m.dayKey === dayKey && m.type === selectedSlot.type)), newMeal]);
+    setSelectedSlot(null);
+    setPhotoPreview(null);
+    setPhotoData(null);
+    setPhotoResult(null);
+    toast({ title: language === "ar" ? "تمت الإضافة!" : "Meal added!", description: photoResult.name });
   };
   
   const handleQuickGenerate = (day: string, type: string) => {
@@ -363,7 +433,13 @@ export default function MealPlanner() {
                                       </h4>
                                     )}
                                   </div>
-                                  {meal.recipe && (
+                                  {meal.calories && (
+                                    <div className="flex gap-2 text-xs text-gray-500 ml-5 mt-0.5">
+                                      <span className="flex items-center gap-0.5"><Flame className="h-3 w-3 text-red-400" />{meal.calories}</span>
+                                      {meal.protein && <span className="flex items-center gap-0.5"><Dumbbell className="h-3 w-3 text-blue-400" />{meal.protein}g</span>}
+                                    </div>
+                                  )}
+                                  {!meal.calories && meal.recipe && (
                                     <div className="text-xs text-gray-500 ml-5">
                                       {meal.recipe.cookTime}
                                     </div>
@@ -412,44 +488,120 @@ export default function MealPlanner() {
                                         })}
                                       </DialogDescription>
                                     </DialogHeader>
-                                    
-                                    <div className="space-y-4">
-                                      <div>
-                                        <Label htmlFor="meal-prompt">{t("mealPlanner.whatToMake")}</Label>
-                                        <Input
-                                          id="meal-prompt"
-                                          value={mealPrompt}
-                                          onChange={(e) => setMealPrompt(e.target.value)}
-                                          placeholder={t("mealPlanner.promptPlaceholder")}
-                                          data-testid="input-meal-prompt"
-                                        />
-                                      </div>
-                                      
-                                      <div>
-                                        <Label htmlFor="servings">{t("recipe.servings")}</Label>
-                                        <Select value={servings.toString()} onValueChange={(v) => setServings(parseInt(v))}>
-                                          <SelectTrigger id="servings" data-testid="select-servings">
-                                            <SelectValue />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            {[1, 2, 3, 4, 5, 6, 8].map(num => (
-                                              <SelectItem key={num} value={num.toString()}>
-                                                {num} {num === 1 ? t("recipe.person") : t("recipe.people")}
-                                              </SelectItem>
-                                            ))}
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                      
-                                      <Button
-                                        className="w-full bg-orange-600 hover:bg-orange-700"
-                                        onClick={handleGenerateMeal}
-                                        disabled={!mealPrompt.trim() || isGenerating}
-                                        data-testid="button-generate-meal"
+
+                                    <div className="flex rounded-lg border border-gray-200 p-1 gap-1 bg-gray-50 mb-2">
+                                      <button
+                                        onClick={() => setAddMode("type")}
+                                        className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-all ${addMode === "type" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+                                        data-testid="tab-add-type"
                                       >
-                                        {isGenerating ? t("recipe.generating") : t("mealPlanner.generateMeal")}
-                                      </Button>
+                                        {language === "ar" ? "✏️ كتابة" : "✏️ Type"}
+                                      </button>
+                                      <button
+                                        onClick={() => setAddMode("photo")}
+                                        className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-all ${addMode === "photo" ? "bg-white shadow text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+                                        data-testid="tab-add-photo"
+                                      >
+                                        {language === "ar" ? "📷 صورة" : "📷 Photo"}
+                                      </button>
                                     </div>
+
+                                    {addMode === "type" ? (
+                                      <div className="space-y-4">
+                                        <div>
+                                          <Label htmlFor="meal-prompt">{t("mealPlanner.whatToMake")}</Label>
+                                          <Input
+                                            id="meal-prompt"
+                                            value={mealPrompt}
+                                            onChange={(e) => setMealPrompt(e.target.value)}
+                                            placeholder={t("mealPlanner.promptPlaceholder")}
+                                            data-testid="input-meal-prompt"
+                                          />
+                                        </div>
+                                        <div>
+                                          <Label htmlFor="servings">{t("recipe.servings")}</Label>
+                                          <Select value={servings.toString()} onValueChange={(v) => setServings(parseInt(v))}>
+                                            <SelectTrigger id="servings" data-testid="select-servings">
+                                              <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {[1, 2, 3, 4, 5, 6, 8].map(num => (
+                                                <SelectItem key={num} value={num.toString()}>
+                                                  {num} {num === 1 ? t("recipe.person") : t("recipe.people")}
+                                                </SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                        <Button
+                                          className="w-full bg-orange-600 hover:bg-orange-700"
+                                          onClick={handleGenerateMeal}
+                                          disabled={!mealPrompt.trim() || isGenerating}
+                                          data-testid="button-generate-meal"
+                                        >
+                                          {isGenerating ? t("recipe.generating") : t("mealPlanner.generateMeal")}
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <div className="space-y-4">
+                                        {!photoPreview ? (
+                                          <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center bg-gray-50">
+                                            <Camera className="h-8 w-8 text-gray-400 mx-auto mb-3" />
+                                            <p className="text-sm text-gray-500 mb-4">
+                                              {language === "ar" ? "التقط صورة للوجبة لاكتشاف السعرات الحرارية" : "Take or upload a photo of your meal to detect calories"}
+                                            </p>
+                                            <div className="flex gap-2 justify-center">
+                                              <Button size="sm" className="bg-orange-600 hover:bg-orange-700 gap-1.5" onClick={() => cameraInputRef.current?.click()} data-testid="button-camera-meal">
+                                                <Camera className="h-4 w-4" />
+                                                {language === "ar" ? "التقط" : "Camera"}
+                                              </Button>
+                                              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => fileInputRef.current?.click()} data-testid="button-upload-meal">
+                                                <Upload className="h-4 w-4" />
+                                                {language === "ar" ? "رفع" : "Upload"}
+                                              </Button>
+                                            </div>
+                                            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+                                            <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoChange} />
+                                          </div>
+                                        ) : (
+                                          <div className="space-y-3">
+                                            <div className="relative rounded-xl overflow-hidden">
+                                              <img src={photoPreview} alt="meal" className="w-full max-h-44 object-cover" data-testid="img-meal-preview" />
+                                              <button onClick={() => { setPhotoPreview(null); setPhotoData(null); setPhotoResult(null); }} className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1">
+                                                <X className="h-3.5 w-3.5" />
+                                              </button>
+                                            </div>
+
+                                            {!photoResult ? (
+                                              <Button className="w-full bg-orange-600 hover:bg-orange-700 gap-2" onClick={handleAnalyzePhoto} disabled={isAnalyzingPhoto} data-testid="button-analyze-meal">
+                                                {isAnalyzingPhoto ? (
+                                                  <><RefreshCw className="h-4 w-4 animate-spin" />{language === "ar" ? "جاري التحليل..." : "Analyzing..."}</>
+                                                ) : (
+                                                  <><Sparkles className="h-4 w-4" />{language === "ar" ? "تحليل واكتشاف السعرات" : "Detect Calories"}</>
+                                                )}
+                                              </Button>
+                                            ) : (
+                                              <div className="space-y-3">
+                                                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                                                  <div className="flex items-center gap-2 mb-2">
+                                                    <CheckCircle className="h-4 w-4 text-green-600" />
+                                                    <span className="font-semibold text-gray-900 text-sm" data-testid="text-detected-meal">{photoResult.name}</span>
+                                                  </div>
+                                                  <div className="flex gap-3 text-xs text-gray-600">
+                                                    <span className="flex items-center gap-1"><Flame className="h-3 w-3 text-red-500" />{photoResult.calories} kcal</span>
+                                                    <span className="flex items-center gap-1"><Dumbbell className="h-3 w-3 text-blue-500" />{photoResult.protein}g protein</span>
+                                                    <span className="text-gray-400">{photoResult.carbs}g carbs · {photoResult.fat}g fat</span>
+                                                  </div>
+                                                </div>
+                                                <Button className="w-full bg-orange-600 hover:bg-orange-700" onClick={handleAddPhotoMeal} data-testid="button-confirm-photo-meal">
+                                                  {language === "ar" ? "إضافة هذه الوجبة" : "Add This Meal"}
+                                                </Button>
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
                                   </DialogContent>
                                 </Dialog>
                                 

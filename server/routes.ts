@@ -60,6 +60,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Meal photo analysis (public) - detect meal name + calories from a photo
+  app.post("/api/meals/analyze-photo", async (req, res) => {
+    try {
+      const { image } = req.body;
+      if (!image || typeof image !== "string") {
+        return res.status(400).json({ error: "Image data is required" });
+      }
+      const nutrition = await analyzeNutritionFromImage(image);
+      res.json(nutrition);
+    } catch (error) {
+      console.error("Meal photo analyze error:", error);
+      res.status(500).json({
+        error: "Failed to analyze meal photo",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Fridge scan: analyze image -> detect ingredients -> generate recipe
   app.post("/api/fridge-scan", async (req, res) => {
     try {
