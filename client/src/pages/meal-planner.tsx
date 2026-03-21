@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calendar, Plus, ChevronLeft, ChevronRight, ShoppingCart, Sparkles, Trash2, ChefHat, Home, TrendingUp, Globe, Flame, Dumbbell, Edit, MessageSquare, RefreshCw } from "lucide-react";
+import { Calendar, Plus, ChevronLeft, ChevronRight, Sparkles, Trash2, ChefHat, Home, TrendingUp, Globe, Flame, Dumbbell, Edit, MessageSquare, RefreshCw } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { Meal, Recipe } from "@shared/schema";
 import Header from "@/components/header";
@@ -475,17 +475,6 @@ export default function MealPlanner() {
               })}
             </div>
 
-            <div className="h-20" />
-          </div>
-
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-50">
-            <div className="max-w-4xl mx-auto flex justify-between items-center">
-              <span className="text-green-600 font-medium">{tf("mp.totalSavings")}</span>
-              <Button className="bg-orange-600 hover:bg-orange-700" data-testid="button-view-cart">
-                <ShoppingCart className="h-4 w-4 mr-2" />
-                {tf("mp.viewCart")}
-              </Button>
-            </div>
           </div>
       </div>
     </div>
