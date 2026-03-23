@@ -67,7 +67,7 @@ const EXPERTS = [
     bioAr: "مدرب معتمد من ISSA مع أكثر من 10 سنوات خبرة في مساعدة العملاء على حرق الدهون وبناء العضلات من خلال التغذية السليمة.",
     tags: ["High Protein", "Low Carb", "Meal Prep", "Muscle Gain"],
     tagsAr: ["بروتين عالي", "كارب منخفض", "تحضير وجبات", "بناء عضلات"],
-    followers: "42.8K",
+    followers: "312",
     meals: [
       { nameEn: "Grilled Chicken & Quinoa Bowl", nameAr: "وعاء دجاج مشوي وكينوا", kcal: 520, protein: 48 },
       { nameEn: "Egg White Omelette & Spinach", nameAr: "أومليت بياض البيض والسبانخ", kcal: 310, protein: 36 },
@@ -86,7 +86,7 @@ const EXPERTS = [
     bioAr: "تدرّب في طوكيو وتألّق في باريس. نجمتا ميشلان في المطابخ الفرنسية والمتوسطية واليابانية. يحوّل المكونات اليومية إلى أطباق استثنائية.",
     tags: ["French", "Japanese", "Mediterranean", "Fusion"],
     tagsAr: ["فرنسي", "ياباني", "متوسطي", "فيوجن"],
-    followers: "128K",
+    followers: "874",
     meals: [
       { nameEn: "Duck Confit with Lentil Jus", nameAr: "بط كونفي مع صلصة العدس", kcal: 680, protein: 38 },
       { nameEn: "Miso-Glazed Black Cod", nameAr: "سمك القد الأسود بالميسو", kcal: 490, protein: 34 },
