@@ -15,6 +15,69 @@ import { z } from "zod";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { analyzeNutritionFromImage } from "./services/openai";
 
+// ── Dish Match ─────────────────────────────────────────────────────────────
+interface SwipeItem {
+  id: string;
+  type: "dish" | "restaurant";
+  name: string;
+  nameAr: string;
+  emoji: string;
+  cuisine: string;
+  price: string;
+  rating: number;
+  description: string;
+  descriptionAr: string;
+  calories?: number;
+}
+interface SwipeSession {
+  id: string;
+  code: string;
+  hostUserId: string;
+  guestUserId: string | null;
+  items: SwipeItem[];
+  hostSwipes: Record<string, "left" | "right">;
+  guestSwipes: Record<string, "left" | "right">;
+  matches: string[];
+  status: "waiting" | "active" | "done";
+  createdAt: Date;
+}
+const swipeSessions = new Map<string, SwipeSession>();
+const codeToSessionId = new Map<string, string>();
+
+const SWIPE_ITEMS: SwipeItem[] = [
+  { id: "d1", type: "dish", name: "Chicken Mandi", nameAr: "مندي الدجاج", emoji: "🍗", cuisine: "Arabic", price: "55 AED", rating: 4.8, description: "Slow-cooked chicken over fragrant saffron rice", descriptionAr: "دجاج مطبوخ ببطء فوق أرز الزعفران العطر", calories: 680 },
+  { id: "d2", type: "dish", name: "Beef Shawarma", nameAr: "شاورما لحم", emoji: "🌯", cuisine: "Arabic", price: "22 AED", rating: 4.6, description: "Marinated beef with garlic sauce in fresh bread", descriptionAr: "لحم بقري متبل مع صلصة الثوم في خبز طازج", calories: 520 },
+  { id: "d3", type: "dish", name: "Margherita Pizza", nameAr: "بيتزا مرغريتا", emoji: "🍕", cuisine: "Italian", price: "65 AED", rating: 4.5, description: "Classic Neapolitan pizza with fresh mozzarella", descriptionAr: "بيتزا نابولية كلاسيكية مع جبن موزاريلا طازج", calories: 720 },
+  { id: "d4", type: "dish", name: "Sushi Platter", nameAr: "طبق سوشي", emoji: "🍣", cuisine: "Japanese", price: "120 AED", rating: 4.9, description: "Fresh salmon & tuna nigiri with maki rolls", descriptionAr: "نيجيري السلمون والتونة الطازج مع لفائف ماكي", calories: 480 },
+  { id: "d5", type: "dish", name: "Grilled Hammour", nameAr: "هامور مشوي", emoji: "🐟", cuisine: "Emirati", price: "95 AED", rating: 4.7, description: "UAE's favourite fish grilled with local spices", descriptionAr: "السمك المفضل في الإمارات، مشوي بالتوابل المحلية", calories: 420 },
+  { id: "d6", type: "dish", name: "Lamb Biryani", nameAr: "برياني لحم", emoji: "🍛", cuisine: "Indian", price: "48 AED", rating: 4.8, description: "Fragrant basmati rice with tender slow-cooked lamb", descriptionAr: "أرز بسمتي عطر مع لحم ضأن طري", calories: 750 },
+  { id: "d7", type: "dish", name: "Wagyu Burger", nameAr: "برجر واغيو", emoji: "🍔", cuisine: "American", price: "85 AED", rating: 4.6, description: "A5 Wagyu patty with truffle aioli and aged cheddar", descriptionAr: "باتي واغيو A5 مع أيولي الكمأة وشيدر المعتق", calories: 890 },
+  { id: "d8", type: "dish", name: "Falafel Wrap", nameAr: "لفة فلافل", emoji: "🧆", cuisine: "Lebanese", price: "18 AED", rating: 4.4, description: "Crispy falafel with tahini and fresh vegetables", descriptionAr: "فلافل مقرمشة مع الطحينة والخضار الطازجة", calories: 410 },
+  { id: "d9", type: "dish", name: "Pad Thai", nameAr: "باد تاي", emoji: "🍜", cuisine: "Thai", price: "65 AED", rating: 4.6, description: "Stir-fried rice noodles with shrimp and peanuts", descriptionAr: "شعيرية أرز مقلية مع الروبيان والفول السوداني", calories: 580 },
+  { id: "d10", type: "dish", name: "Cheese Manakish", nameAr: "مناقيش جبنة", emoji: "🥙", cuisine: "Lebanese", price: "15 AED", rating: 4.5, description: "Freshly baked flatbread with melted akkawi cheese", descriptionAr: "خبز مخبوز طازج مع جبنة عكاوي ذائبة", calories: 380 },
+  { id: "r1", type: "restaurant", name: "Nobu Abu Dhabi", nameAr: "نوبو أبوظبي", emoji: "⭐", cuisine: "Japanese Fusion", price: "250–400 AED/person", rating: 4.9, description: "World-famous Japanese fusion by Nobu Matsuhisa", descriptionAr: "مطبخ ياباني مشهور عالمياً من نوبو ماتسوهيسا" },
+  { id: "r2", type: "restaurant", name: "Tamba Dubai", nameAr: "تامبا دبي", emoji: "🌙", cuisine: "Indian", price: "100–180 AED/person", rating: 4.7, description: "Modern Indian with rooftop views of the Dubai skyline", descriptionAr: "مطبخ هندي عصري مع إطلالات على أسطح دبي" },
+  { id: "r3", type: "restaurant", name: "Zuma DIFC", nameAr: "زوما المركز المالي", emoji: "🏮", cuisine: "Japanese", price: "200–350 AED/person", rating: 4.8, description: "Contemporary Japanese izakaya in the heart of DIFC", descriptionAr: "إيزاكايا يابانية معاصرة في قلب مركز دبي المالي" },
+  { id: "r4", type: "restaurant", name: "Operation Falafel", nameAr: "عملية فلافل", emoji: "🧆", cuisine: "Lebanese", price: "30–60 AED/person", rating: 4.5, description: "Popular Lebanese street food with a cult following", descriptionAr: "أكل شارع لبناني شعبي بمتابعين متحمسين" },
+  { id: "r5", type: "restaurant", name: "Nusr-Et Steakhouse", nameAr: "نصرت ستيك", emoji: "🥩", cuisine: "Turkish Steakhouse", price: "200–400 AED/person", rating: 4.6, description: "Salt Bae's legendary theatrical steakhouse experience", descriptionAr: "تجربة مطعم اللحوم المسرحية الأسطورية لسولت باي" },
+];
+
+function generateCode(): string {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+function generateId(): string {
+  return Math.random().toString(36).substring(2, 18) + Date.now().toString(36);
+}
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+// ───────────────────────────────────────────────────────────────────────────
+
 function hashIP(ip: string): string {
   return createHash("sha256").update(ip).digest("hex");
 }
@@ -97,6 +160,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // ── Dish Match API ─────────────────────────────────────────────────────────
+  app.post("/api/dish-match/sessions", (req, res) => {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: "userId required" });
+    const id = generateId();
+    let code = generateCode();
+    while (codeToSessionId.has(code)) code = generateCode();
+    const session: SwipeSession = {
+      id, code,
+      hostUserId: userId,
+      guestUserId: null,
+      items: shuffle(SWIPE_ITEMS),
+      hostSwipes: {},
+      guestSwipes: {},
+      matches: [],
+      status: "waiting",
+      createdAt: new Date()
+    };
+    swipeSessions.set(id, session);
+    codeToSessionId.set(code, id);
+    res.json({ id, code, items: session.items });
+  });
+
+  app.post("/api/dish-match/sessions/join", (req, res) => {
+    const { code, userId } = req.body;
+    if (!code || !userId) return res.status(400).json({ error: "code and userId required" });
+    const sessionId = codeToSessionId.get(code.toUpperCase());
+    if (!sessionId) return res.status(404).json({ error: "Session not found" });
+    const session = swipeSessions.get(sessionId);
+    if (!session) return res.status(404).json({ error: "Session not found" });
+    if (session.guestUserId && session.guestUserId !== userId) return res.status(409).json({ error: "Session already has a guest" });
+    session.guestUserId = userId;
+    session.status = "active";
+    res.json({ id: session.id, code: session.code, items: session.items });
+  });
+
+  app.get("/api/dish-match/sessions/:id", (req, res) => {
+    const session = swipeSessions.get(req.params.id);
+    if (!session) return res.status(404).json({ error: "Session not found" });
+    res.json({
+      id: session.id,
+      code: session.code,
+      status: session.status,
+      guestJoined: !!session.guestUserId,
+      matches: session.matches,
+      hostSwipeCount: Object.keys(session.hostSwipes).length,
+      guestSwipeCount: Object.keys(session.guestSwipes).length,
+    });
+  });
+
+  app.post("/api/dish-match/sessions/:id/swipe", (req, res) => {
+    const { userId, itemId, direction } = req.body;
+    if (!userId || !itemId || !direction) return res.status(400).json({ error: "userId, itemId, direction required" });
+    const session = swipeSessions.get(req.params.id);
+    if (!session) return res.status(404).json({ error: "Session not found" });
+
+    const isHost = session.hostUserId === userId;
+    const isGuest = session.guestUserId === userId;
+    if (!isHost && !isGuest) return res.status(403).json({ error: "Not a participant" });
+
+    if (isHost) session.hostSwipes[itemId] = direction;
+    else session.guestSwipes[itemId] = direction;
+
+    // Recalculate matches
+    const matches: string[] = [];
+    for (const id of Object.keys(session.hostSwipes)) {
+      if (session.hostSwipes[id] === "right" && session.guestSwipes[id] === "right") {
+        matches.push(id);
+      }
+    }
+    session.matches = matches;
+
+    const allSwiped = session.items.every(item =>
+      session.hostSwipes[item.id] && session.guestSwipes[item.id]
+    );
+    if (allSwiped) session.status = "done";
+
+    res.json({ matches: session.matches, newMatches: matches.filter(m => !session.matches.includes(m)) });
+  });
+  // ───────────────────────────────────────────────────────────────────────────
 
   // Get recipe details
   app.get("/api/recipes/:id", async (req, res) => {
