@@ -22,7 +22,8 @@ interface SwipeItem {
   calories?: number;
 }
 
-type Phase = "landing" | "creating" | "waiting" | "joining" | "swiping" | "matched" | "done";
+type Phase = "landing" | "setup" | "creating" | "waiting" | "joining" | "swiping" | "matched" | "done";
+type Category = "dishes" | "restaurants" | "both";
 
 function generateUserId() {
   return "user_" + Math.random().toString(36).substring(2, 18);
@@ -46,6 +47,7 @@ export default function DishMatch() {
   const [newMatch, setNewMatch] = useState<SwipeItem | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [guestJoined, setGuestJoined] = useState(false);
+  const [category, setCategory] = useState<Category>("both");
 
   // Drag state
   const cardRef = useRef<HTMLDivElement>(null);
@@ -101,7 +103,7 @@ export default function DishMatch() {
   const startSession = async () => {
     setIsLoading(true);
     try {
-      const res = await apiRequest("POST", "/api/dish-match/sessions", { userId: userId.current });
+      const res = await apiRequest("POST", "/api/dish-match/sessions", { userId: userId.current, category });
       const data = await res.json();
       setSessionId(data.id);
       setSessionCode(data.code);
@@ -233,8 +235,7 @@ export default function DishMatch() {
           <div className="space-y-3 w-full max-w-xs">
             <Button
               className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white text-base font-semibold rounded-xl"
-              onClick={startSession}
-              disabled={isLoading}
+              onClick={() => setPhase("setup")}
               data-testid="button-start-session"
             >
               <Users className="h-5 w-5 mr-2" />
@@ -249,6 +250,62 @@ export default function DishMatch() {
               {lang("Join with Code", "انضم برمز")}
             </Button>
           </div>
+        </div>
+      )}
+
+      {/* Setup — choose category */}
+      {phase === "setup" && (
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] px-4 text-center">
+          <h2 className="text-2xl font-bold text-white mb-2">
+            {lang("What are you deciding?", "ماذا تريدون أن تختاروا؟")}
+          </h2>
+          <p className="text-gray-400 text-sm mb-8">
+            {lang("Pick a category — both of you will swipe the same selection", "اختر فئة — ستمرران على نفس الاختيارات")}
+          </p>
+
+          <div className="grid grid-cols-1 gap-3 w-full max-w-xs mb-8">
+            {([
+              { id: "dishes", emoji: "🍽️", labelEn: "Dishes", labelAr: "أطباق", descEn: "Swipe on individual meals & dishes", descAr: "مرر على الوجبات والأطباق الفردية" },
+              { id: "restaurants", emoji: "🏪", labelEn: "Restaurants", labelAr: "مطاعم", descEn: "Swipe on restaurants to dine at", descAr: "مرر على المطاعم للتناول فيها" },
+              { id: "both", emoji: "🎲", labelEn: "Mix of Both", labelAr: "كلاهما معاً", descEn: "Dishes and restaurants combined", descAr: "أطباق ومطاعم معاً" },
+            ] as const).map(opt => {
+              const selected = category === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => setCategory(opt.id)}
+                  className={`flex items-center gap-4 rounded-2xl p-4 border-2 text-left transition-all ${selected ? "border-orange-500 bg-orange-500/10" : "border-gray-700 bg-gray-800 hover:border-gray-600"}`}
+                  data-testid={`button-category-${opt.id}`}
+                >
+                  <span className="text-3xl">{opt.emoji}</span>
+                  <div className="flex-1">
+                    <p className={`font-semibold text-sm ${selected ? "text-orange-400" : "text-white"}`}>
+                      {language === "ar" ? opt.labelAr : opt.labelEn}
+                    </p>
+                    <p className="text-gray-500 text-xs mt-0.5">
+                      {language === "ar" ? opt.descAr : opt.descEn}
+                    </p>
+                  </div>
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selected ? "border-orange-500 bg-orange-500" : "border-gray-600"}`}>
+                    {selected && <div className="w-2 h-2 rounded-full bg-white" />}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <Button
+            className="w-full max-w-xs h-12 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold"
+            onClick={startSession}
+            disabled={isLoading}
+            data-testid="button-confirm-setup"
+          >
+            {isLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : lang("Create Session →", "إنشاء الجلسة →")}
+          </Button>
+
+          <button onClick={() => setPhase("landing")} className="mt-6 text-gray-600 text-xs hover:text-gray-400">
+            {lang("← Back", "← رجوع")}
+          </button>
         </div>
       )}
 

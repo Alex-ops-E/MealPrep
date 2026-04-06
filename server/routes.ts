@@ -163,16 +163,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ── Dish Match API ─────────────────────────────────────────────────────────
   app.post("/api/dish-match/sessions", (req, res) => {
-    const { userId } = req.body;
+    const { userId, category } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
     const id = generateId();
     let code = generateCode();
     while (codeToSessionId.has(code)) code = generateCode();
+    const filtered = category === "dishes"
+      ? SWIPE_ITEMS.filter(i => i.type === "dish")
+      : category === "restaurants"
+      ? SWIPE_ITEMS.filter(i => i.type === "restaurant")
+      : SWIPE_ITEMS;
     const session: SwipeSession = {
       id, code,
       hostUserId: userId,
       guestUserId: null,
-      items: shuffle(SWIPE_ITEMS),
+      items: shuffle(filtered),
       hostSwipes: {},
       guestSwipes: {},
       matches: [],
