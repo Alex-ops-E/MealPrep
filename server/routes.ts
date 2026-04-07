@@ -9,8 +9,11 @@ import {
   insertWaitlistSchema,
   insertOnboardingResponseSchema,
   insertMealLogSchema,
+  dishMatchSessions,
   type RecipeWithDetails
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, sql as sqlExpr } from "drizzle-orm";
 import { z } from "zod";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { analyzeNutritionFromImage } from "./services/openai";
@@ -40,6 +43,8 @@ interface SwipeSession {
   matches: string[];
   status: "waiting" | "active" | "done";
   createdAt: Date;
+  category: string;
+  dbRowId?: string;
 }
 const swipeSessions = new Map<string, SwipeSession>();
 const codeToSessionId = new Map<string, string>();
@@ -162,15 +167,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ── Dish Match API ─────────────────────────────────────────────────────────
-  app.post("/api/dish-match/sessions", (req, res) => {
+  app.post("/api/dish-match/sessions", async (req, res) => {
     const { userId, category } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
     const id = generateId();
     let code = generateCode();
     while (codeToSessionId.has(code)) code = generateCode();
-    const filtered = category === "dishes"
+    const cat = category || "both";
+    const filtered = cat === "dishes"
       ? SWIPE_ITEMS.filter(i => i.type === "dish")
-      : category === "restaurants"
+      : cat === "restaurants"
       ? SWIPE_ITEMS.filter(i => i.type === "restaurant")
       : SWIPE_ITEMS;
     const session: SwipeSession = {
@@ -182,8 +188,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       guestSwipes: {},
       matches: [],
       status: "waiting",
-      createdAt: new Date()
+      createdAt: new Date(),
+      category: cat,
     };
+    // Persist to DB for analytics
+    try {
+      const [row] = await db.insert(dishMatchSessions).values({
+        sessionCode: code,
+        category: cat,
+        hadMatch: false,
+        matchCount: 0,
+      }).returning();
+      session.dbRowId = row.id;
+    } catch (e) {
+      console.error("Failed to insert dish match session to DB", e);
+    }
     swipeSessions.set(id, session);
     codeToSessionId.set(code, id);
     res.json({ id, code, items: session.items });
@@ -216,7 +235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  app.post("/api/dish-match/sessions/:id/swipe", (req, res) => {
+  app.post("/api/dish-match/sessions/:id/swipe", async (req, res) => {
     const { userId, itemId, direction } = req.body;
     if (!userId || !itemId || !direction) return res.status(400).json({ error: "userId, itemId, direction required" });
     const session = swipeSessions.get(req.params.id);
@@ -229,6 +248,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (isHost) session.hostSwipes[itemId] = direction;
     else session.guestSwipes[itemId] = direction;
 
+    const prevMatchCount = session.matches.length;
+
     // Recalculate matches
     const matches: string[] = [];
     for (const id of Object.keys(session.hostSwipes)) {
@@ -238,12 +259,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     session.matches = matches;
 
+    // Update DB when new matches are found
+    if (session.dbRowId && matches.length > prevMatchCount) {
+      try {
+        await db.update(dishMatchSessions)
+          .set({ hadMatch: true, matchCount: matches.length })
+          .where(eq(dishMatchSessions.id, session.dbRowId));
+      } catch (e) {
+        console.error("Failed to update dish match session in DB", e);
+      }
+    }
+
     const allSwiped = session.items.every(item =>
       session.hostSwipes[item.id] && session.guestSwipes[item.id]
     );
     if (allSwiped) session.status = "done";
 
     res.json({ matches: session.matches, newMatches: matches.filter(m => !session.matches.includes(m)) });
+  });
+
+  app.get("/api/dish-match/stats", async (_req, res) => {
+    try {
+      const rows = await db.select().from(dishMatchSessions);
+      const totalSessions = rows.length;
+      const sessionsWithMatch = rows.filter(r => r.hadMatch).length;
+      res.json({ totalSessions, sessionsWithMatch });
+    } catch (e) {
+      res.status(500).json({ error: "Failed to fetch stats" });
+    }
   });
   // ───────────────────────────────────────────────────────────────────────────
 

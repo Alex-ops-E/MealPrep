@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -72,6 +72,15 @@ export const mealLogs = pgTable("meal_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const dishMatchSessions = pgTable("dish_match_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionCode: text("session_code").notNull(),
+  category: text("category").notNull().default("both"),
+  hadMatch: boolean("had_match").notNull().default(false),
+  matchCount: integer("match_count").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertRecipeSchema = createInsertSchema(recipes).omit({
   id: true,
@@ -99,6 +108,11 @@ export const insertOnboardingResponseSchema = createInsertSchema(onboardingRespo
 });
 
 export const insertMealLogSchema = createInsertSchema(mealLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertDishMatchSessionSchema = createInsertSchema(dishMatchSessions).omit({
   id: true,
   createdAt: true,
 });
@@ -138,6 +152,9 @@ export type InsertOnboardingResponse = z.infer<typeof insertOnboardingResponseSc
 
 export type MealLog = typeof mealLogs.$inferSelect;
 export type InsertMealLog = z.infer<typeof insertMealLogSchema>;
+
+export type DishMatchSession = typeof dishMatchSessions.$inferSelect;
+export type InsertDishMatchSession = z.infer<typeof insertDishMatchSessionSchema>;
 
 export type GenerateRecipeParams = z.infer<typeof generateRecipeSchema>;
 export type GenerateMealParams = z.infer<typeof generateMealSchema>;
