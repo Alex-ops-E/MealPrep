@@ -36,7 +36,6 @@ export default function Header({ currentStep }: HeaderProps) {
     { path: "", label: t("header.recipeGenerator"), testId: "link-recipe-generator" },
     { path: "/meal-planner", label: t("header.mealPlanner"), testId: "link-meal-planner" },
     { path: "/fridge-scan", label: language === "ar" ? "مسح الثلاجة" : "Fridge Scan", testId: "link-fridge-scan" },
-    { path: "/dish-match", label: language === "ar" ? "مطابقة الأطباق" : "Dish Match", testId: "link-dish-match" },
   ];
 
   return (
