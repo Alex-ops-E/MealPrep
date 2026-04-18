@@ -296,6 +296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sessionCode: "SOLO",
         category: cat,
         isSolo: true,
+        matchingLaunched: true,
         hadMatch: false,
         matchCount: 0,
       }).returning();
@@ -310,11 +311,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const rows = await db.select().from(dishMatchSessions);
       const multiplayer = rows.filter(r => !r.isSolo);
+      const solo = rows.filter(r => r.isSolo);
       const totalSessions = multiplayer.length;
       const matchingLaunched = multiplayer.filter(r => r.matchingLaunched).length;
       const sessionsWithMatch = multiplayer.filter(r => r.hadMatch).length;
-      const soloSessions = rows.filter(r => r.isSolo).length;
-      res.json({ totalSessions, matchingLaunched, sessionsWithMatch, soloSessions });
+      const soloSessions = solo.length;
+      const soloLaunched = solo.filter(r => r.matchingLaunched).length;
+      res.json({ totalSessions, matchingLaunched, sessionsWithMatch, soloSessions, soloLaunched });
     } catch (e) {
       res.status(500).json({ error: "Failed to fetch stats" });
     }
