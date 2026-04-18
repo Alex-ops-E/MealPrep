@@ -76,6 +76,7 @@ export const dishMatchSessions = pgTable("dish_match_sessions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   sessionCode: text("session_code").notNull(),
   category: text("category").notNull().default("both"),
+  isSolo: boolean("is_solo").notNull().default(false),
   hadMatch: boolean("had_match").notNull().default(false),
   matchCount: integer("match_count").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),

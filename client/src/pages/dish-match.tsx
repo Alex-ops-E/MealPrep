@@ -123,7 +123,7 @@ export default function DishMatch() {
     return [...arr].sort(() => Math.random() - 0.5);
   }
 
-  const startSolo = () => {
+  const startSolo = async () => {
     const filtered = category === "dishes"
       ? LOCAL_ITEMS.filter(i => i.type === "dish")
       : category === "restaurants"
@@ -135,6 +135,10 @@ export default function DishMatch() {
     setMySwipes({});
     setIsSolo(true);
     setPhase("swiping");
+    // Record solo session in DB (fire and forget)
+    try {
+      await apiRequest("POST", "/api/dish-match/solo", { category });
+    } catch {}
   };
 
   const startSession = async () => {

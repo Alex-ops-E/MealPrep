@@ -278,12 +278,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ matches: session.matches, newMatches: matches.filter(m => !session.matches.includes(m)) });
   });
 
+  app.post("/api/dish-match/solo", async (req, res) => {
+    const { category } = req.body;
+    const cat = category || "both";
+    try {
+      const [row] = await db.insert(dishMatchSessions).values({
+        sessionCode: "SOLO",
+        category: cat,
+        isSolo: true,
+        hadMatch: false,
+        matchCount: 0,
+      }).returning();
+      res.json({ id: row.id });
+    } catch (e) {
+      console.error("Failed to record solo session", e);
+      res.status(500).json({ error: "Failed to record session" });
+    }
+  });
+
   app.get("/api/dish-match/stats", async (_req, res) => {
     try {
       const rows = await db.select().from(dishMatchSessions);
-      const totalSessions = rows.length;
-      const sessionsWithMatch = rows.filter(r => r.hadMatch).length;
-      res.json({ totalSessions, sessionsWithMatch });
+      const totalSessions = rows.filter(r => !r.isSolo).length;
+      const soloSessions = rows.filter(r => r.isSolo).length;
+      const sessionsWithMatch = rows.filter(r => r.hadMatch && !r.isSolo).length;
+      res.json({ totalSessions, soloSessions, sessionsWithMatch });
     } catch (e) {
       res.status(500).json({ error: "Failed to fetch stats" });
     }
