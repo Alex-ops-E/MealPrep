@@ -208,7 +208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ id, code, items: session.items });
   });
 
-  app.post("/api/dish-match/sessions/join", (req, res) => {
+  app.post("/api/dish-match/sessions/join", async (req, res) => {
     const { code, userId } = req.body;
     if (!code || !userId) return res.status(400).json({ error: "code and userId required" });
     const sessionId = codeToSessionId.get(code.toUpperCase());
@@ -218,6 +218,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (session.guestUserId && session.guestUserId !== userId) return res.status(409).json({ error: "Session already has a guest" });
     session.guestUserId = userId;
     session.status = "active";
+    // Mark matching as launched in DB (both players are now in)
+    if (session.dbRowId) {
+      try {
+        await db.update(dishMatchSessions)
+          .set({ matchingLaunched: true })
+          .where(eq(dishMatchSessions.id, session.dbRowId));
+      } catch (e) {
+        console.error("Failed to update matchingLaunched", e);
+      }
+    }
     res.json({ id: session.id, code: session.code, items: session.items });
   });
 
@@ -299,10 +309,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/dish-match/stats", async (_req, res) => {
     try {
       const rows = await db.select().from(dishMatchSessions);
-      const totalSessions = rows.filter(r => !r.isSolo).length;
+      const multiplayer = rows.filter(r => !r.isSolo);
+      const totalSessions = multiplayer.length;
+      const matchingLaunched = multiplayer.filter(r => r.matchingLaunched).length;
+      const sessionsWithMatch = multiplayer.filter(r => r.hadMatch).length;
       const soloSessions = rows.filter(r => r.isSolo).length;
-      const sessionsWithMatch = rows.filter(r => r.hadMatch && !r.isSolo).length;
-      res.json({ totalSessions, soloSessions, sessionsWithMatch });
+      res.json({ totalSessions, matchingLaunched, sessionsWithMatch, soloSessions });
     } catch (e) {
       res.status(500).json({ error: "Failed to fetch stats" });
     }
