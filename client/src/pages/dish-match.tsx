@@ -320,7 +320,7 @@ export default function DishMatch() {
                 data-testid="button-play-solo"
               >
                 <Zap className="h-5 w-5" />
-                {lang("Play Solo", "العب بمفردك")}
+                {lang("Start Swipe", "ابدأ التمرير")}
               </button>
 
               {/* Invite a friend */}
