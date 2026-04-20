@@ -403,7 +403,7 @@ export default function DishMatch() {
               {isLoading
                 ? <RefreshCw className="h-4 w-4 animate-spin" />
                 : isSolo
-                  ? lang("Start Swiping →", "ابدأ التمرير →")
+                  ? lang("Start Swipe", "ابدأ التمرير")
                   : lang("Create Session →", "إنشاء الجلسة →")}
             </button>
 
