@@ -255,17 +255,29 @@ export default function DishMatch({ initialPhase = "landing", initialSolo = fals
   return (
     <div className={`min-h-screen bg-gray-950 ${isRTL ? "rtl" : "ltr"}`}>
       <style>{`
-        @keyframes floatUp {
-          0%   { transform: translateY(0px) rotate(0deg); opacity: 0.12; }
-          50%  { opacity: 0.22; }
-          100% { transform: translateY(-120px) rotate(15deg); opacity: 0; }
-        }
         @keyframes floatSway {
           0%,100% { transform: translateY(0px) translateX(0px) rotate(-5deg); }
           33%     { transform: translateY(-18px) translateX(8px) rotate(5deg); }
           66%     { transform: translateY(-8px) translateX(-6px) rotate(-3deg); }
         }
         .float-emoji { animation: floatSway var(--dur, 6s) ease-in-out infinite; animation-delay: var(--delay, 0s); }
+
+        @keyframes bgSwipeLeft {
+          0%   { transform: translateY(30px) rotate(0deg); opacity: 0; }
+          12%  { transform: translateY(0) rotate(0deg); opacity: 0.55; }
+          60%  { transform: translateY(0) rotate(-2deg); opacity: 0.55; }
+          85%  { transform: translateX(-220px) rotate(-22deg); opacity: 0; }
+          100% { transform: translateX(-220px) rotate(-22deg); opacity: 0; }
+        }
+        @keyframes bgSwipeRight {
+          0%   { transform: translateY(30px) rotate(0deg); opacity: 0; }
+          12%  { transform: translateY(0) rotate(0deg); opacity: 0.55; }
+          60%  { transform: translateY(0) rotate(2deg); opacity: 0.55; }
+          85%  { transform: translateX(220px) rotate(22deg); opacity: 0; }
+          100% { transform: translateX(220px) rotate(22deg); opacity: 0; }
+        }
+        .bg-card-left  { animation: bgSwipeLeft  var(--cdur, 5.5s) ease-in-out infinite; animation-delay: var(--cdelay, 0s); }
+        .bg-card-right { animation: bgSwipeRight var(--cdur, 5.5s) ease-in-out infinite; animation-delay: var(--cdelay, 0s); }
       `}</style>
 
       <Header />
@@ -355,11 +367,45 @@ export default function DishMatch({ initialPhase = "landing", initialSolo = fals
       {/* ── Setup — choose category ───────────────────────────────────────── */}
       {phase === "setup" && (
         <div className="relative flex flex-col items-center justify-center min-h-[calc(100vh-64px)] px-4 text-center overflow-hidden">
+
+          {/* Gradient glow */}
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[300px] rounded-full bg-orange-600/15 blur-[100px]" />
+            <div className="absolute top-[-40px] left-1/2 -translate-x-1/2 w-[500px] h-[400px] rounded-full bg-orange-600/20 blur-[120px]" />
+            <div className="absolute bottom-0 left-1/4 w-[300px] h-[300px] rounded-full bg-pink-600/10 blur-[100px]" />
           </div>
 
-          <div className="relative z-10 w-full max-w-xs">
+          {/* Animated swiping cards in background (solo only) */}
+          {isSolo && (
+            <div className="absolute inset-0 pointer-events-none select-none" style={{ zIndex: 0 }}>
+              {[
+                { emoji: "🍕", name: "Margherita Pizza", rating: "4.8", dir: "left",  delay: "0s"   },
+                { emoji: "🍔", name: "Smash Burger",     rating: "4.7", dir: "right", delay: "1.1s" },
+                { emoji: "🍣", name: "Sushi Platter",    rating: "4.9", dir: "left",  delay: "2.2s" },
+                { emoji: "🌮", name: "Lamb Tacos",       rating: "4.6", dir: "right", delay: "3.3s" },
+                { emoji: "🍜", name: "Ramen Bowl",       rating: "4.8", dir: "left",  delay: "4.4s" },
+              ].map((card, i) => (
+                /* Centering wrapper — no transform so animation can use transform freely */
+                <div key={i} className="absolute" style={{ top: "15%", left: "calc(50% - 88px)" }}>
+                  <div
+                    className={`${card.dir === "left" ? "bg-card-left" : "bg-card-right"} w-44 rounded-2xl border border-gray-700/50 shadow-2xl overflow-hidden`}
+                    style={{ "--cdur": "5.5s", "--cdelay": card.delay, background: "rgba(28,28,38,0.82)" } as any}
+                  >
+                    <div className="h-24 bg-gradient-to-b from-gray-700/30 to-gray-800/50 flex items-center justify-center text-5xl">
+                      {card.emoji}
+                    </div>
+                    <div className="px-3 py-2">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-white text-[11px] font-semibold truncate">{card.name}</span>
+                        <span className="text-yellow-400 text-[10px] shrink-0">⭐ {card.rating}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="relative z-10 w-full max-w-xs backdrop-blur-sm rounded-3xl">
             <h2 className="text-2xl font-bold text-white mb-1">
               {lang("What are you deciding?", "ماذا تريد أن تختار؟")}
             </h2>
