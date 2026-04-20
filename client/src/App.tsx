@@ -17,6 +17,7 @@ import Room from "@/pages/room";
 import MealTrackerPage from "@/pages/meal-tracker";
 import FridgeScan from "@/pages/fridge-scan";
 import DishMatch from "@/pages/dish-match";
+import Swipe from "@/pages/swipe";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -40,6 +41,7 @@ function Router() {
       <Route path="/:lang(en|ar)/recipe/:id" component={RecipeDetail} />
       <Route path="/:lang(en|ar)/fridge-scan" component={FridgeScan} />
       <Route path="/:lang(en|ar)/dish-match" component={DishMatch} />
+      <Route path="/:lang(en|ar)/swipe" component={Swipe} />
 
       
       <Route component={NotFound} />

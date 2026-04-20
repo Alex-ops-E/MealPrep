@@ -31,14 +31,19 @@ function generateUserId() {
 
 const BG_EMOJIS = ["🍕","🍣","🍔","🌮","🍜","🥗","🍛","🥩","🍱","🧆","🥘","🍝","🌯","🍗","🥟"];
 
-export default function DishMatch() {
+interface DishMatchProps {
+  initialPhase?: Phase;
+  initialSolo?: boolean;
+}
+
+export default function DishMatch({ initialPhase = "landing", initialSolo = false }: DishMatchProps) {
   const { language } = useLanguage();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const isRTL = language === "ar";
 
   const userId = useRef(generateUserId());
-  const [phase, setPhase] = useState<Phase>("landing");
+  const [phase, setPhase] = useState<Phase>(initialPhase);
   const [sessionId, setSessionId] = useState("");
   const [sessionCode, setSessionCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
@@ -50,7 +55,7 @@ export default function DishMatch() {
   const [isLoading, setIsLoading] = useState(false);
   const [guestJoined, setGuestJoined] = useState(false);
   const [category, setCategory] = useState<Category>("both");
-  const [isSolo, setIsSolo] = useState(false);
+  const [isSolo, setIsSolo] = useState(initialSolo);
   const [soloLikes, setSoloLikes] = useState<SwipeItem[]>([]);
 
   // Drag state
