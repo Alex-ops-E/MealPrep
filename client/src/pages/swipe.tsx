@@ -1,5 +1,5 @@
 import DishMatch from "./dish-match";
 
 export default function Swipe() {
-  return <DishMatch initialPhase="setup" initialSolo={true} />;
+  return <DishMatch initialPhase="setup" initialSolo={true} source="swipe" />;
 }

@@ -168,12 +168,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ── Dish Match API ─────────────────────────────────────────────────────────
   app.post("/api/dish-match/sessions", async (req, res) => {
-    const { userId, category } = req.body;
+    const { userId, category, source } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
     const id = generateId();
     let code = generateCode();
     while (codeToSessionId.has(code)) code = generateCode();
     const cat = category || "both";
+    const src = source || "dish-match";
     const filtered = cat === "dishes"
       ? SWIPE_ITEMS.filter(i => i.type === "dish")
       : cat === "restaurants"
@@ -196,6 +197,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const [row] = await db.insert(dishMatchSessions).values({
         sessionCode: code,
         category: cat,
+        source: src,
         hadMatch: false,
         matchCount: 0,
       }).returning();
@@ -289,12 +291,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/dish-match/solo", async (req, res) => {
-    const { category } = req.body;
+    const { category, source } = req.body;
     const cat = category || "both";
+    const src = source || "dish-match";
     try {
       const [row] = await db.insert(dishMatchSessions).values({
         sessionCode: "SOLO",
         category: cat,
+        source: src,
         isSolo: true,
         matchingLaunched: true,
         hadMatch: false,
@@ -317,7 +321,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sessionsWithMatch = multiplayer.filter(r => r.hadMatch).length;
       const soloSessions = solo.length;
       const soloLaunched = solo.filter(r => r.matchingLaunched).length;
-      res.json({ totalSessions, matchingLaunched, sessionsWithMatch, soloSessions, soloLaunched });
+      // A/B breakdown by source
+      const bySource: Record<string, { sessions: number; launched: number; matches: number }> = {};
+      for (const row of rows) {
+        const s = row.source ?? "dish-match";
+        if (!bySource[s]) bySource[s] = { sessions: 0, launched: 0, matches: 0 };
+        bySource[s].sessions++;
+        if (row.matchingLaunched) bySource[s].launched++;
+        if (row.hadMatch) bySource[s].matches++;
+      }
+      res.json({ totalSessions, matchingLaunched, sessionsWithMatch, soloSessions, soloLaunched, bySource });
     } catch (e) {
       res.status(500).json({ error: "Failed to fetch stats" });
     }

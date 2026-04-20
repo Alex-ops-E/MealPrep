@@ -34,9 +34,10 @@ const BG_EMOJIS = ["🍕","🍣","🍔","🌮","🍜","🥗","🍛","🥩","🍱
 interface DishMatchProps {
   initialPhase?: Phase;
   initialSolo?: boolean;
+  source?: string;
 }
 
-export default function DishMatch({ initialPhase = "landing", initialSolo = false }: DishMatchProps) {
+export default function DishMatch({ initialPhase = "landing", initialSolo = false, source = "dish-match" }: DishMatchProps) {
   const { language } = useLanguage();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -142,14 +143,14 @@ export default function DishMatch({ initialPhase = "landing", initialSolo = fals
     setPhase("swiping");
     // Record solo session in DB (fire and forget)
     try {
-      await apiRequest("POST", "/api/dish-match/solo", { category });
+      await apiRequest("POST", "/api/dish-match/solo", { category, source });
     } catch {}
   };
 
   const startSession = async () => {
     setIsLoading(true);
     try {
-      const res = await apiRequest("POST", "/api/dish-match/sessions", { userId: userId.current, category });
+      const res = await apiRequest("POST", "/api/dish-match/sessions", { userId: userId.current, category, source });
       const data = await res.json();
       setSessionId(data.id);
       setSessionCode(data.code);
