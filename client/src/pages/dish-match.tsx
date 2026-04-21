@@ -368,15 +368,34 @@ export default function DishMatch({ initialPhase = "landing", initialSolo = fals
       {phase === "setup" && (
         <div className="relative flex flex-col items-center justify-center min-h-[calc(100vh-64px)] px-4 text-center overflow-hidden">
 
-          {/* Gradient glow */}
+          {/* Gradient glow blobs — matching landing */}
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-[-40px] left-1/2 -translate-x-1/2 w-[500px] h-[400px] rounded-full bg-orange-600/20 blur-[120px]" />
-            <div className="absolute bottom-0 left-1/4 w-[300px] h-[300px] rounded-full bg-pink-600/10 blur-[100px]" />
+            <div className="absolute top-[-80px] left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-orange-600/20 blur-[120px]" />
+            <div className="absolute bottom-[-60px] left-1/4 w-[350px] h-[350px] rounded-full bg-pink-600/15 blur-[100px]" />
+            <div className="absolute top-1/3 right-[-80px] w-[280px] h-[280px] rounded-full bg-amber-500/15 blur-[90px]" />
+          </div>
+
+          {/* Floating food emojis — same as landing */}
+          <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
+            {BG_EMOJIS.map((em, i) => (
+              <span
+                key={i}
+                className="float-emoji absolute text-3xl"
+                style={{
+                  left: `${(i * 7 + 3) % 95}%`,
+                  top: `${(i * 13 + 5) % 85}%`,
+                  "--dur": `${5 + (i % 5)}s`,
+                  "--delay": `${(i * 0.4) % 4}s`,
+                } as any}
+              >
+                {em}
+              </span>
+            ))}
           </div>
 
           {/* Animated swiping cards in background (solo only) */}
           {isSolo && (
-            <div className="absolute inset-0 pointer-events-none select-none" style={{ zIndex: 0 }}>
+            <div className="absolute inset-0 pointer-events-none select-none" style={{ zIndex: 1 }}>
               {[
                 { emoji: "🍕", name: "Margherita Pizza", rating: "4.8", dir: "left",  delay: "0s"   },
                 { emoji: "🍔", name: "Smash Burger",     rating: "4.7", dir: "right", delay: "1.1s" },
@@ -384,13 +403,12 @@ export default function DishMatch({ initialPhase = "landing", initialSolo = fals
                 { emoji: "🌮", name: "Lamb Tacos",       rating: "4.6", dir: "right", delay: "3.3s" },
                 { emoji: "🍜", name: "Ramen Bowl",       rating: "4.8", dir: "left",  delay: "4.4s" },
               ].map((card, i) => (
-                /* Centering wrapper — no transform so animation can use transform freely */
-                <div key={i} className="absolute" style={{ top: "15%", left: "calc(50% - 88px)" }}>
+                <div key={i} className="absolute" style={{ top: "12%", left: "calc(50% - 88px)" }}>
                   <div
-                    className={`${card.dir === "left" ? "bg-card-left" : "bg-card-right"} w-44 rounded-2xl border border-gray-700/50 shadow-2xl overflow-hidden`}
-                    style={{ "--cdur": "5.5s", "--cdelay": card.delay, background: "rgba(28,28,38,0.82)" } as any}
+                    className={`${card.dir === "left" ? "bg-card-left" : "bg-card-right"} w-44 rounded-2xl border border-white/10 shadow-2xl overflow-hidden`}
+                    style={{ "--cdur": "5.5s", "--cdelay": card.delay, background: "rgba(28,28,42,0.78)" } as any}
                   >
-                    <div className="h-24 bg-gradient-to-b from-gray-700/30 to-gray-800/50 flex items-center justify-center text-5xl">
+                    <div className="h-24 bg-gradient-to-b from-orange-500/10 to-pink-600/10 flex items-center justify-center text-5xl">
                       {card.emoji}
                     </div>
                     <div className="px-3 py-2">
@@ -405,17 +423,26 @@ export default function DishMatch({ initialPhase = "landing", initialSolo = fals
             </div>
           )}
 
-          <div className="relative z-10 w-full max-w-xs backdrop-blur-sm rounded-3xl">
-            <h2 className="text-2xl font-bold text-white mb-1">
-              {lang("What are you deciding?", "ماذا تريد أن تختار؟")}
+          {/* Content */}
+          <div className="relative z-10 flex flex-col items-center w-full max-w-xs">
+
+            {/* Gradient icon — same style as landing hero */}
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center text-3xl mb-5 shadow-2xl shadow-orange-500/40">
+              {isSolo ? "⚡" : "🍽️"}
+            </div>
+
+            <h2 className="text-3xl font-black mb-2 leading-tight">
+              <span className="bg-gradient-to-r from-orange-400 via-pink-400 to-amber-300 bg-clip-text text-transparent">
+                {lang("Pick Your Vibe", "اختر ما تريد")}
+              </span>
             </h2>
-            <p className="text-gray-500 text-sm mb-8">
+            <p className="text-gray-400 text-sm mb-8 max-w-xs leading-relaxed">
               {isSolo
-                ? lang("Pick a category and start swiping", "اختر فئة وابدأ التمرير")
+                ? lang("Choose a category and start swiping on food you love", "اختر فئة وابدأ التمرير على الطعام الذي تحبه")
                 : lang("Both of you will swipe the same selection", "ستمرران على نفس الاختيارات")}
             </p>
 
-            <div className="space-y-3 mb-8">
+            <div className="space-y-3 mb-8 w-full">
               {([
                 { id: "dishes",      emoji: "🍽️", labelEn: "Dishes",       labelAr: "أطباق",       descEn: "Meals & individual dishes",      descAr: "وجبات وأطباق فردية" },
                 { id: "restaurants", emoji: "🏪", labelEn: "Restaurants",  labelAr: "مطاعم",       descEn: "Places to dine at",              descAr: "أماكن لتناول الطعام" },
@@ -426,19 +453,23 @@ export default function DishMatch({ initialPhase = "landing", initialSolo = fals
                   <button
                     key={opt.id}
                     onClick={() => setCategory(opt.id)}
-                    className={`w-full flex items-center gap-4 rounded-2xl p-4 border-2 text-left transition-all ${selected ? "border-orange-500 bg-orange-500/10" : "border-gray-700 bg-gray-800/80 hover:border-gray-600"}`}
+                    className={`w-full flex items-center gap-4 rounded-2xl p-4 border-2 text-left transition-all ${
+                      selected
+                        ? "border-orange-500 bg-gradient-to-r from-orange-500/15 to-pink-500/10 shadow-lg shadow-orange-500/10"
+                        : "border-gray-700/80 bg-gray-800/60 hover:border-orange-500/40 hover:bg-gray-800/80"
+                    }`}
                     data-testid={`button-category-${opt.id}`}
                   >
-                    <span className="text-3xl">{opt.emoji}</span>
+                    <span className={`text-3xl p-1.5 rounded-xl ${selected ? "bg-orange-500/20" : "bg-gray-700/60"}`}>{opt.emoji}</span>
                     <div className="flex-1">
-                      <p className={`font-semibold text-sm ${selected ? "text-orange-400" : "text-white"}`}>
+                      <p className={`font-bold text-sm ${selected ? "text-orange-400" : "text-white"}`}>
                         {language === "ar" ? opt.labelAr : opt.labelEn}
                       </p>
-                      <p className="text-gray-500 text-xs mt-0.5">
+                      <p className={`text-xs mt-0.5 ${selected ? "text-orange-300/70" : "text-gray-500"}`}>
                         {language === "ar" ? opt.descAr : opt.descEn}
                       </p>
                     </div>
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selected ? "border-orange-500 bg-orange-500" : "border-gray-600"}`}>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${selected ? "border-orange-500 bg-orange-500" : "border-gray-600"}`}>
                       {selected && <div className="w-2 h-2 rounded-full bg-white" />}
                     </div>
                   </button>
@@ -449,17 +480,17 @@ export default function DishMatch({ initialPhase = "landing", initialSolo = fals
             <button
               onClick={isSolo ? startSolo : startSession}
               disabled={isLoading}
-              className="w-full h-13 py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-400 hover:to-pink-400 text-white font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-orange-500/30 transition-all active:scale-95 disabled:opacity-60"
+              className="w-full h-14 rounded-2xl bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-400 hover:to-pink-400 text-white font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-orange-500/30 transition-all active:scale-95 disabled:opacity-60"
               data-testid="button-confirm-setup"
             >
               {isLoading
                 ? <RefreshCw className="h-4 w-4 animate-spin" />
                 : isSolo
-                  ? lang("Start Swipe", "ابدأ التمرير")
+                  ? <><Zap className="h-5 w-5" />{lang("Start Swipe", "ابدأ التمرير")}</>
                   : lang("Create Session →", "إنشاء الجلسة →")}
             </button>
 
-            <button onClick={() => setPhase("landing")} className="mt-6 text-gray-600 text-xs hover:text-gray-400">
+            <button onClick={() => setPhase("landing")} className="mt-5 text-gray-600 text-xs hover:text-gray-400 transition-colors">
               {lang("← Back", "← رجوع")}
             </button>
           </div>
