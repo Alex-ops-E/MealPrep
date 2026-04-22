@@ -37,11 +37,12 @@ interface DishMatchProps {
   source?: string;
 }
 
-export default function DishMatch({ initialPhase = "landing", initialSolo = false, source = "dish-match" }: DishMatchProps) {
+export default function DishMatch({ initialPhase = "landing", initialSolo = false, source: sourceProp = "dish-match" }: DishMatchProps) {
   const { language } = useLanguage();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const isRTL = language === "ar";
+  const source = new URLSearchParams(window.location.search).get("source") || sourceProp;
 
   const userId = useRef(generateUserId());
   const [phase, setPhase] = useState<Phase>(initialPhase);
