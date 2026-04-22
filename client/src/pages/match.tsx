@@ -129,16 +129,6 @@ export default function Match() {
             </span>
           </p>
 
-          {/* Headline */}
-          <h1 className="text-4xl font-black text-center leading-tight mb-3">
-            <span className="text-white">{lang("Stop arguing.", "توقفا عن الجدال.")}</span>
-            <br />
-            <span className="text-white">{lang("Start ", "ابدآ ")}</span>
-            <span className="bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
-              {lang("eating.", "بالأكل.")}
-            </span>
-          </h1>
-
           {/* Subtitle */}
           <p className="text-gray-400 text-sm text-center leading-relaxed mb-8 max-w-xs mx-auto">
             {lang(
