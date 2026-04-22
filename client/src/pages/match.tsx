@@ -123,10 +123,15 @@ export default function Match() {
           </div>
 
           {/* Dish Match logo text */}
-          <p className="text-center mb-2">
+          <p className="text-center mb-1">
             <span className="text-2xl font-black bg-gradient-to-r from-orange-400 via-pink-400 to-amber-300 bg-clip-text text-transparent">
               {lang("Dish Match", "مطابقة الأطباق")}
             </span>
+          </p>
+
+          {/* Trust line — under logo */}
+          <p className="text-gray-600 text-xs text-center mb-6">
+            {lang("No account needed", "لا حاجة لحساب")} · {lang("Free to use", "مجاني تماماً")}
           </p>
 
           {/* Subtitle */}
@@ -181,11 +186,6 @@ export default function Match() {
               </div>
             ))}
           </div>
-
-          {/* Trust line */}
-          <p className="text-gray-600 text-xs text-center mb-8">
-            {lang("No account needed", "لا حاجة لحساب")} · {lang("Free to use", "مجاني تماماً")}
-          </p>
 
           {/* CTA section */}
           <div className="bg-gray-800/50 border border-gray-700/50 rounded-3xl p-5 mb-6 backdrop-blur-sm">
