@@ -122,6 +122,13 @@ export default function Match() {
             </div>
           </div>
 
+          {/* Dish Match logo text */}
+          <p className="text-center mb-2">
+            <span className="text-2xl font-black bg-gradient-to-r from-orange-400 via-pink-400 to-amber-300 bg-clip-text text-transparent">
+              {lang("Dish Match", "مطابقة الأطباق")}
+            </span>
+          </p>
+
           {/* Headline */}
           <h1 className="text-4xl font-black text-center leading-tight mb-3">
             <span className="text-white">{lang("Stop arguing.", "توقفا عن الجدال.")}</span>
