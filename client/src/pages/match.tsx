@@ -52,7 +52,7 @@ export default function Match() {
 
   const handleFindSolo = () => {
     const cat = tab === "restaurant" ? "restaurants" : "dishes";
-    navigate(`/${language}/swipe?cat=${cat}`);
+    navigate(`/${language}/swipe?cat=${cat}&autostart=true`);
   };
 
   const handleInvite = () => {

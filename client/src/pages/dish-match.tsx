@@ -256,6 +256,9 @@ export default function DishMatch({ initialPhase = "landing", initialSolo = fals
     const params = new URLSearchParams(window.location.search);
     const joinParam = params.get("join");
     if (joinParam) setJoinCode(joinParam);
+    if (params.get("autostart") === "true" && initialSolo) {
+      startSolo();
+    }
   }, []);
 
   return (
