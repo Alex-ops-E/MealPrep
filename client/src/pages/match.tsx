@@ -263,7 +263,7 @@ export default function Match() {
             </div>
             <span className="text-gray-400 text-xs">
               <span className="text-white font-semibold">4.9 ★</span>
-              {" · "}{lang("Loved by couples in 40+ countries", "محبوب من أزواج في 40+ دولة")}
+              {" · "}{lang("Loved by couples in 20+ countries", "محبوب من أزواج في 20+ دولة")}
             </span>
           </div>
 
