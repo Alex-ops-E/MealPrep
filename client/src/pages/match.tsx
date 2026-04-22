@@ -189,12 +189,18 @@ export default function Match() {
 
           {/* CTA section */}
           <div className="bg-gray-800/50 border border-gray-700/50 rounded-3xl p-5 mb-6 backdrop-blur-sm">
-            <h2 className="text-lg font-black text-white text-center mb-5 flex items-center justify-center gap-2">
-              <Zap className="h-5 w-5 text-orange-400" />
+
+            {/* Primary CTA button */}
+            <button
+              onClick={handleInvite}
+              className="w-full h-14 rounded-2xl bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-400 hover:to-pink-400 text-white font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-orange-500/30 transition-all active:scale-95 mb-4"
+              data-testid="button-find-cta"
+            >
+              <Zap className="h-5 w-5" />
               {tab === "restaurant"
                 ? lang("Find Our Restaurant", "ابحثا عن مطعمكما")
                 : lang("Find Our Dish", "ابحثا عن طبقكما")}
-            </h2>
+            </button>
 
             {/* Action buttons */}
             <div className="grid grid-cols-2 gap-3 mb-4">
