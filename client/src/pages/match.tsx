@@ -50,6 +50,11 @@ export default function Match() {
     ],
   };
 
+  const handleFindSolo = () => {
+    const cat = tab === "restaurant" ? "restaurants" : "dishes";
+    navigate(`/${language}/swipe?cat=${cat}`);
+  };
+
   const handleInvite = () => {
     navigate(`/${language}/dish-match`);
   };
@@ -190,9 +195,9 @@ export default function Match() {
           {/* CTA section */}
           <div className="bg-gray-800/50 border border-gray-700/50 rounded-3xl p-5 mb-6 backdrop-blur-sm">
 
-            {/* Primary CTA button */}
+            {/* Primary CTA button — solo mode for the selected tab */}
             <button
-              onClick={handleInvite}
+              onClick={handleFindSolo}
               className="w-full h-14 rounded-2xl bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-400 hover:to-pink-400 text-white font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-orange-500/30 transition-all active:scale-95 mb-4"
               data-testid="button-find-cta"
             >

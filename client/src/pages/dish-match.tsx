@@ -55,7 +55,13 @@ export default function DishMatch({ initialPhase = "landing", initialSolo = fals
   const [newMatch, setNewMatch] = useState<SwipeItem | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [guestJoined, setGuestJoined] = useState(false);
-  const [category, setCategory] = useState<Category>("both");
+  const initialCat = (() => {
+    const p = new URLSearchParams(window.location.search).get("cat");
+    if (p === "restaurants") return "restaurants" as Category;
+    if (p === "dishes") return "dishes" as Category;
+    return "both" as Category;
+  })();
+  const [category, setCategory] = useState<Category>(initialCat);
   const [isSolo, setIsSolo] = useState(initialSolo);
   const [soloLikes, setSoloLikes] = useState<SwipeItem[]>([]);
 
