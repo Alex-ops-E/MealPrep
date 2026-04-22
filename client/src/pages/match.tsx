@@ -198,8 +198,8 @@ export default function Match() {
             >
               <Zap className="h-5 w-5" />
               {tab === "restaurant"
-                ? lang("Find Our Restaurant", "ابحثا عن مطعمكما")
-                : lang("Find Our Dish", "ابحثا عن طبقكما")}
+                ? lang("Find a Restaurant", "ابحثا عن مطعم")
+                : lang("Find a Dish", "ابحثا عن طبق")}
             </button>
 
             {/* Action buttons */}
