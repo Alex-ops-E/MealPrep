@@ -35,9 +35,10 @@ interface DishMatchProps {
   initialPhase?: Phase;
   initialSolo?: boolean;
   source?: string;
+  customItems?: SwipeItem[];
 }
 
-export default function DishMatch({ initialPhase = "landing", initialSolo = false, source: sourceProp = "dish-match" }: DishMatchProps) {
+export default function DishMatch({ initialPhase = "landing", initialSolo = false, source: sourceProp = "dish-match", customItems }: DishMatchProps) {
   const { language } = useLanguage();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -137,11 +138,12 @@ export default function DishMatch({ initialPhase = "landing", initialSolo = fals
   }
 
   const startSolo = async () => {
+    const pool = customItems || LOCAL_ITEMS;
     const filtered = category === "dishes"
-      ? LOCAL_ITEMS.filter(i => i.type === "dish")
+      ? pool.filter(i => i.type === "dish")
       : category === "restaurants"
-      ? LOCAL_ITEMS.filter(i => i.type === "restaurant")
-      : LOCAL_ITEMS;
+      ? pool.filter(i => i.type === "restaurant")
+      : pool;
     setItems(shuffle(filtered));
     setCurrentIndex(0);
     setSoloLikes([]);
