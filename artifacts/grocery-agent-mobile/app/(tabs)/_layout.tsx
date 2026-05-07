@@ -3,7 +3,7 @@ import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { Tabs } from "expo-router";
 import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 import { SymbolView } from "expo-symbols";
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Platform, StyleSheet, View } from "react-native";
 
@@ -14,17 +14,9 @@ function NativeTabLayout() {
   const { language } = useLanguage();
   return (
     <NativeTabs>
-      <NativeTabs.Trigger name="index">
-        <Icon sf={{ default: "house", selected: "house.fill" }} />
-        <Label>{language === "ar" ? "الرئيسية" : "Home"}</Label>
-      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="swipe">
         <Icon sf={{ default: "heart", selected: "heart.fill" }} />
         <Label>{language === "ar" ? "مطابقة" : "Dish Match"}</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="planner">
-        <Icon sf={{ default: "calendar", selected: "calendar.fill" }} />
-        <Label>{language === "ar" ? "مخطط" : "Planner"}</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
@@ -62,13 +54,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: language === "ar" ? "الرئيسية" : "Home",
-          tabBarIcon: ({ color, size }) =>
-            isIOS ? (
-              <SymbolView name="house" tintColor={color} size={size} />
-            ) : (
-              <Feather name="home" size={size} color={color} />
-            ),
+          href: null,
         }}
       />
       <Tabs.Screen
@@ -86,13 +72,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="planner"
         options={{
-          title: language === "ar" ? "المخطط" : "Planner",
-          tabBarIcon: ({ color, size }) =>
-            isIOS ? (
-              <SymbolView name="calendar" tintColor={color} size={size} />
-            ) : (
-              <Feather name="calendar" size={size} color={color} />
-            ),
+          href: null,
         }}
       />
     </Tabs>
