@@ -365,7 +365,7 @@ export default function SwipeScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.inviteBtnTitle, { color: colors.foreground, fontFamily: fontFamily("bold"), textAlign: isRTL ? "right" : "left" }]}>
-                  {language === "ar" ? "العب مع صديق" : "Play with a Friend"}
+                  {language === "ar" ? "ادعُ صديقاً" : "Invite a Friend"}
                 </Text>
                 <Text style={[styles.inviteBtnSub, { color: colors.mutedForeground, fontFamily: fontFamily(), textAlign: isRTL ? "right" : "left" }]}>
                   {language === "ar" ? "أنت تلعب على الموبايل، صديقك على الويب" : "You on mobile · Friend joins via web"}
