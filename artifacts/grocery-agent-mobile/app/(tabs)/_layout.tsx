@@ -8,21 +8,23 @@ import React from "react";
 import { Platform, StyleSheet, View } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 function NativeTabLayout() {
+  const { language } = useLanguage();
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
         <Icon sf={{ default: "house", selected: "house.fill" }} />
-        <Label>Home</Label>
+        <Label>{language === "ar" ? "الرئيسية" : "Home"}</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="swipe">
         <Icon sf={{ default: "heart", selected: "heart.fill" }} />
-        <Label>Dish Match</Label>
+        <Label>{language === "ar" ? "مطابقة" : "Dish Match"}</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="planner">
         <Icon sf={{ default: "calendar", selected: "calendar.fill" }} />
-        <Label>Planner</Label>
+        <Label>{language === "ar" ? "مخطط" : "Planner"}</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
@@ -30,6 +32,7 @@ function NativeTabLayout() {
 
 function ClassicTabLayout() {
   const colors = useColors();
+  const { language } = useLanguage();
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
 
@@ -50,22 +53,16 @@ function ClassicTabLayout() {
         },
         tabBarBackground: () =>
           isIOS ? (
-            <BlurView
-              intensity={80}
-              tint="dark"
-              style={StyleSheet.absoluteFill}
-            />
+            <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
           ) : (
-            <View
-              style={[StyleSheet.absoluteFill, { backgroundColor: colors.card }]}
-            />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.card }]} />
           ),
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: language === "ar" ? "الرئيسية" : "Home",
           tabBarIcon: ({ color, size }) =>
             isIOS ? (
               <SymbolView name="house" tintColor={color} size={size} />
@@ -77,7 +74,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="swipe"
         options={{
-          title: "Dish Match",
+          title: language === "ar" ? "مطابقة الأطباق" : "Dish Match",
           tabBarIcon: ({ color, size }) =>
             isIOS ? (
               <SymbolView name="heart" tintColor={color} size={size} />
@@ -89,7 +86,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="planner"
         options={{
-          title: "Planner",
+          title: language === "ar" ? "المخطط" : "Planner",
           tabBarIcon: ({ color, size }) =>
             isIOS ? (
               <SymbolView name="calendar" tintColor={color} size={size} />
