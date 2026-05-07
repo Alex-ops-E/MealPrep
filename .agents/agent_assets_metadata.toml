@@ -1,0 +1,20 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "KTbcw2AAPy5R8RL475prT"
+uri = "file://artifacts/grocery-agent-mobile/assets/images/icon.png"
+type = "image"
+title = "grocery agent mobile icon"
+
+[[generated]]
+id = "J7WyYcd_p12lhq88V--c_"
+uri = "file://artifacts/grocery-agent-mobile/assets/images/food-hero.png"
+type = "image"
+title = "food hero banner"
+
+[[generated]]
+id = "Q56ZCqhl2vvtT0e7s6uNR"
+uri = "file://artifacts/grocery-agent-mobile/assets/images/meal-planner-bg.png"
+type = "image"
+title = "meal planner background"
