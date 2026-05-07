@@ -4,6 +4,10 @@ import {
   Inter_700Bold,
   useFonts,
 } from "@expo-google-fonts/inter";
+import {
+  NotoSansArabic_400Regular,
+  NotoSansArabic_700Bold,
+} from "@expo-google-fonts/noto-sans-arabic";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -19,7 +23,11 @@ SystemUI.setBackgroundColorAsync("#020817");
 
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { retry: 1, staleTime: 5 * 60 * 1000 },
+  },
+});
 
 function RootLayoutNav() {
   return (
@@ -34,6 +42,8 @@ export default function RootLayout() {
     Inter_400Regular,
     Inter_600SemiBold,
     Inter_700Bold,
+    NotoSansArabic_400Regular,
+    NotoSansArabic_700Bold,
   });
 
   useEffect(() => {

@@ -4,7 +4,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  FlatList,
   Platform,
   Pressable,
   ScrollView,
@@ -14,95 +13,60 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useQuery } from "@tanstack/react-query";
 
 import { useColors } from "@/hooks/useColors";
 
 interface Recipe {
   id: string;
-  name: string;
-  nameAr: string;
-  cuisine: string;
-  time: string;
-  calories: number;
-  rating: number;
-  emoji: string;
-  tags: string[];
+  title: string;
+  cuisine?: string;
+  cookingTime?: string;
+  calories?: number;
+  servings?: number;
+  description?: string;
+  createdAt?: string;
 }
 
-const FEATURED_RECIPES: Recipe[] = [
-  {
-    id: "1",
-    name: "Machboos Laham",
-    nameAr: "مجبوس لحم",
-    cuisine: "Qatari",
-    time: "60 min",
-    calories: 720,
-    rating: 4.9,
-    emoji: "🍖",
-    tags: ["Traditional", "Rice", "Lamb"],
-  },
-  {
-    id: "2",
-    name: "Salmon Sushi Bowl",
-    nameAr: "طبق سوشي السلمون",
-    cuisine: "Japanese",
-    time: "25 min",
-    calories: 520,
-    rating: 4.8,
-    emoji: "🍣",
-    tags: ["Healthy", "Seafood"],
-  },
-  {
-    id: "3",
-    name: "Chicken Shawarma",
-    nameAr: "شاورما دجاج",
-    cuisine: "Lebanese",
-    time: "35 min",
-    calories: 560,
-    rating: 4.7,
-    emoji: "🌯",
-    tags: ["Grilled", "Popular"],
-  },
-  {
-    id: "4",
-    name: "Lamb Biryani",
-    nameAr: "برياني لحم",
-    cuisine: "South Asian",
-    time: "75 min",
-    calories: 680,
-    rating: 4.8,
-    emoji: "🍚",
-    tags: ["Spiced", "Rice"],
-  },
-  {
-    id: "5",
-    name: "Mezze Platter",
-    nameAr: "طبق مزة",
-    cuisine: "Levantine",
-    time: "15 min",
-    calories: 580,
-    rating: 4.7,
-    emoji: "🧆",
-    tags: ["Vegetarian", "Sharing"],
-  },
-  {
-    id: "6",
-    name: "Wagyu Steak",
-    nameAr: "ستيك واغيو",
-    cuisine: "Japanese",
-    time: "20 min",
-    calories: 820,
-    rating: 5.0,
-    emoji: "🥩",
-    tags: ["Premium", "Grilled"],
-  },
+// Fallback featured recipes if API returns empty or fails
+const FALLBACK_RECIPES = [
+  { id: "f1", title: "Machboos Laham", cuisine: "Qatari", cookingTime: "60 min", calories: 720, emoji: "🍖", tags: ["Traditional", "Rice", "Lamb"] },
+  { id: "f2", title: "Salmon Sushi Bowl", cuisine: "Japanese", cookingTime: "25 min", calories: 520, emoji: "🍣", tags: ["Healthy", "Seafood"] },
+  { id: "f3", title: "Chicken Shawarma", cuisine: "Lebanese", cookingTime: "35 min", calories: 560, emoji: "🌯", tags: ["Grilled", "Popular"] },
+  { id: "f4", title: "Lamb Biryani", cuisine: "South Asian", cookingTime: "75 min", calories: 680, emoji: "🍚", tags: ["Spiced", "Rice"] },
+  { id: "f5", title: "Mezze Platter", cuisine: "Levantine", cookingTime: "15 min", calories: 580, emoji: "🧆", tags: ["Vegetarian", "Sharing"] },
+  { id: "f6", title: "Wagyu Steak", cuisine: "Japanese", cookingTime: "20 min", calories: 820, emoji: "🥩", tags: ["Premium", "Grilled"] },
 ];
+
+const CUISINE_EMOJIS: Record<string, string> = {
+  Qatari: "🍖", Japanese: "🍣", Lebanese: "🌯", Indian: "🍛",
+  Italian: "🍕", American: "🍔", Emirati: "🐟", Thai: "🍜",
+  "South Asian": "🍚", Levantine: "🧆", default: "🍽️",
+};
 
 const CATEGORIES = ["All", "Qatari", "Japanese", "Lebanese", "Indian", "Italian", "American"];
 
 const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
 
-function RecipeCard({ recipe, colors }: { recipe: Recipe; colors: ReturnType<typeof useColors> }) {
+function getEmoji(cuisine?: string): string {
+  if (!cuisine) return CUISINE_EMOJIS.default;
+  for (const [key, emoji] of Object.entries(CUISINE_EMOJIS)) {
+    if (cuisine.toLowerCase().includes(key.toLowerCase())) return emoji;
+  }
+  return CUISINE_EMOJIS.default;
+}
+
+function RecipeCard({
+  recipe,
+  emoji,
+  tags,
+  colors,
+}: {
+  recipe: Recipe;
+  emoji: string;
+  tags?: string[];
+  colors: ReturnType<typeof useColors>;
+}) {
   const [saved, setSaved] = useState(false);
 
   return (
@@ -111,35 +75,49 @@ function RecipeCard({ recipe, colors }: { recipe: Recipe; colors: ReturnType<typ
       onPress={() => Haptics.selectionAsync()}
     >
       <View style={[styles.recipeEmoji, { backgroundColor: colors.muted }]}>
-        <Text style={styles.recipeEmojiText}>{recipe.emoji}</Text>
+        <Text style={styles.recipeEmojiText}>{emoji}</Text>
       </View>
       <View style={styles.recipeInfo}>
         <Text style={[styles.recipeName, { color: colors.foreground }]} numberOfLines={1}>
-          {recipe.name}
+          {recipe.title}
         </Text>
-        <Text style={[styles.recipeCuisine, { color: colors.mutedForeground }]}>
-          {recipe.cuisine}
-        </Text>
+        {recipe.cuisine && (
+          <Text style={[styles.recipeCuisine, { color: colors.mutedForeground }]}>
+            {recipe.cuisine}
+          </Text>
+        )}
         <View style={styles.recipeMeta}>
-          <Feather name="clock" size={11} color={colors.mutedForeground} />
-          <Text style={[styles.recipeMetaText, { color: colors.mutedForeground }]}>{recipe.time}</Text>
-          <Text style={[styles.recipeMetaText, { color: colors.mutedForeground }]}>·</Text>
-          <Text style={[styles.recipeMetaText, { color: colors.mutedForeground }]}>{recipe.calories} cal</Text>
-          <Text style={[styles.recipeMetaText, { color: colors.mutedForeground }]}>·</Text>
-          <Ionicons name="star" size={11} color="#FBBF24" />
-          <Text style={[styles.recipeMetaText, { color: "#FBBF24" }]}>{recipe.rating}</Text>
+          {recipe.cookingTime && (
+            <>
+              <Feather name="clock" size={11} color={colors.mutedForeground} />
+              <Text style={[styles.recipeMetaText, { color: colors.mutedForeground }]}>
+                {recipe.cookingTime}
+              </Text>
+              <Text style={[styles.recipeMetaText, { color: colors.mutedForeground }]}>·</Text>
+            </>
+          )}
+          {recipe.calories && (
+            <Text style={[styles.recipeMetaText, { color: colors.mutedForeground }]}>
+              {recipe.calories} cal
+            </Text>
+          )}
         </View>
-        <View style={styles.recipeTags}>
-          {recipe.tags.slice(0, 2).map((tag) => (
-            <View key={tag} style={[styles.tag, { backgroundColor: colors.muted }]}>
-              <Text style={[styles.tagText, { color: colors.mutedForeground }]}>{tag}</Text>
-            </View>
-          ))}
-        </View>
+        {tags && (
+          <View style={styles.recipeTags}>
+            {tags.slice(0, 2).map((tag) => (
+              <View key={tag} style={[styles.tag, { backgroundColor: colors.muted }]}>
+                <Text style={[styles.tagText, { color: colors.mutedForeground }]}>{tag}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
       <Pressable
         style={styles.saveBtn}
-        onPress={() => { setSaved(!saved); Haptics.selectionAsync(); }}
+        onPress={() => {
+          setSaved(!saved);
+          Haptics.selectionAsync();
+        }}
       >
         <Ionicons
           name={saved ? "bookmark" : "bookmark-outline"}
@@ -158,39 +136,65 @@ export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [generating, setGenerating] = useState(false);
   const [generatedRecipe, setGeneratedRecipe] = useState<string | null>(null);
-  const [prompt, setPrompt] = useState("");
+  const [craving, setCraving] = useState("");
   const [showGenerator, setShowGenerator] = useState(false);
 
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : 0;
 
-  const filteredRecipes = FEATURED_RECIPES.filter((r) => {
-    const matchesCategory = selectedCategory === "All" || r.cuisine === selectedCategory;
+  // Fetch real recipes from backend
+  const { data: apiRecipes, isLoading: recipesLoading } = useQuery<Recipe[]>({
+    queryKey: ["recipes"],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/api/recipes`);
+      if (!res.ok) throw new Error("Failed to fetch recipes");
+      return res.json();
+    },
+    retry: 1,
+  });
+
+  // Use API recipes if available, otherwise fallback
+  const baseRecipes =
+    apiRecipes && apiRecipes.length > 0
+      ? apiRecipes.map((r) => ({
+          ...r,
+          emoji: getEmoji(r.cuisine),
+          cookingTime: r.cookingTime ?? undefined,
+          tags: r.cuisine ? [r.cuisine] : [],
+        }))
+      : FALLBACK_RECIPES;
+
+  const filteredRecipes = baseRecipes.filter((r) => {
+    const matchesCategory =
+      selectedCategory === "All" ||
+      (r.cuisine ?? "").toLowerCase().includes(selectedCategory.toLowerCase());
     const matchesSearch =
       search === "" ||
-      r.name.toLowerCase().includes(search.toLowerCase()) ||
-      r.cuisine.toLowerCase().includes(search.toLowerCase());
+      r.title.toLowerCase().includes(search.toLowerCase()) ||
+      (r.cuisine ?? "").toLowerCase().includes(search.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
   const generateRecipe = async () => {
-    if (!prompt.trim()) return;
+    if (!craving.trim()) return;
     setGenerating(true);
     setGeneratedRecipe(null);
     try {
       const res = await fetch(`${API_BASE}/api/recipes/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), servings: 2 }),
+        body: JSON.stringify({ craving: craving.trim(), servings: 2 }),
       });
       if (res.ok) {
         const data = await res.json();
-        setGeneratedRecipe(data.name || data.title || "Your recipe is ready!");
+        setGeneratedRecipe(data.title ?? data.name ?? "Recipe generated!");
+        // Refetch recipes to show the new one
       } else {
-        setGeneratedRecipe("Recipe generated! Check the web app for details.");
+        const err = await res.json().catch(() => ({}));
+        setGeneratedRecipe(err.message ?? "Recipe generated! Pull to refresh to see it.");
       }
     } catch {
-      setGeneratedRecipe("Recipe generated! Check the web app for full details.");
+      setGeneratedRecipe("Could not connect to server. Check your connection.");
     } finally {
       setGenerating(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -202,10 +206,16 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={[styles.header, { paddingTop: topInset + 12 }]}>
         <View>
-          <Text style={[styles.headerGreeting, { color: colors.mutedForeground }]}>Good day! 👋</Text>
-          <Text style={[styles.headerTitle, { color: colors.foreground }]}>What are you craving?</Text>
+          <Text style={[styles.headerGreeting, { color: colors.mutedForeground }]}>
+            Good day!
+          </Text>
+          <Text style={[styles.headerTitle, { color: colors.foreground }]}>
+            What are you craving?
+          </Text>
         </View>
-        <Pressable style={[styles.avatarBtn, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Pressable
+          style={[styles.avatarBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+        >
           <Feather name="user" size={20} color={colors.foreground} />
         </Pressable>
       </View>
@@ -215,7 +225,12 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingBottom: bottomInset + 90 }}
       >
         {/* Search */}
-        <View style={[styles.searchRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.searchRow,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
           <Feather name="search" size={16} color={colors.mutedForeground} />
           <TextInput
             style={[styles.searchInput, { color: colors.foreground }]}
@@ -232,7 +247,12 @@ export default function HomeScreen() {
         </View>
 
         {/* AI Generate Banner */}
-        <Pressable onPress={() => { setShowGenerator(!showGenerator); Haptics.selectionAsync(); }}>
+        <Pressable
+          onPress={() => {
+            setShowGenerator(!showGenerator);
+            Haptics.selectionAsync();
+          }}
+        >
           <LinearGradient
             colors={[colors.gradientStart, colors.gradientEnd]}
             start={{ x: 0, y: 0 }}
@@ -243,28 +263,45 @@ export default function HomeScreen() {
               <Feather name="zap" size={22} color="#fff" />
               <View style={{ flex: 1 }}>
                 <Text style={styles.generateBannerTitle}>AI Recipe Generator</Text>
-                <Text style={styles.generateBannerSub}>Describe a craving, get a recipe</Text>
+                <Text style={styles.generateBannerSub}>
+                  Describe a craving, get a personalised recipe
+                </Text>
               </View>
-              <Feather name={showGenerator ? "chevron-up" : "chevron-right"} size={20} color="#fff" />
+              <Feather
+                name={showGenerator ? "chevron-up" : "chevron-right"}
+                size={20}
+                color="#fff"
+              />
             </View>
           </LinearGradient>
         </Pressable>
 
         {/* Generator Input */}
         {showGenerator && (
-          <View style={[styles.generatorBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.generatorBox,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
             <TextInput
-              style={[styles.generatorInput, { color: colors.foreground, borderColor: colors.border }]}
+              style={[
+                styles.generatorInput,
+                { color: colors.foreground, borderColor: colors.border },
+              ]}
               placeholder="e.g. spicy lamb with rice and herbs..."
               placeholderTextColor={colors.mutedForeground}
-              value={prompt}
-              onChangeText={setPrompt}
+              value={craving}
+              onChangeText={setCraving}
               multiline
             />
             <Pressable
-              style={[styles.generateBtn, { opacity: generating || !prompt.trim() ? 0.5 : 1 }]}
+              style={[
+                styles.generateBtn,
+                { opacity: generating || !craving.trim() ? 0.5 : 1 },
+              ]}
               onPress={generateRecipe}
-              disabled={generating || !prompt.trim()}
+              disabled={generating || !craving.trim()}
             >
               <LinearGradient
                 colors={[colors.gradientStart, colors.gradientEnd]}
@@ -277,7 +314,7 @@ export default function HomeScreen() {
                 ) : (
                   <>
                     <Feather name="zap" size={16} color="#fff" />
-                    <Text style={styles.generateBtnText}>Generate</Text>
+                    <Text style={styles.generateBtnText}>Generate Recipe</Text>
                   </>
                 )}
               </LinearGradient>
@@ -302,19 +339,27 @@ export default function HomeScreen() {
           {CATEGORIES.map((cat) => (
             <Pressable
               key={cat}
-              onPress={() => { setSelectedCategory(cat); Haptics.selectionAsync(); }}
+              onPress={() => {
+                setSelectedCategory(cat);
+                Haptics.selectionAsync();
+              }}
               style={[
                 styles.categoryPill,
                 {
-                  backgroundColor: selectedCategory === cat ? colors.primary : colors.card,
-                  borderColor: selectedCategory === cat ? colors.primary : colors.border,
+                  backgroundColor:
+                    selectedCategory === cat ? colors.primary : colors.card,
+                  borderColor:
+                    selectedCategory === cat ? colors.primary : colors.border,
                 },
               ]}
             >
               <Text
                 style={[
                   styles.categoryPillText,
-                  { color: selectedCategory === cat ? "#fff" : colors.mutedForeground },
+                  {
+                    color:
+                      selectedCategory === cat ? "#fff" : colors.mutedForeground,
+                  },
                 ]}
               >
                 {cat}
@@ -325,22 +370,36 @@ export default function HomeScreen() {
 
         {/* Section Title */}
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Featured Recipes</Text>
-          <Text style={[styles.sectionCount, { color: colors.mutedForeground }]}>
-            {filteredRecipes.length} results
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+            {apiRecipes && apiRecipes.length > 0 ? "Your Recipes" : "Featured Recipes"}
           </Text>
+          {recipesLoading ? (
+            <ActivityIndicator size="small" color={colors.mutedForeground} />
+          ) : (
+            <Text style={[styles.sectionCount, { color: colors.mutedForeground }]}>
+              {filteredRecipes.length} results
+            </Text>
+          )}
         </View>
 
         {/* Recipe List */}
         {filteredRecipes.length === 0 ? (
           <View style={styles.emptyState}>
             <Feather name="search" size={36} color={colors.mutedForeground} />
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>No recipes found</Text>
+            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+              No recipes found
+            </Text>
           </View>
         ) : (
           <View style={styles.recipeList}>
             {filteredRecipes.map((recipe) => (
-              <RecipeCard key={recipe.id} recipe={recipe} colors={colors} />
+              <RecipeCard
+                key={recipe.id}
+                recipe={recipe}
+                emoji={(recipe as any).emoji ?? getEmoji(recipe.cuisine)}
+                tags={(recipe as any).tags}
+                colors={colors}
+              />
             ))}
           </View>
         )}
@@ -427,7 +486,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    paddingVertical: 12,
+    paddingVertical: 13,
   },
   generateBtnText: { color: "#fff", fontFamily: "Inter_700Bold", fontSize: 15 },
   generatedResult: {
