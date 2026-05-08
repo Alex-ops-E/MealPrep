@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTheme } from "@/contexts/ThemeContext";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -89,6 +90,7 @@ export default function SwipeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { language, isRTL, fontFamily } = useLanguage();
+  const { resolvedTheme, toggleTheme } = useTheme();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
 
@@ -306,10 +308,24 @@ export default function SwipeScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { paddingTop: topInset + 12 }]}>
-          <Text style={[styles.headerTitle, { color: colors.foreground, fontFamily: fontFamily("bold") }]}>Dish Match</Text>
-          <Text style={[styles.headerSub, { color: colors.mutedForeground, fontFamily: fontFamily() }]}>
-            {language === "ar" ? "امسح لتجد ما تشتهيه" : "Swipe to find what you're craving"}
-          </Text>
+          <View style={styles.headerRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.headerTitle, { color: colors.foreground, fontFamily: fontFamily("bold") }]}>Dish Match</Text>
+              <Text style={[styles.headerSub, { color: colors.mutedForeground, fontFamily: fontFamily() }]}>
+                {language === "ar" ? "امسح لتجد ما تشتهيه" : "Swipe to find what you're craving"}
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => { toggleTheme(); Haptics.selectionAsync(); }}
+              style={[styles.themeToggle, { backgroundColor: colors.card, borderColor: colors.border }]}
+            >
+              <Feather
+                name={resolvedTheme === "dark" ? "sun" : "moon"}
+                size={18}
+                color={resolvedTheme === "dark" ? "#FBBF24" : colors.primary}
+              />
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.landingContent}>
@@ -776,8 +792,10 @@ const CARD_WIDTH = 320;
 const styles = StyleSheet.create({
   container:        { flex: 1 },
   header:           { paddingHorizontal: 20, paddingBottom: 16 },
+  headerRow:        { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
   headerTitle:      { fontSize: 26, marginBottom: 4 },
   headerSub:        { fontSize: 14 },
+  themeToggle:      { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   backText:         { fontSize: 14 },
   landingContent:   { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24, gap: 16 },
   heroIcon:         { width: 120, height: 120, borderRadius: 30, alignItems: "center", justifyContent: "center", marginBottom: 8 },
