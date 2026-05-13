@@ -2,6 +2,7 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 import * as Sharing from "expo-sharing";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -389,6 +390,14 @@ export default function SwipeScreen() {
               </View>
               <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={18} color={colors.mutedForeground} />
             </View>
+          </Pressable>
+
+          {/* Terms link */}
+          <Pressable onPress={() => router.push("/terms")} style={styles.termsLink}>
+            <Feather name="shield" size={12} color={colors.mutedForeground} />
+            <Text style={[styles.termsLinkText, { color: colors.mutedForeground, fontFamily: fontFamily() }]}>
+              {language === "ar" ? "شروط الاستخدام والخصوصية" : "Terms of Use & Privacy"}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -836,6 +845,8 @@ const styles = StyleSheet.create({
   linkPreviewText:  { flex: 1, fontSize: 11 },
   cancelBtn:        { alignItems: "center", paddingVertical: 14, borderRadius: 14, borderWidth: 1 },
   cancelBtnText:    { fontSize: 14 },
+  termsLink:        { flexDirection: "row", alignItems: "center", gap: 5, paddingVertical: 4 },
+  termsLinkText:    { fontSize: 12 },
 
   // Match celebration
   matchHeroBox:     { width: 140, height: 140, borderRadius: 36, alignItems: "center", justifyContent: "center", marginBottom: 12 },
