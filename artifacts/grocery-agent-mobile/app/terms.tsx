@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React from "react";
+import React, { ComponentProps } from "react";
 import {
   Platform,
   Pressable,
@@ -17,8 +17,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 const LAST_UPDATED = "May 2026";
 const CONTACT_EMAIL = "privacy@groceryagent.app";
 
+type FeatherIconName = ComponentProps<typeof Feather>["name"];
+
 interface Section {
-  icon: string;
+  icon: FeatherIconName;
   title: string;
   titleAr: string;
   body: string;
@@ -134,7 +136,7 @@ export default function TermsScreen() {
           <View key={i} style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={[styles.sectionHeader, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
               <View style={[styles.iconBox, { backgroundColor: colors.primary + "18" }]}>
-                <Feather name={section.icon as any} size={16} color={colors.primary} />
+                <Feather name={section.icon} size={16} color={colors.primary} />
               </View>
               <Text style={[styles.sectionTitle, { color: colors.foreground, fontFamily: fontFamily("bold"), textAlign: isRTL ? "right" : "left" }]}>
                 {isAr ? section.titleAr : section.title}
