@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "grocery-agent-mobile",
+    "scheme": "groceryagent",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
@@ -14,21 +14,20 @@
       "backgroundColor": "#020817"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.groceryagent.mobile",
+      "buildNumber": "1"
     },
     "android": {
-      "backgroundColor": "#020817"
+      "backgroundColor": "#020817",
+      "package": "com.groceryagent.mobile",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/images/icon.png"
     },
     "plugins": [
-      [
-        "expo-router",
-        {
-          "origin": "https://replit.com/"
-        }
-      ],
+      "expo-router",
       "expo-font",
       "expo-web-browser"
     ],
