@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "7fe7d5bb-9569-4011-a26e-663fc5f89c34"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.alexserous.workspace",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}
